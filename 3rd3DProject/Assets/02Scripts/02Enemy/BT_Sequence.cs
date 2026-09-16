@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 
-public class BT_Sequance : BT_Node
+public class BT_Sequence : BT_Node
 {
     private List<BT_Node> children;
 
-    public BT_Sequance(List<BT_Node> children)
+    public BT_Sequence(List<BT_Node> children)
     {
         this.children = children;
     }
