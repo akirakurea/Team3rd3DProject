@@ -2,11 +2,18 @@
 
 public class BT_Selector : BT_Node
 {
-    private List<BT_Node> children;
+    private List<BT_Node> children =new List<BT_Node>();
+
+    public BT_Selector() { }
 
     public BT_Selector(List<BT_Node> children)
     {
-        this.children = children;
+        this.children = children ?? new List<BT_Node>();
+    }
+
+    public void AddChild(BT_Node node)
+    {
+        children.Add(node);
     }
     public override BT_NodeStatus Evaluate()
     {
