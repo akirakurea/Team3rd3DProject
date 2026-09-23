@@ -13,5 +13,14 @@ public class ItemManager2 : MonoBehaviour
     }
 
     public List<GameObject> GetRemainingItems() => remainingItems;
-    public void RemoveItem(Transform item) => remainingItems.Remove(item.gameObject);
+    public void AddItem(GameObject item)
+    {
+        if(!remainingItems.Contains(item))
+            remainingItems.Add(item);
+    }
+    public void RemoveItem(Transform item)
+    {
+        if(item != null && remainingItems.Contains(item.gameObject))
+        remainingItems.Remove(item.gameObject);
+    }
 }

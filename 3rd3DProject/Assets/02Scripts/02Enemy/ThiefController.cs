@@ -19,7 +19,7 @@ public class ThiefController : MonoBehaviour
 
     private void Update()
     {
-        Debug.Log($"NavMesh 연결 상태: {blackboard.Agent.isOnNavMesh}");
+        //Debug.Log($"NavMesh 연결 상태: {blackboard.Agent.isOnNavMesh}");
         blackboard.UpdatePerception();
 
         if(rootNode != null )
@@ -30,17 +30,20 @@ public class ThiefController : MonoBehaviour
     {
         BT_Selector rootSelector = new BT_Selector();
 
-        BT_StunCheck stunCheckNode = new BT_StunCheck(blackboard);//함정밟은 상태를 가장 먼저 체크하기
+        BT_StunCheck stunCheckNode = new BT_StunCheck(blackboard);//우선순위1 ]함정밟은 상태를 가장 먼저 체크하기 
         rootSelector.AddChild(stunCheckNode);
 
-        BT_Sequence stealSequnce = new BT_Sequence();
+        BT_Sequence fleeSequence = new BT_Sequence();//우선순위2]도망치기
+        fleeSequence.AddChild(new BT_CheckPlayerNearby(blackboard));
+        fleeSequence.AddChild(new BT_Flee(blackboard));
+        rootSelector.AddChild(fleeSequence);
 
-        stealSequnce.AddChild(new BT_FindFurtherItem(blackboard));
-
+        BT_Sequence stealSequence = new BT_Sequence();//우선순위 3]훔치기 시퀀스. 
+        stealSequence.AddChild(new BT_FindFurtherItem(blackboard));
+        stealSequence.AddChild(new BT_MoveToTarget(blackboard));
+        stealSequence.AddChild(new BT_StealItem(blackboard));
+        rootSelector.AddChild(stealSequence);
         //이 구간에는 행동트리 추가 가능
-        stealSequnce.AddChild(new BT_MoveToTarget(blackboard));
-
-        rootSelector.AddChild(stealSequnce);
 
         rootNode = rootSelector;
     }

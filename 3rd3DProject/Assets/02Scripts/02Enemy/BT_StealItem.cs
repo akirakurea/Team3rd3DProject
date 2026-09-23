@@ -21,15 +21,16 @@ public class BT_StealItem : BT_Leaf
             //AlertSystem.TriggerStealAlert(blackboard.TargetItem.position);
             //경보시스템 스크립트 필요
         }
-
+        Debug.Log($"[BT]아이템 훔치기 시작{currentTimer}초");
         currentTimer += Time.deltaTime;
         if (currentTimer >= stealDuration)
         {
-            ItemManager2.Instance.RemoveItem(blackboard.TargetItem);
+            Object.Destroy(blackboard.TargetItem.gameObject);
             blackboard.TargetItem = null;
 
             currentTimer = 0f;
             isNotifying = false;
+            Debug.Log("[BT] 아이템 훔치기 완료");
             return BT_NodeStatus.Success;
 
 

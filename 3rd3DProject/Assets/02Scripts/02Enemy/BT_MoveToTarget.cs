@@ -12,9 +12,13 @@ public class BT_MoveToTarget : BT_Leaf
         if (bb.TargetItem == null) return BT_NodeStatus.Failure;
 
         bb.Agent.SetDestination(bb.TargetItem.position);
-
-        if (!bb.Agent.pathPending && bb.Agent.remainingDistance <= bb.Agent.stoppingDistance)
+        float disToTgt = Vector3.Distance(bb.ThiefTransform.position, bb.TargetItem.position);
+        Debug.Log($"[BT] {bb.TargetItem.position}방향 이동");
+        if (disToTgt<= 1.2f || (!bb.Agent.pathPending && bb.Agent.remainingDistance <= bb.Agent.stoppingDistance))
+        {
+            bb.Agent.ResetPath();
             return BT_NodeStatus.Success;//이동완료
+        }
 
         return BT_NodeStatus.Running;//이동중
     }
