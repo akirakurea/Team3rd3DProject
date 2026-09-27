@@ -18,7 +18,7 @@ public class BT_Flee : BT_Leaf
             bb.Agent.ResetPath();//안전지역판단
             return BT_NodeStatus.Success;
         }
-        if(bb.IsCarrytingItem && (bb.DistanceToPlayer < 5.0f))
+        if(bb.IsCarryingItem && (bb.DistanceToPlayer < 5.0f))
         {
             DropCarriedItem();
         }
@@ -47,7 +47,7 @@ public class BT_Flee : BT_Leaf
                 Object.Instantiate(bb.CarriedItem, bb.ThiefTransform.position, Quaternion.identity);
             }
 
-        bb.IsCarrytingItem = false;
+        bb.IsCarryingItem = false;
         Debug.Log("[BT]플레이어가 다가와 들고있던 아이템을 바닥에 버리고 도망칩니다.");
     }
 }
