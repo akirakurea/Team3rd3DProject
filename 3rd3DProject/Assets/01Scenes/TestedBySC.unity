@@ -480,7 +480,7 @@ MonoBehaviour:
     FleeDistanceThreshold: 8
     TargetItem: {fileID: 8133423171153687284, guid: 06b2454e8ecb0964385f8ebd52d506d4, type: 3}
     TargetDestination: {x: 0, y: 0, z: 0}
-    IsCarrytingItem: 0
+    IsCarryingItem: 0
     CarriedItem: {fileID: 0}
     IsStunned: 1
     StunDuration: 0
