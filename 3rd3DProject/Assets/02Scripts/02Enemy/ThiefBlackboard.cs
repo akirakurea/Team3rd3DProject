@@ -35,7 +35,7 @@ public class ThiefBlackboard
     public float CurrentStunTimer;
 
     [Header("탈출/도주 로직")]
-    public Vector3 EscapeDestination;
+    public Transform SpawnPosition;
     public bool ShouldDropItemOnFlee;//도망 시 물건 버릴지 여부
 
     public void Initailize(GameObject thiefObj)
@@ -47,10 +47,42 @@ public class ThiefBlackboard
 
         //플레이어 자동검색
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if(playerObj != null )
+        if (playerObj != null)
         {
             PlayerTransform = playerObj.transform;
         }
+        GameObject baseObj = GameObject.FindGameObjectWithTag("Base");
+        if (baseObj != null)
+        {
+            SpawnPosition = baseObj.transform;
+        }
+
+    }
+    public void PickUpTargetItem()
+    {
+        if(TargetItem != null)
+        {
+            CarriedItem = TargetItem.gameObject;
+            CarriedItem.SetActive(false);
+
+            IsCarryingItem = true;
+            TargetItem = null;
+        }
+    }
+    public void DropCarriedItem()
+    {
+        if(IsCarryingItem && CarriedItem != null)
+        {
+            CarriedItem.transform.position = ThiefTransform.position;
+            CarriedItem.SetActive(true);
+            Debug.Log("[BT]플레이어가 다가와 들고있던 아이템을 바닥에 버리고 도망칩니다.");
+            //아이템매니저로 씬 내 아이템 재등록
+            ItemManager2.Instance?.AddItem(CarriedItem);
+
+            CarriedItem = null;
+            IsCarryingItem = false;
+        }
+
     }
 
     public void UpdatePerception()

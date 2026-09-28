@@ -25,8 +25,13 @@ public class BT_StealItem : BT_Leaf
         currentTimer += Time.deltaTime;
         if (currentTimer >= stealDuration)
         {
-            Object.Destroy(blackboard.TargetItem.gameObject);
-            blackboard.TargetItem = null;
+            
+            
+            blackboard.PickUpTargetItem();
+           
+
+
+            
 
             currentTimer = 0f;
             isNotifying = false;
