@@ -11,7 +11,7 @@ public class BT_CheckPlayerNearby : BT_Leaf
 
     public override BT_NodeStatus Evaluate()
     {
-        if(bb.IsPlayerNearby)
+        if(bb.IsPlayerNearby || bb.IsFleeing)
         {
             Debug.Log("돔황챠");
             return BT_NodeStatus.Success;
