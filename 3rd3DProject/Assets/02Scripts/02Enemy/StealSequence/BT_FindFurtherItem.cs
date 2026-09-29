@@ -35,13 +35,15 @@ public class BT_FindFurtherItem : BT_Leaf
             float distanceToPlayer = Vector3.Distance(item.transform.position, player.position);
             float distanceToThiedf = Vector3.Distance(item.transform.position, thief.position);
 
-            //플레이어와 멀수록 점수가 올라감 && 도둑과 가까울수록 점수가 더 크게 올라감
-            float score = distanceToPlayer / (distanceToThiedf + 0.1f); 
-
-            if(score > maxDistance)
+            if (item != null && item.gameObject.activeInHierarchy)
             {
-                maxDistance = score;
-                furherItem = item.transform; 
+            //플레이어와 멀수록 점수가 올라감 && 도둑과 가까울수록 점수가 더 크게 올라감
+            float score = distanceToPlayer / (distanceToThiedf + 0.1f);
+                if (score > maxDistance)
+                {
+                    maxDistance = score;
+                    furherItem = item.transform;
+                }
             }
         }
         if(furherItem != null)

@@ -13,6 +13,7 @@ public class BT_CheckPlayerNearby : BT_Leaf
     {
         if(bb.IsPlayerNearby)
         {
+            Debug.Log("돔황챠");
             return BT_NodeStatus.Success;
         }
         return BT_NodeStatus.Failure;
