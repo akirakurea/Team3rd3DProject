@@ -122,8 +122,6 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
-<<<<<<< Updated upstream
-=======
     "com.unity.nuget.newtonsoft-json": {
       "version": "3.2.2",
       "depth": 1,
@@ -143,7 +141,6 @@
       },
       "url": "https://packages.unity.com"
     },
->>>>>>> Stashed changes
     "com.unity.render-pipelines.core": {
       "version": "17.5.0",
       "depth": 1,
