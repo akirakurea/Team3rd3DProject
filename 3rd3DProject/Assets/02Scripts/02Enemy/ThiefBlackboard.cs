@@ -31,6 +31,7 @@ public class ThiefBlackboard
 
     [Header("디버그 및 상태")]
     public bool IsStunned;
+    public bool IsFleeing;
     public float StunDuration;
     public float CurrentStunTimer;
 
