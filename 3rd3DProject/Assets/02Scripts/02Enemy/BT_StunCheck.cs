@@ -14,10 +14,20 @@ public class BT_StunCheck : BT_Leaf
         if (!blackboard.IsStunned) 
             return BT_NodeStatus.Failure;//스턴이 아니니 다음 행동으로
 
+        if (blackboard.CurrentStunTimer == 0f)
+        {
+            if (blackboard.Agent != null && blackboard.Agent.isOnNavMesh)
+            {
+                blackboard.Agent.isStopped = true;//이동중이었으면 멈추기
+                blackboard.Agent.ResetPath();
+            }
+            if(blackboard.IsCarryingItem)
+            {
+                blackboard.DropCarriedItem();
+            }
+        }
         blackboard.CurrentStunTimer += Time.deltaTime;//스턴 상태 처리
 
-        if (blackboard.Agent != null && blackboard.Agent.isOnNavMesh) 
-            blackboard.Agent.isStopped = true;//이동중이었으면 멈추기
 
         if(blackboard.CurrentStunTimer >= blackboard.StunDuration) //시간 다 지나면
         {
@@ -29,7 +39,7 @@ public class BT_StunCheck : BT_Leaf
 
             return BT_NodeStatus.Failure;//상태 해제하고 다음행동으로
         }
-        return BT_NodeStatus.Success;//스턴시간중에는 계속 스턴상태반환
+        return BT_NodeStatus.Running;//스턴시간중에는 계속 스턴상태반환
     }
 
 }

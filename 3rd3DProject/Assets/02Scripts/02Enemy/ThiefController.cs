@@ -52,6 +52,11 @@ public class ThiefController : MonoBehaviour
 
         rootNode = rootSelector;
     }
+
+    public void TakeStun(float duration)
+    {
+        blackboard.ApplyStun(duration);
+    }
     public ThiefBlackboard Blackboard => blackboard;
 
 }
