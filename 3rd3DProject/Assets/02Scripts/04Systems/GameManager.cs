@@ -109,13 +109,13 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 승리/패배 화면의 "다시 하기" 버튼이 호출. 승리/패배 상태에서만 동작한다.
+    /// 승리/패배 화면과 설정창의 "다시 하기/다시 시작" 버튼이 호출. 게임이 시작된 뒤(Ready 제외) 어느 상태에서든 동작한다.
     /// reloadSceneOnRestart가 켜져 있으면 씬을 새로 불러오고(이때 timeScale은 OnDestroy/StartGame에서 1로 복구),
     /// 꺼져 있으면 씬은 그대로 두고 1라운드부터 다시 시작한다.
     /// </summary>
     public void RestartGame()
     {
-        if (State != GameState.Win && State != GameState.Lose) return;
+        if (State == GameState.Ready) return;
 
         if (reloadSceneOnRestart)
         {
