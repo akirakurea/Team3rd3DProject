@@ -17,6 +17,10 @@ public class ThiefBlackboard
     public Transform ThiefTransform;
     public NavMeshAgent Agent;
     public Animator ThiefAnim;
+    [Header("이동 및 속도")]
+    public float NormalSpeed = 5.0f;
+    public float CarrySpeedMultiplier = 0.7f;
+    public float FleeSpeedMultiplier = 1.0f;
     [Header("플레이어감지")]
     public Transform PlayerTransform;
     public float DistanceToPlayer;
@@ -46,6 +50,10 @@ public class ThiefBlackboard
         Agent = thiefObj.GetComponent<NavMeshAgent>();
         ThiefAnim = thiefObj.GetComponentInChildren<Animator>();
 
+        if(Agent != null )
+        {
+            UpadateAgentSpeed();
+        }
         //플레이어 자동검색
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
@@ -68,6 +76,8 @@ public class ThiefBlackboard
 
             IsCarryingItem = true;
             TargetItem = null;
+
+            UpadateAgentSpeed();
         }
     }
     public void DropCarriedItem()
@@ -82,8 +92,26 @@ public class ThiefBlackboard
 
             CarriedItem = null;
             IsCarryingItem = false;
+
+            UpadateAgentSpeed();
         }
 
+    }
+
+    public void UpadateAgentSpeed()
+    {
+        if (Agent == null) return;
+
+        float targetSpeed = NormalSpeed;
+
+        if(IsCarryingItem)
+        {
+            targetSpeed *= CarrySpeedMultiplier;
+        }
+
+        Agent.speed = targetSpeed;
+            
+                
     }
 
     public void UpdatePerception()
@@ -92,5 +120,18 @@ public class ThiefBlackboard
         {
             DistanceToPlayer = Vector3.Distance(ThiefTransform.position, PlayerTransform.position);
         }
+    }
+
+    public void ApplyStun(float duration)
+    {
+        IsStunned = true;
+        StunDuration = duration;
+        CurrentStunTimer = 0f;
+
+        if(ThiefAnim != null)
+        {
+            ThiefAnim.SetTrigger("OnStunned");
+        }
+        Debug.Log($"[BT] 도둑이 {duration}초 동안 스턴에 빠졌습니다");
     }
 }

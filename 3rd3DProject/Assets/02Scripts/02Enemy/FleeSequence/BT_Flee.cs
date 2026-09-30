@@ -8,6 +8,9 @@ public class BT_Flee : BT_Leaf
     private float safeDistance = 14.0f;
     private float minFleeDuration = 1.5f;
     private float currentFleeTimer = 0f;
+
+    private float repathInterval = 0.4f;
+    private float currentRepathTimer = 0f;
     public BT_Flee(ThiefBlackboard bb)
     {
         this.bb = bb;
@@ -15,7 +18,15 @@ public class BT_Flee : BT_Leaf
 
     public override BT_NodeStatus Evaluate()
     {
+        if(!bb.IsFleeing)
+        {
+            currentFleeTimer = 0f;
+            currentRepathTimer = repathInterval;
+            bb.IsFleeing = true;
+        }
+
         currentFleeTimer += Time.deltaTime;
+        currentRepathTimer += Time.deltaTime;
         if (bb.DistanceToPlayer >= safeDistance && currentFleeTimer >= minFleeDuration)
         {   
             //히스테리시스 기법. 플레이어가 근처에 있는지 매 프레임 확인해 진동하지 않게 하기
@@ -25,8 +36,9 @@ public class BT_Flee : BT_Leaf
             bb.IsFleeing = false;
             return BT_NodeStatus.Success;
         }
-        bb.IsFleeing = true;
+        
         bb.TargetItem = null;//도망칠때는 노리던 아이템 초기화 장치
+
         if(bb.IsCarryingItem && (bb.DistanceToPlayer < 5.0f))
         {
             bb.DropCarriedItem();
@@ -42,8 +54,13 @@ public class BT_Flee : BT_Leaf
         //{
         //    bb.Agent.SetDestination(bb.ThiefTransform.position);
         //}
-        if (bb.Agent.hasPath || bb.Agent.remainingDistance <= 1.5f)
+        
+        if (!bb.Agent.hasPath || 
+            bb.Agent.remainingDistance <= 1.5f ||
+            currentRepathTimer >= repathInterval)
         {
+            currentRepathTimer = 0f;
+
             Vector3 bestFleePos = FindBestFleePosition();
 
             bb.Agent.SetDestination(bestFleePos);
