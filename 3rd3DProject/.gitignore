@@ -106,3 +106,9 @@ InitTestScene*.unity*
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
 
+.env
+.env.*
+*.log
+node_modules/
+build/
+dist/
