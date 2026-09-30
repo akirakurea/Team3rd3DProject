@@ -1,0 +1,36 @@
+{
+    "version": 1,
+    "name": "CatCameraLook",
+    "maps": [
+        {
+            "name": "Camera",
+            "id": "3ddf0079-a11e-459b-a469-99b192c34e7a",
+            "actions": [
+                {
+                    "name": "Look",
+                    "type": "Value",
+                    "id": "8d4dcae5-e78e-4457-830f-66476d9588d2",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true,
+                    "priority": 0
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "9af0bee2-d55f-4b75-96b9-78cd96706a00",
+                    "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Look",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
