@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -17,6 +18,13 @@ public class Treasure : MonoBehaviour
     /// <summary>현재 활성화된 보물 목록 (MinimapController가 읽는다)</summary>
     public static readonly List<Treasure> Active = new List<Treasure>(16);
 
+    /// <summary>쥐가 보물을 집었을 때 (화면 추적 아이콘 UI가 구독)</summary>
+    public static event Action<Treasure> OnPickedUp;
+    /// <summary>들고 있던 보물이 놓였을 때: 잡혀서 제자리 복귀 / 탈출 성공 / 라운드 초기화</summary>
+    public static event Action<Treasure> OnReleased;
+    /// <summary>탈출에 성공해 털렸을 때 (GameManager가 처리한 뒤 호출되므로 GameManager 상태가 이미 갱신돼 있다)</summary>
+    public static event Action<Treasure> OnStolen;
+
     public TreasureState State { get; private set; } = TreasureState.Available;
     public TreasureCarrier Carrier { get; private set; }
     public bool IsAvailable => State == TreasureState.Available;
@@ -31,6 +39,9 @@ public class Treasure : MonoBehaviour
     private static void ResetStatics()
     {
         Active.Clear();
+        OnPickedUp = null;
+        OnReleased = null;
+        OnStolen = null;
     }
 
     private void Awake()
@@ -53,6 +64,9 @@ public class Treasure : MonoBehaviour
     /// <summary>라운드 시작 시 TreasureManager가 호출: 지정한 위치에 새로 놓는다.</summary>
     public void Init(Vector3 position, Quaternion rotation, Transform parent)
     {
+        // 쥐가 들고 있는 채로 라운드가 새로 시작되면 화면 추적 아이콘도 정리되게 알린다
+        if (State == TreasureState.Carried) OnReleased?.Invoke(this);
+
         homeParent = parent;
         homePosition = position;
         homeRotation = rotation;
@@ -84,6 +98,8 @@ public class Treasure : MonoBehaviour
 
         var minimap = MinimapController.Instance;
         if (minimap != null) minimap.BeginBlink(this);   // 점이 깜빡이다 사라진다
+
+        OnPickedUp?.Invoke(this);
         return true;
     }
 
@@ -99,6 +115,7 @@ public class Treasure : MonoBehaviour
         SetColliders(true);
 
         RegisterOnMinimap(removeFirst: false);   // 제자리로 돌아왔으니 점 복구
+        OnReleased?.Invoke(this);
     }
 
     /// <summary>쥐가 탈출에 성공했을 때: 보물이 털린 것으로 확정하고 GameManager에 알린다.</summary>
@@ -113,6 +130,9 @@ public class Treasure : MonoBehaviour
 
         if (GameManager.Instance != null)
             GameManager.Instance.OnTreasureStolen();
+
+        OnReleased?.Invoke(this);
+        OnStolen?.Invoke(this);
     }
 
     private void RegisterOnMinimap(bool removeFirst)
