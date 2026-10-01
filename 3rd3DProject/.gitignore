@@ -118,3 +118,6 @@ node_modules/
 build/
 dist/
 
+*.sln
+*.slnx
+*.csproj

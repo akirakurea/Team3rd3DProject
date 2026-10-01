@@ -43,7 +43,7 @@ public class ThiefBlackboard
     public Transform SpawnPosition;
     public bool ShouldDropItemOnFlee;//도망 시 물건 버릴지 여부
 
-    public void Initailize(GameObject thiefObj)
+    public void Initialize(GameObject thiefObj)
     {
         ThiefGameObject = thiefObj;
         ThiefTransform = thiefObj.transform;
@@ -52,7 +52,7 @@ public class ThiefBlackboard
 
         if(Agent != null )
         {
-            UpadateAgentSpeed();
+            UpdateAgentSpeed();
         }
         //플레이어 자동검색
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
@@ -77,7 +77,7 @@ public class ThiefBlackboard
             IsCarryingItem = true;
             TargetItem = null;
 
-            UpadateAgentSpeed();
+            UpdateAgentSpeed();
         }
     }
     public void DropCarriedItem()
@@ -93,12 +93,12 @@ public class ThiefBlackboard
             CarriedItem = null;
             IsCarryingItem = false;
 
-            UpadateAgentSpeed();
+            UpdateAgentSpeed();
         }
 
     }
 
-    public void UpadateAgentSpeed()
+    public void UpdateAgentSpeed()
     {
         if (Agent == null) return;
 

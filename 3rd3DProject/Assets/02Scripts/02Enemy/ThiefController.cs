@@ -9,9 +9,15 @@ public class ThiefController : MonoBehaviour
 
     private BT_Node rootNode;
 
+
+    //애니메이터 파라미터
+    private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    private static readonly int IsCarryingHash = Animator.StringToHash("IsCarrying");
+    private static readonly int IsStunnedHash = Animator.StringToHash("IsStunned");
+
     private void Awake()
     {
-        blackboard.Initailize(gameObject);
+        blackboard.Initialize(gameObject);
 
         
         BuildBehaviorTree();
@@ -22,7 +28,9 @@ public class ThiefController : MonoBehaviour
         //Debug.Log($"NavMesh 연결 상태: {blackboard.Agent.isOnNavMesh}");
         blackboard.UpdatePerception();
 
-        if(rootNode != null )
+        UpdateAnimation();
+
+        if (rootNode != null )
             rootNode.Evaluate();
     }
 
@@ -51,6 +59,20 @@ public class ThiefController : MonoBehaviour
         //이 구간에는 행동트리 추가 가능
 
         rootNode = rootSelector;
+    }
+
+    private void UpdateAnimation()
+    {
+        if (blackboard.ThiefAnim == null) return;
+
+        if(blackboard.Agent != null)
+        {
+            float currentSpeed = blackboard.Agent.velocity.magnitude;
+            blackboard.ThiefAnim.SetFloat(SpeedHash, currentSpeed);
+        }
+        blackboard.ThiefAnim.SetBool(IsCarryingHash, blackboard.IsCarryingItem);
+
+        blackboard.ThiefAnim.SetBool(IsStunnedHash, blackboard.IsStunned);
     }
 
     public void TakeStun(float duration)
