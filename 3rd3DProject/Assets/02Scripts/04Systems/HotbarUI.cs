@@ -74,9 +74,12 @@ public class HotbarUI : MonoBehaviour
 
     private void RefreshSlot(int i)
     {
+        var icon = slots[i].icon;
+        if (icon == null) return;   // Inspector에 Icon이 연결 안 된 칸은 건너뜀
+
         var item = hb.GetSlot(i);
-        slots[i].icon.enabled = item != null && item.icon != null;
-        slots[i].icon.sprite = item != null ? item.icon : null;
+        icon.enabled = item != null && item.icon != null;
+        icon.sprite = item != null ? item.icon : null;
     }
 
     private void HandleSelectedChanged(int selectedIndex)
