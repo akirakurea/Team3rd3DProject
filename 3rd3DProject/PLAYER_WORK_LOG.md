@@ -198,3 +198,27 @@
 - 삭제 없음: 원본은 보존 대상, 검증 도구·결과는 증거이며 대체되어 불필요해진 제품 코드 없음. 기존 씬/코드/프리팹/설정 변경 없음. 새 사본 문서2개만 갱신.
 - 공식 근거: https://docs.github.com/en/desktop/overview/launching-github-desktop-from-the-command-line?platform=windows , https://docs.unity.com/en-us/unity-cli/unity-cli-reference .
 - 최종 독립 재검사: Play 종료·문서 갱신 후에도 Assets/Packages/ProjectSettings 1,730파일 내용 동일, Git HEAD/branch/refs/status 경로·코드 동일(42행). final_scope_verification.json 기록.
+
+## 2026-10-06 — 사용자 복구본 위 Player 기능 재연결, GUID 보존
+
+- 요청: 파일 정리 뒤 RAt 관련 오류가 발생해 사용자가 전체를 복구한 현재 상태에서 Player 기능을 다시 적용. 현재 GUID를 수정하지 않고 관련 없는 구현을 보존한다.
+- 실제 열린 프로젝트는 C:/Users/307/Desktop/unity/Team3rd3DProject/3rd3DProject, Unity 6000.5.6f1, Player 브랜치, PlaytestScene01 하나임을 프로세스와 편집기 API 양쪽에서 확인. 이전 C:/UnityProjects 사본은 적용 대상에서 제외했다.
+- 시작 기준: Assets/Packages/ProjectSettings/기존 문서의 SHA-256 1,992파일, Git 인덱스 1,996엔트리, 메타 1,046개. GUID 중복·참조 누락·Git 충돌 없음. 기존 사용자 설정 변경 2파일은 그대로 보존했다.
+- 시작 시 Player의 기존 모델·Idle/Walk/Run·카메라·장비는 있으나 CatShotgunCombat/Pose/SpreadRing/AimZoom과 총구·벽 차단점 연결이 빠져 있었다. 기존 Shotgun_Fire와 SpreadRing 재질 GUID를 조회해 현재 씬의 Player·카메라에 연결했다. Player 태그, 위치·크기, 기존 총·손 기준점·장착 자세값을 보존했다. 다른 루트의 컴포넌트 1,648개를 연결 전후 직렬화해 해시 동일 확인.
+- 기존 Player C# 15개만 변경: Editor/Setup의 Combat·Equipment·Interaction·PlayerInteractionSettings 4개, Editor/Validation의 Player·Interaction·Combat·CombatInput·Hitscan 5개, Equipment/CatShotgunCombat, Input/CatCombatInput, Interaction의 Controller·Carrier 및 Presentation의 InventoryPickupPresenter·ItemHighlight 6개. 기존 클래스명·공개 필드·파일명·메타는 유지했다.
+- Setup은 현재 씬/편집 상태와 기존 에셋을 먼저 확인하고 기존 GUID로 연결한다. CreateAsset/MoveAsset/전체 SaveAssets를 제거했다. 잘못된 에셋을 새로 만들거나 경로 이동으로 덮지 않는다. 무마찰·카메라 설정 도구에서 장비 설정 접근을 제거했다. 이번 실행은 Combat 연결만 호출했다.
+- 책임 분리: 입력 초기화는 선택적 ICatResettableInputSource 계약으로 처리하고, 강조 대상은 ICatHighlightSource로 받는다. 비조준 중 불필요한 조준 질의를 건너뛰고 최근 강조 메시를 캐시하되 외형 변경/해제 시 정리한다. 운반 단계는 의미 있는 enum으로 표시하고 UI 촬영 실패의 중복 해제를 제거했다. 기존 사용자가 호출할 수 있는 공개 API는 삭제하지 않았다.
+- 검증기는 PlaytestScene01만 허용하고 동시 검증을 차단한다. 결과는 프로젝트 밖 %TEMP%/CatPlayerValidation에 기록한다. 테스트 임시 오브젝트는 Play 중에만 존재하며 씬에 저장하지 않는다.
+- 외부 컴파일: Unity 설치본 Roslyn 및 현재 프로젝트 참조로 Runtime 77소스, Editor 24소스 컴파일 성공. 순수 정책 35검사 통과, Unity DLL 의존 없음. 산출물은 프로젝트 밖 PlayerRestore20261006에 저장.
+- 실제 Play 검증: 기본 장치 입력 15/15, 전투 통합 32/32, 히트스캔 물리 18/18, 상호작용 38/38, 강조 메시 캐시 7/7, 대체 입력 초기화 2/2 통과. 줌 중 걷기, 4산탄, 총구 벽 차단, 양손 자세, 해제, UI 미등록 획득 거부, 정지 좌우60도/이동360도 포함. 전투 화면과 강조/운반 화면도 외부에 캡처했다.
+- 검증 과정에서 드러난 검사 전제 2개 수정: (1) 1000m 테스트 좌표에서 nearClip .03 카메라 역투영 오차 때문에 1번 명중 좌표 검사가 실패. 실제 명중은 정상임을 두 가지 HideFlags로 확인하고 검사용 근평면만 .3으로 바꿨다. 거리 끝점 기대값도 근평면 수치로 계산하며 허용 오차/실제 게임 카메라는 유지. 이후 18개 통과. (2) 물건 보유 우클릭을 누른 채 장착하면 새 조준 동작이 정상 실행되는데 이전 상호작용 검사는 기본 장착 자세를 기대했다. 버튼 해제와 자세 복귀 대기 후 검사하도록 순서를 고쳤고 양손·총 위치 오차 0.003m 기준을 유지해 38개 통과.
+- 기존 맵 좌표 고정 이동 검사 19개는 복구된 맵의 높이/배치와 달라 전부 검증불가로 기록했으며 통과로 바꾸지 않았다. 현재 맵 별도 이동 검증 결과는 아래 후속 기록에 남긴다.
+- 연결 도중 MCP 재검색이 일시 실패해 Unity 창 활성화 후 재연결했다. 임포트 일시 보류는 해제했다. 외부 실행 코드의 구 API(GetInstanceID), 사용하지 않는 Reflection import, 동적 namespace의 Mesh 타입 충돌은 실행 전에 바로잡았다. 실패를 프로젝트 스크립트 컴파일 성공으로 혼동하지 않았다.
+- 범위 확인: 메타 1,046개 전부 바이트 동일, RAt 보호 파일 63개·RAt 씬 인스턴스 2개·다른 씬 9개 동일, 파일 추가/삭제/이동/이름변경 없음, Git 스테이지 변경 없음. 에셋 복사본 정리와 이전 58파일 삭제 승인을 재실행하지 않았다.
+- 자동 저장 차이: EditorBuildSettings.asset은 CRLF→LF만 바뀌었고 내용은 HEAD와 동일. 설정값 변경은 없으며 임의 되돌리기 하지 않았다. 승인 씬의 Main Camera/Cinemachine Transform 회전은 Cinemachine 평가로 소폭 달라졌으나 추적 대상·구도 설정은 변경하지 않았다.
+- 프로젝트 밖 증거/수정 전 백업: C:/Users/307/Documents/Codex/PlayerRestore20261006. 로그에는 인증 정보나 계정 로그를 복사하지 않았다. 기존 .gitattributes 매크로 경고는 범위 밖이므로 보존했다.
+- 공식 API 확인: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AssetDatabase.DisallowAutoRefresh.html , https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AssetDatabase.GUIDToAssetPath.html , https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Component.GetComponentInParent.html .
+- 최종 추가 검증: 현재 맵의 실제 충돌체 높이를 읽은 7개 검사가 11.53초에 모두 통과. Idle/Walk/Run·입력 해제·비활성화 후 복귀·걷기/달리기 턱 통과. 도로 높이 -0.03m → 앞마당 0.07m인 0.10m 턱에서 통과 후 발밑 높이 0.07000m, 걷기 1.6m/s·달리기 3.4m/s 확인. 예전 19개 검사 전제는 변경하지 않았으며 이 결과로 과거 19개 전체를 통과했다고 주장하지 않는다.
+- 최종 편집기: Play 종료, sceneCount1, dirtyFalse, compilingFalse, compileFailedFalse, 임포트 보류False, 씬 Missing Script0, Player 누락 메시0, 누락 재질/셰이더 오류0, RAt 루트2, Player 태그 유지. Play 안에서 오류/예외 수집기를 등록한 각 검사 구간에서 오류0·예외0. RAt의 모든 AI 상태 전환/게임 전체 빌드까지 검증한 결과로 확대하지 않는다.
+- 최종 Git/GUID 감사: meta_count1046, unmerged0, errors0, index_working_guid_mismatches0, Player 파일 인덱스 누락0. 코드15·허용 씬1·기존 문서3 변경, 파일 추가/삭제0. 범위 밖 내용 변경0이며 별도로 기록한 EditorBuildSettings 줄바꿈 차이1은 보존했다. 커밋·스테이징·푸시·설치 없음.
+- 현재 맵 외부 검증의 중첩 클래스가 MCP 실행기의 namespace 재작성으로 중복되어 첫 컴파일에 실패했다. 테스트 입력 클래스를 최상위로 분리하고 Motor를 생성자로 받도록 바꾼 뒤 실행해 7개 통과. 제품 코드나 메타에 검사용 파일을 추가하지 않았다.

@@ -7,19 +7,19 @@ using UnityEngine.SceneManagement;
 /// <summary>먼 임시 공간에서 실제 PhysX 질의로 발사 판정을 검사합니다. 씬·에셋을 저장하지 않습니다.</summary>
 public static class CatHitscanValidation
 {
-    const string ScenePath = "Assets/01Scenes/PlayerTestScene.unity";
-
-    /// <summary>PlayerTestScene의 Play 모드에서만 실행하며 실패하면 근거를 담은 예외를 발생시킵니다.</summary>
+    /// <summary>PlaytestScene01의 Play 모드에서만 실행하며 실패하면 근거를 담은 예외를 발생시킵니다.</summary>
     public static string Run()
     {
-        Scene scene = SceneManager.GetActiveScene();
-        if (!EditorApplication.isPlaying || !Application.isPlaying || scene.path != ScenePath)
-            throw new InvalidOperationException("PlayerTestScene의 Play 모드에서만 히트스캔 검증을 실행할 수 있습니다.");
+        Scene scene = CatPlayerEditorScope.RequireScene();
+        CatPlayerEditorScope.RequireValidationIdle();
+        if (!EditorApplication.isPlaying || !Application.isPlaying)
+            throw new InvalidOperationException("PlaytestScene01의 Play 모드에서만 히트스캔 검증을 실행할 수 있습니다.");
 
         bool wasDirty = scene.isDirty;
         var report = new StringBuilder("CatHitscanValidation | 실제 물리 질의 | 씬·에셋 저장 없음\n");
         GameObject root = null;
         int checks = 0;
+        CatPlayerEditorScope.BeginValidation(nameof(CatHitscanValidation));
         try
         {
             root = NewObject("__CatHitscanValidation_Temporary", null);
@@ -34,7 +34,9 @@ public static class CatHitscanValidation
             viewObject.transform.localPosition = new Vector3(0f, 0f, -4f);
             Camera view = viewObject.AddComponent<Camera>();
             view.enabled = false;
-            view.nearClipPlane = 0.03f;
+            // 1000m 떨어진 검증 공간에서 근평면 역투영의 float 오차를 줄입니다.
+            // 실제 플레이어 카메라는 변경하지 않으며 명중 허용 오차도 유지합니다.
+            view.nearClipPlane = 0.3f;
             view.farClipPlane = 100f;
             view.fieldOfView = 60f;
             var query = new CatHitscanQuery(owner.transform);
@@ -140,7 +142,7 @@ public static class CatHitscanValidation
 
             shot = query.Cast(guard, muzzle, 25f, ~0, Vector2.zero);
             aimed = query.TryGetAimPoint(view, 25f, ~0, out aim);
-            Vector3 expectedAim = guard + new Vector3(0f, 0f, 21.03f);
+            Vector3 expectedAim = view.transform.position + view.transform.forward * (view.nearClipPlane + 25f);
             Check(shot.Kind == CatShotHitKind.Miss && shot.Collider == null &&
                 Near(shot.Point, muzzle.position + Vector3.forward * 25f) &&
                 Mathf.Abs(shot.Distance - 25f) < 0.001f && aimed && Near(aim, expectedAim),
@@ -206,9 +208,13 @@ public static class CatHitscanValidation
         }
         finally
         {
-            // 이 함수가 만든 단일 루트만 제거합니다. 기존 오브젝트·씬 파일에는 접근하지 않습니다.
-            if (root != null) UnityEngine.Object.DestroyImmediate(root);
-            Physics.SyncTransforms();
+            try
+            {
+                // 이 함수가 만든 단일 루트만 제거합니다. 기존 오브젝트·씬 파일에는 접근하지 않습니다.
+                if (root != null) UnityEngine.Object.DestroyImmediate(root);
+                Physics.SyncTransforms();
+            }
+            finally { CatPlayerEditorScope.EndValidation(nameof(CatHitscanValidation)); }
         }
 
         if (scene.isDirty != wasDirty)

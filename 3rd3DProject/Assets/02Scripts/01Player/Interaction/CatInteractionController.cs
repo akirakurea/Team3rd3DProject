@@ -76,7 +76,7 @@ public sealed class CatInteractionController : MonoBehaviour
         // 기존 아이템의 예약·비활성 상태가 별도 강조 컴포넌트로 우회되지 않게 합니다.
         var item = collider.GetComponentInParent<CatInteractionItem>();
         if (item != null) return item;
-        return collider.GetComponentInParent<CatHighlightTarget>();
+        return collider.GetComponentInParent<ICatHighlightSource>();
     }
     bool Nearest(Vector3 origin, Vector3 direction, float distance, out RaycastHit result)
     {
@@ -99,7 +99,7 @@ public sealed class CatInteractionController : MonoBehaviour
         if (!isActiveAndEnabled || !input.Enabled || !HasFreeHands) return false;
         if (Target == null || !Target.IsHighlightAvailable) return false;
         bool success = Target.kind == CatItemKind.CarryOnly ? carrier.TryGrab(Target) : pickup != null && pickup.TryCollect(Target, view);
-        if (success) { Target = null; HoveredHighlight = null; highlight.SetTarget(null); }
+        if (success) ClearTarget();
         return success;
     }
     /// <summary>키 1 토글의 공용 진입점. 다른 장비 구현도 작은 포트 계약으로 연결합니다.</summary>
@@ -111,14 +111,23 @@ public sealed class CatInteractionController : MonoBehaviour
         if (weapon.IsEquipped) { weapon.Unequip(); return true; }
         if (!weapon.IsReady || (pickup != null && pickup.IsBusy)) return false;
         if (Held != null && !carrier.TryDrop()) return false;
-        Target = null; HoveredHighlight = null; highlight?.SetTarget(null);
+        ClearTarget();
         return weapon.TryEquip();
     }
     public void ReleaseHeld()
     {
         carrier?.Release();
-        Target = null; HoveredHighlight = null; highlight?.SetTarget(null);
+        ClearTarget();
     }
+
+    // 집기·놓기·장착 후 선택과 강조가 함께 해제되도록 한곳에서 처리합니다.
+    void ClearTarget()
+    {
+        Target = null;
+        HoveredHighlight = null;
+        highlight?.SetTarget(null);
+    }
+
     void OnDisable()
     {
         input = default; Target = null; HoveredHighlight = null;

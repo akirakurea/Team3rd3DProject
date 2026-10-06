@@ -11,12 +11,12 @@ using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// 실제 PlayerTestScene의 이동·렌즈·손 자세·발사 경로를 Play에서 검사합니다.
+/// 실제 PlaytestScene01의 이동·렌즈·손 자세·발사 경로를 Play에서 검사합니다.
 /// 입력만 교체하며 장비·발사·애니메이션 구현을 대신하지 않습니다. 씬/에셋 저장은 하지 않습니다.
 /// </summary>
 public static class CatCombatValidation
 {
-    const string ScenePath = "Assets/01Scenes/PlayerTestScene.unity";
+    const string ScenePath = CatPlayerEditorScope.ScenePath;
     static readonly StringBuilder report = new StringBuilder();
     static readonly List<GameObject> temporaryObjects = new List<GameObject>();
     static CatShotgunCombat combat;
@@ -91,25 +91,29 @@ public static class CatCombatValidation
     public static void Start()
     {
         RequireScene();
+        CatPlayerEditorScope.RequireValidationIdle();
         if (!EditorApplication.isPlaying || EditorApplication.isPaused || running)
-            throw new InvalidOperationException("PlayerTestScene의 일시정지하지 않은 새 Play 모드에서 실행하세요.");
-        var roots = SceneManager.GetActiveScene().GetRootGameObjects();
-        combat = roots.SelectMany(r => r.GetComponentsInChildren<CatShotgunCombat>(true)).Single();
+            throw new InvalidOperationException("PlaytestScene01의 일시정지하지 않은 새 Play 모드에서 실행하세요.");
+        combat = CatPlayerEditorScope.FindSingle<CatShotgunCombat>();
         equipment = combat.equipment; pose = combat.pose; view = combat.view;
         motor = combat.GetComponent<CatPlayerMotor>(); body = combat.GetComponent<Rigidbody>();
         animator = combat.GetComponent<Animator>(); interaction = combat.GetComponent<CatInteractionController>();
-        zoom = roots.SelectMany(r => r.GetComponentsInChildren<CatAimZoom>(true)).Single();
-        spreadRing = roots.SelectMany(r => r.GetComponentsInChildren<CatShotSpreadRing>(true)).SingleOrDefault();
+        zoom = CatPlayerEditorScope.FindSingle<CatAimZoom>();
+        spreadRing = CatPlayerEditorScope.FindAll<CatShotSpreadRing>().SingleOrDefault();
         virtualCamera = zoom.GetComponent<CinemachineCamera>();
         cursor = zoom.GetComponent<CatCinemachineCursor>();
         cameraInput = zoom.GetComponent<CinemachineInputAxisController>();
         if (!equipment || !pose || !pose.fireMotion || !view || !motor || !body || !animator || !interaction ||
             !virtualCamera || !cursor || !cameraInput || !combat.muzzle || !combat.guardOrigin || !equipment.IsReady)
             throw new InvalidOperationException("조준·발사·장비·이동·Cinemachine 연결이 완성되어야 합니다.");
+        CatPlayerEditorScope.RequireOwned(combat, equipment, pose, view, motor, body, animator, interaction,
+            zoom, virtualCamera, cursor, cameraInput, combat.muzzle, combat.guardOrigin,
+            equipment.weaponRoot, equipment.motionRoot, equipment.leftHand, equipment.rightHand,
+            equipment.leftGrip, equipment.rightGrip);
+        if (spreadRing) CatPlayerEditorScope.RequireOwned(spreadRing);
         if (interaction.Held || (interaction.pickup && interaction.pickup.IsBusy))
             throw new InvalidOperationException("아이템을 들거나 획득하는 중에는 검증을 시작하지 않습니다.");
-        string logs = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Logs");
-        Directory.CreateDirectory(logs);
+        string logs = CatPlayerEditorScope.OutputDirectory;
         string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
         logPath = Path.Combine(logs, "CatCombatValidation_" + stamp + ".txt");
         capturePrefix = Path.Combine(logs, "combat_" + stamp + "_");
@@ -127,9 +131,11 @@ public static class CatCombatValidation
         originalPosition = body.position; originalRotation = body.rotation;
         baseFov = zoom.CurrentFieldOfView;
         input = new CombatInput(); movement = new MotionInput(); handInput = new NeutralHandInput();
-        running = true; started = EditorApplication.timeSinceStartup;
+        CatPlayerEditorScope.BeginValidation(nameof(CatCombatValidation));
+        running = true;
         try
         {
+            started = EditorApplication.timeSinceStartup;
             Application.runInBackground = true;
             cursor.enabled = false; cameraInput.enabled = false;
             Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false;
@@ -163,11 +169,7 @@ public static class CatCombatValidation
     [MenuItem("Tools/Cat Player/조준 발사 검증 중단", true)]
     static bool CanStop() => running;
 
-    static void RequireScene()
-    {
-        if (SceneManager.sceneCount != 1 || SceneManager.GetActiveScene().path != ScenePath)
-            throw new InvalidOperationException("PlayerTestScene 하나만 열려 있어야 합니다.");
-    }
+    static void RequireScene() => CatPlayerEditorScope.RequireScene();
 
     static void Pump()
     {
@@ -438,38 +440,42 @@ public static class CatCombatValidation
     {
         if (!running) return;
         running = false;
-        EditorApplication.update -= Tick; InputSystem.onAfterUpdate -= Pump;
-        EditorApplication.playModeStateChanged -= Mode; AssemblyReloadEvents.beforeAssemblyReload -= Reload;
-        if (interruption != null) { failures++; report.AppendLine(interruption); }
         try
         {
-            if (combat) { combat.PelletResolved -= OnPellet; combat.ShotFired -= OnShot; combat.SetInputSource(null); }
-            if (equipment) { equipment.PoseApplied -= OnPose; equipment.Unequip(); }
-            if (motor) { motor.SetInputSource(null); motor.enabled = previousMotorEnabled; }
-            if (interaction) interaction.SetInputSource(null);
-            if (body)
+            EditorApplication.update -= Tick; InputSystem.onAfterUpdate -= Pump;
+            EditorApplication.playModeStateChanged -= Mode; AssemblyReloadEvents.beforeAssemblyReload -= Reload;
+            if (interruption != null) { failures++; report.AppendLine(interruption); }
+            try
             {
-                body.isKinematic = previousKinematic;
-                if (!body.isKinematic) { body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; }
-                body.position = originalPosition; body.rotation = originalRotation;
+                if (combat) { combat.PelletResolved -= OnPellet; combat.ShotFired -= OnShot; combat.SetInputSource(null); }
+                if (equipment) { equipment.PoseApplied -= OnPose; equipment.Unequip(); }
+                if (motor) { motor.SetInputSource(null); motor.enabled = previousMotorEnabled; }
+                if (interaction) interaction.SetInputSource(null);
+                if (body)
+                {
+                    body.isKinematic = previousKinematic;
+                    if (!body.isKinematic) { body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; }
+                    body.position = originalPosition; body.rotation = originalRotation;
+                }
+            }
+            catch (Exception exception) { failures++; report.AppendLine("FAIL 정리 오류: " + exception); }
+            finally
+            {
+                // 이 검증기가 만든 Play 전용 객체만 제거합니다. 원래 씬 객체/파일은 삭제하지 않습니다.
+                foreach (var created in temporaryObjects) if (created) UnityEngine.Object.DestroyImmediate(created);
+                temporaryObjects.Clear();
+                if (cursor) cursor.enabled = previousCursorEnabled;
+                if (cameraInput) cameraInput.enabled = previousCameraInputEnabled;
+                Application.runInBackground = previousBackground;
+                Cursor.lockState = previousCursorLock; Cursor.visible = previousCursorVisible;
+                cases?.Dispose(); cases = null;
+                report.AppendLine($"RESULT checks={checks}, failures={failures}, interrupted={interruption != null}");
+                Flush();
+                Debug.Log($"[Cat Combat] 검사 {checks}, 실패 {failures}. {logPath}");
+                if (previousFocusedWindow) previousFocusedWindow.Focus();
+                if (EditorApplication.isPlaying) EditorApplication.ExitPlaymode();
             }
         }
-        catch (Exception exception) { failures++; report.AppendLine("FAIL 정리 오류: " + exception); }
-        finally
-        {
-            // 이 검증기가 만든 Play 전용 객체만 제거합니다. 원래 씬 객체/파일은 삭제하지 않습니다.
-            foreach (var created in temporaryObjects) if (created) UnityEngine.Object.DestroyImmediate(created);
-            temporaryObjects.Clear();
-            if (cursor) cursor.enabled = previousCursorEnabled;
-            if (cameraInput) cameraInput.enabled = previousCameraInputEnabled;
-            Application.runInBackground = previousBackground;
-            Cursor.lockState = previousCursorLock; Cursor.visible = previousCursorVisible;
-            cases?.Dispose(); cases = null;
-            report.AppendLine($"RESULT checks={checks}, failures={failures}, interrupted={interruption != null}");
-            Flush();
-            Debug.Log($"[Cat Combat] 검사 {checks}, 실패 {failures}. {logPath}");
-            if (previousFocusedWindow) previousFocusedWindow.Focus();
-            if (EditorApplication.isPlaying) EditorApplication.ExitPlaymode();
-        }
+        finally { CatPlayerEditorScope.EndValidation(nameof(CatCombatValidation)); }
     }
 }

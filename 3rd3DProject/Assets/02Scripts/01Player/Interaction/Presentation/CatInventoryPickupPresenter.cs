@@ -6,7 +6,7 @@ public sealed class CatInventoryPickupPresenter : MonoBehaviour
 {
     [Header("인벤토리 UI 연결")]
     [Tooltip("실제 인벤토리 UI의 도착 지점. 연결되지 않았거나 비활성 상태이면 수집하지 않습니다.")]
-    [SerializeField] public RectTransform inventoryTarget;
+    public RectTransform inventoryTarget;
     [Tooltip("아이템이 UI에 도착한 뒤 한 번만 아이템 ID를 전달합니다. 인벤토리 저장은 연결한 수신자가 처리합니다.")]
     [SerializeField] UnityEvent<string> collected = new UnityEvent<string>();
     [Header("수집 연출")]
@@ -73,12 +73,10 @@ public sealed class CatInventoryPickupPresenter : MonoBehaviour
         Vector3 screenPosition = view.WorldToScreenPoint(bounds.center);
         if (screenPosition.z <= view.nearClipPlane) return false;
         Renderer[] renderers = item.VisualRenderers;
+        // 촬영 실패 시 임시 텍스처 정리는 촬영 도구가 책임집니다.
         if (!CatItemIconCapture.TryCapture(renderers, bounds, view.transform.rotation,
             iconResolution, out RenderTexture texture))
-        {
-            CatItemIconCapture.Release(texture);
             return false;
-        }
 
         EnsureOverlay();
         activeItem = item;
