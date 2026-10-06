@@ -25,9 +25,29 @@ public static class CatPolicyValidation
         RunMovement(report, ref checks, ref failures);
         RunHands(report, ref checks, ref failures);
         RunOrbit(report, ref checks, ref failures);
+        RunCombat(report, ref checks, ref failures);
         report.AppendLine($"RESULT checks={checks}, failures={failures}");
         if (failures != 0) throw new InvalidOperationException(report.ToString());
         return report.ToString();
+    }
+
+    static void RunCombat(StringBuilder report, ref int checks, ref int failures)
+    {
+        var policy = new CatCombatPolicy();
+        Check(!policy.TryRequest(false, true, true, 0, .55f) && !policy.TryRequest(true, false, true, 0, .55f),
+            "메뉴·미장착 상태 발사 금지", report, ref checks, ref failures);
+        Check(policy.TryRequest(true, true, true, 0, .55f), "첫 누름 허용", report, ref checks, ref failures);
+        Check(!policy.TryRequest(true, true, true, .54f, .55f) && policy.TryRequest(true, true, true, .55f, .55f),
+            "발사 간격 경계", report, ref checks, ref failures);
+        Check(!policy.TryRequest(true, true, false, 2, .55f), "누름 유지로 새 발사 없음", report, ref checks, ref failures);
+        Check(!policy.TryRequest(true, true, true, float.NaN, .55f), "비정상 발사 시각 거부", report, ref checks, ref failures);
+        var sprint = new CatMovementIntent(.5f, .5f, true);
+        var aim = CatCombatPolicy.RestrictMovement(sprint, true);
+        Check(!aim.Sprint && aim.Horizontal == sprint.Horizontal && aim.Forward == sprint.Forward &&
+            CatMovementPolicy.SelectAnimation(aim) == CatMovementState.Walk, "조준 중 이동 방향 보존·걷기 제한", report, ref checks, ref failures);
+        Check(CatMovementPolicy.SelectAnimation(CatCombatPolicy.RestrictMovement(default, true)) == CatMovementState.Idle,
+            "조준 중 가만히 있으면 대기", report, ref checks, ref failures);
+        Check(CatCombatPolicy.RestrictMovement(sprint, false).Sprint, "조준 해제 시 달리기 의도 복귀", report, ref checks, ref failures);
     }
 
     static void RunMovement(StringBuilder report, ref int checks, ref int failures)

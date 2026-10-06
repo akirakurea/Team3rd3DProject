@@ -104,3 +104,97 @@
 - 추가 파일: Domain/CatMovementPolicy.cs·CatHandPolicy.cs·CatOrbitPolicy.cs·ICatMotionState.cs, Input/CatInteractionInput.cs, Camera/CatCameraOrbitLimit.cs, Editor/Setup/CatPlayerInteractionSettings.cs, Editor/Validation/CatPolicyValidation.cs, Player/Physics/Player_NoFriction.physicMaterial 및 Unity meta.
 - 불필요해진 기존 장비검증기와 meta를 제거했고 원본 백업·실패와성공 로그는 보존. 외부 작업 폴더의 일회용 inspect.cs.txt·clear_test_objects.cs.txt·final_inspect.cs.txt는 실행 결과 보존 후 해당 절대경로 범위를 확인하여 개별 삭제. 재사용 가능한 범위 검사와 규칙 컴파일 스크립트는 유지.
 - 최종 상태에 이번 기능 관련 컴파일 오류/검증 실패/임시 테스트 객체는 남아 있지 않음. 공식문서 기준·엔진연결부 교체 범위·입력/값 수정 위치를 PLAYER_IMPLEMENTATION_GUIDE.md에 갱신 완료.
+
+## 2026-10-06 — manifest.json 중복 키 오류 수정
+
+- 요청: Package Manager가 `com.unity.behavior` 중복 키로 manifest.json을 읽지 못하는 오류 해결.
+- 확인: Packages/manifest.json의 dependencies 안에 동일한 `"com.unity.behavior": "1.0.16"`이 두 번 있음. [Unity 프로젝트 매니페스트 공식 문서](https://docs.unity3d.com/6000.0/Documentation/Manual/upm-manifestPrj.html)에서 JSON 형식과 dependencies 구조 확인.
+- 변경: 두 번째 중복 줄 하나만 제거. 기존 패키지 이름·버전 유지. 패키지 설치·업데이트·씬/게임 스크립트 변경은 실행하지 않음. 설명서에 같은 오류의 확인 방법 추가.
+- 검증: 모든 JSON 객체의 중복 키를 거부하는 파서로 전체 파일 검사 PASS. 중복 키0, dependencies50개, com.unity.behavior1.0.16 유지 확인. Unity 편집기 내부의 패키지 재처리 결과는 미확인.
+- 읽기 전용 git diff에서 기존 .gitattributes 속성 경고가 출력됐으나 이번 오류와 별개이므로 수정하지 않음.
+- 파일 삭제 없음: 중복 줄만 정리했으며 불필요해진 별도 파일은 없음.
+- 독립 읽기 검토에서도 manifest 중복0과 behavior1.0.16을 재확인했고, packages-lock.json의 behavior 버전도1.0.16임을 확인. 추가 발견: packages-lock.json의 com.unity.mathematics 객체에 depth3/depth2가 중복됨. 이번에 제시된 manifest 오류와는 별도이며 값이 달라 해당 파일은 수정하지 않음. Unity 전체 패키지 상태 정상화까지 완료했다고 보고하지 않음.
+
+## 2026-10-06 — 패키지 오류 정상화와 Unity 실행 검증
+
+- 후속 요청: 정상 작동까지 수정하고 검증 완료. 시작 전 이 프로젝트의 PLAYER_WORK_RULES.md를 읽음. 범위는 오류가 난 패키지 목록·잠금 파일, 필요한 기존 패키지 연결, 검증 기록과 설명서.
+- 원인 확인: packages-lock.json의 Mathematics depth3/depth2 중복으로 실제 에디터 로그에 `No packages loaded` 기록. 설치된 Assistant package.json과 현재 의존 그래프를 조사한 결과 직접 패키지 Assistant → Mathematics 경로의 올바른 depth는1. depth1 하나로 최소 정리하고 Unity Client.Resolve를 실행함.
+- Unity가 잠금 파일을 정상 계산하면서 직접 패키지 Sprite depth0, 누락된 기존 Collab Proxy2.13.3 항목을 정리함. 임의 버전 업데이트나 잠금 파일 전체 삭제는 하지 않음.
+- 후속 컴파일에서 기존 CatCameraOrbitLimit/CatCinemachineCursor가 Cinemachine 타입을 찾지 못하는 오류7종 발견. 현재 manifest에서 Cinemachine이 빠져 있었으며 Editor.log의 기존 로드 기록에서3.1.7 확인. 이전 사용자 `Cinemachine 설치 승인`과 정상화 요청에 따라 Client.Add("com.unity.cinemachine@3.1.7")로 같은 버전을 다시 연결함. Unity가 필요한 Splines2.9.0도 의존성으로 기록함. 기존 lock에 존재했던 패키지의 버전 변경0.
+- 실제 변경: Packages/manifest.json(Cinemachine3.1.7 추가), Packages/packages-lock.json(중복 제거 및 Unity 계산 결과), PLAYER_WORK_LOG.md, PLAYER_IMPLEMENTATION_GUIDE.md. 검증 자료는 Logs/PackageRepair20261006/에 보관. Assets에 구현/검증 스크립트를 추가하지 않음.
+- 파일 검사 PASS: manifest51개, lock67개, 모든 객체 중복키0, 누락0, 최단 의존 깊이 불일치0, 직접버전 불일치0. 별도 읽기 전용 감사에서도 재확인.
+- Unity6000.5.6f1에서 Client.List(true,true) 성공,67개 패키지 각각 errors0. 잠금 파일과 Editor가 실제로 사용하는 패키지를 함께 확인. 기존 전체 버전에서 새 버전으로 올린 것은 없음.
+- Cinemachine 재연결 후 Unity 컴파일 로그의 ExitCode0 및 Assembly-CSharp/Editor 재처리 확인. 이어서 RequestScriptCompilation 추가 검사 완료, errors0. 추가 증분 요청의 assemblies0은 캐시 재사용이며 전체 클린 빌드를 수행했다고 주장하지 않음. 검증 코드가 임시 동적 namespace와 충돌한 첫 시도는 실패했고 UnityEditor.Compilation.CompilationPipeline 전체 이름으로 수정한 뒤 통과.
+- PlayerTestScene 연결 검사 PASS. 씬 저장 없이 Play 진입 후10.67412초/1315프레임 시점에서 애니메이터 초기화·Idle/Walk/Run 상태 존재, 활성 Cinemachine 출력, 동적 Rigidbody, compileFailedFalse 확인. PlaySmoke PASS. Play 시작부터 종료까지 새 컴파일오류·예외·패키지 JSON/해결 실패 로그0. 전체 이동/상호작용 회귀검사나 빌드 테스트를 수행한 것으로 확대하지 않음.
+- 씬은 작업 시작 시 이미 dirtyTrue였으므로 저장하거나 재로드하지 않음. Play 종료 후 편집모드 확인.1387개 범위 해시 검사에서 게임 스크립트·씬·프리팹·재질·meta 유지. 추가로 ProjectSettings/Packages/com.unity.probuilder/Settings.json의 줄바꿈이 CRLF→LF로 정규화됨을 감지. 현재 내용을 CRLF로 변환한 바이트의 SHA256이 작업 전 해시와 정확히 같아 내용 변경은 없음을 확인. 직접 수정·복원하지 않음.
+- 연결/도구 기록: Unity CLI는 Pipeline 미설치로 연결되지 않아 기존 로컬 MCP relay 사용, 새 제어 패키지 설치 없음. PTY의 긴 JSON 한 줄 제한으로 첫 명령 전달 실패 후 짧은 code_file 방식으로 성공. 도메인 재로드 중 일시적인 연결 실패는 로컬 relay 재연결로 해결. 계정 로그인·유료 AI 생성·Git 쓰기 실행 없음.
+- 삭제 없음: 패키지 캐시를 직접 삭제하지 않았으며 이번 검증 자료·원본 패키지 파일 사본은 재현/확인 근거로 유지. 기존 실패 기록도 보존.
+- 근거: Logs/PackageRepair20261006/json_graph_validation.json, live_validation.txt, cinemachine_reconnect.txt, play_validation.txt, play_error_scan.json, scope_after.json, final_editor_state.txt.
+- 공식 자료: [Unity 잠금 파일](https://docs.unity3d.com/6000.0/Documentation/Manual/upm-conflicts-auto.html), [Client.Resolve](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/PackageManager.Client.Resolve.html), [Client.List](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/PackageManager.Client.List.html). 손상된 JSON을 최소 복구한 다음 실제 잠금 계산은 Unity에 맡김.
+
+## 2026-10-06 — 샷건 줌·걷기 제한·4발 산탄·발사 자세
+
+- 요청/확정: 샷건 장착 중 우클릭 유지형 줌, 줌 중 Shift와 관계없이 걷기. 좌클릭 한 번당 발사1회, 산탄4개. 비줌/줌 모두 발사하며 줌하면 더 모임. 기존 중앙 조준점 주위에 속 빈 퍼짐 원. 카메라 중앙으로 목표를 정하고 실제 총구에서 판정, 벽이 막으면 관통 금지. 총을 앞으로 드는 양손 준비·반동 클립 제작. 빈손 우클릭 운반과 숫자1 장착/해제는 보존.
+- 시작 전 PLAYER_WORK_RULES.md를 확인하고 현재 씬, 모델·총열축(-X)·양손 기준점·몸통 본, 입력→이동→카메라→장비 LateUpdate 경로를 조사. 사용자 기존 변경을 대상으로 되돌리기/삭제/이름변경을 하지 않음. 기존 로컬 MCP relay와 native Unity API 사용; 추가 패키지/로그인/유료 생성 호출 없음.
+- 변경한 기존 코드(Assets/02Scripts/01Player/): Core/CatPlayerMotor.cs(조준 중 걷기/카메라 방향 요청), Movement/CatPlayerLocomotion.cs(Rigidbody 회전 단일 제어), Equipment/CatShotgunEquipment.cs(원래 자세 적용과 새 준비/반동·손잡이 연결), Editor/Validation/CatPolicyValidation.cs(새 독립 규칙8검사).
+- 추가한 코드(같은 폴더): Domain/CatCombatPolicy.cs, Input/CatCombatInput.cs, Camera/CatAimZoom.cs, Animation/CatShotgunPose.cs, Equipment/CatShotgunCombat.cs, Equipment/CatHitscanQuery.cs, Equipment/Presentation/CatShotSpreadRing.cs 및 .shader, Editor/Setup/CatCombatSetup.cs, Editor/Validation/CatHitscanValidation.cs, CatCombatValidation.cs, CatCombatInputValidation.cs와 Unity meta. 입력/규칙/물리/자세/카메라/표시 책임 분리. 매 프레임 히트스캔 버퍼·표시 프로퍼티 재사용, 원은 프레임당 draw1회.
+- 에셋/씬: Assets/03Sprites/Player/Animations/Shotgun_Fire.anim(0.5초,3곡선)와 Weapons/Shotgun/Shotgun_SpreadRing.mat 추가. PlayerTestScene에 기존 플레이어의 새 컴포넌트, Muzzle 및 ShotGuardOrigin 기준점 연결. 현재 씬의 기존 편집 내용을 포함해 허용된 씬만 저장. 이전 Idle/Walk/Run·모델·총 재질·컨트롤러·프리팹 변경 없음(작업 전후 SHA256).
+- 기본값: 비줌 FOV60/줌40, 전환0.16초, 준비0.12초, 발사 간격0.55초, 최대 사거리75, 산탄4개, 비줌 반각4도/줌1.5도. 원의 선1.4px/외곽0.6px. 실제 손잡이 기준으로 양손을 붙이며 발사 clip은 자세 성분3개만 움직이므로 기존 이동 clip을 건드리지 않음.
+- 히트스캔: 중앙 카메라 광선으로 목표점 → 실제 양손/총구 최종 자세 → 몸통 시작점 겹침/몸통→총구 구형 경로/총구 겹침 → 총구 전방4광선. 자기 충돌체/Trigger 제외, 최근접 외부 충돌 우선. 검사64슬롯 포화는 임의 명중 대신 안전 차단. 가까운 벽에서 총을 뒤집지 않도록 자세용 목표만 최소 전방거리로 제한하고 실제 벽 검사는 그대로 수행.
+- 첫 통합 실행:32검사 추가 전30개 중1실패. 누른 프레임의 이전 deltaTime을 준비에 포함하여 실측0.0885초에 판정하는 문제. 시작 프레임 deltaTime을0으로 바꾸고 발사 승인 시 clip시간을 정확한 발사시각으로 맞춰 저FPS나 몸 회전 대기로 반동이 건너뛰지 않도록 수정. 실패 로그 CatCombatValidation_20261006_122435_924.txt 보존.
+- 추가 읽기 검토에서 근거리 target와 총열 각도를 몸 회전 대기 기준으로 쓰면 영구대기가 생길 수 있음을 발견. 대기 기준을 실제 몸 회전 목표인 카메라 방향으로 바꾸고 가까운 target의 총열 뒤집힘 방어 적용. 큰 밀착 벽 검사로 총구보다0.5205m 뒤쪽에 생긴 카메라 조준점에서도 발사 종료·전방 유지·Blocked 확인.
+- 최종 물리18검사 PASS: Logs/Shotgun20261006/hitscan_validation.txt. 자기/Trigger 제외, 최근접, 벽 안·벽 너머 총구, 양 끝 겹침, 얇은 벽, 사거리/레이어, 검사 포화 포함.
+- 최종 통합32검사 PASS: Logs/CatCombatValidation_20261006_122858_895.txt. 줌40/비줌60, Shift 줌 속도1.6·Walk/해제3.4·Run, 정지Idle, 준비 실측0.1209초·raise1, 총구 출발 오차0, 양손 표시점 오차0,4산탄, 연타·유지 입력 처리, 일반/밀착 벽, 해제/복귀, 원 반경 계산 포함. 카메라 높이412px에서 줌 원14.821px/비줌24.950px 확인. 산탄 실측1.2707도/2.7777도(최대 허용각 안의 회전 패턴) 확인.
+- 실제 기본 입력 경로15검사 PASS: Logs/CatCombatInputValidation_20261006_123305_664.txt. 가상 Keyboard/Mouse에 InputSystem.QueueStateEvent를 넣어 실제 기본 입력 공급자를 거침. 좌클릭 새 누름/유지,4산탄, 우클릭 줌/해제, W+Shift 모션, 숫자1 장착/해제, 빈손 비줌, Esc·재잠금 클릭 오발 방지. 사람이 직접 클릭한 하드웨어 시험으로 확대하지 않음. 검사 후 가상 기기를 제거하고 원래 current 기기 복구.
+- 순수 규칙35검사 PASS: Logs/Shotgun20261006/pure_policy.txt. Domain 파일들과 CatPolicyValidation을 PowerShell Add-Type으로 Unity DLL 없이 독립 컴파일해 실행. Unity 전용 물리·렌더·애니메이션이 타 엔진에서도 그대로 동작한다고 주장하지 않음.
+- 화면 확인: Camera.Render 재호출 캡처는 Graphics.DrawMesh의 이미 그려진 링을 포함하지 않아 첫 이미지에 원이 안 보였음. 실제 Game 렌더 ScreenCapture로 다시 촬영해 줌/비줌의 중앙 점과 속 빈 원, 줌 축소를 직접 확인. Logs/combat_20261006_122858_895_aim_game.png 및 hip_game.png. Logs/Shotgun20261006/firing_pose_1.png와 firing_pose_2.png에서 실제 명중 프레임에 총이 캐릭터 앞을 향하고 양손이 파란 손잡이 위치에 붙는 것을 확인.
+- 임시 바닥·표적·벽·촬영 카메라는 Play 검증에만 사용하고 제거, 씬에 저장하지 않음. 장치·렌즈·입력·물리 변경을 정리하고 Play 종료. 기존 전체 이동/상호작용 검증이나 Windows 빌드 전체를 다시 수행한 것으로 확대하지 않음.
+- 삭제 없음: 재사용하는 기존 장비·입력·물리 기능은 필요한 연결을 유지했으며 이번 변경으로 불필요해진 이전 구현 파일은 없음. 새 검증기는 이후 조준·발사 수정의 재검증 메뉴로 유지. 로그의 cs.txt는 컴파일되지 않는 실행 근거이며 실패 기록도 보존.
+- 범위 검사: Logs/Shotgun20261006/scope_before.json→scope_after.json/scope_diff.json. 다른 씬·다른 담당 스크립트·Packages·기존 모델/클립/재질/프리팹 유지. 예외로 Unity가 ProjectSettings/EditorBuildSettings.asset의 줄바꿈을 CRLF→LF로 자동 정리. 현재 파일을 메모리에서 CRLF로 바꾼 SHA256이 작업 전 값과 정확히 일치하여 설정 내용 변화0임을 확인(auto_line_endings.json). 파일을 직접 변경하거나 복원하지 않음.
+- 추가/갱신 문서: PLAYER_WORK_RULES.md(현재 승인된 전투 범위), PLAYER_IMPLEMENTATION_GUIDE.md(조작·쉽게 설명한 원리·값 수정 위치·확장 연결·검증 방법), 이 작업 로그. 적 체력/탄약/소환/발사음은 요청 범위가 아니어서 추가하지 않고 ICatShotReceiver 명중 전달점만 제공.
+- 도구 기록: 소스 컴파일·Play 전환 후 MCP discovery가 잠시 낡아 명령 전달 실패가 있었고 helper 재연결 뒤 수행. 긴 PTY 명령 대신 Logs/Shotgun20261006의 code_file 사용. Unity AI 패키지의 기존 NoSubscription 로그와 이번 플레이어 컴파일/실행 검증을 구분; 계정·유료 생성 기능을 호출하지 않음.
+- 공식 자료: [AnimationClip.SampleAnimation](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AnimationClip.SampleAnimation.html), [CinemachineCamera](https://docs.unity3d.com/Packages/com.unity.cinemachine@3.1/manual/CinemachineCamera.html), [Physics.Raycast](https://docs.unity3d.com/ScriptReference/Physics.Raycast.html), [SphereCastNonAlloc](https://docs.unity3d.com/ScriptReference/Physics.SphereCastNonAlloc.html), [OverlapSphereNonAlloc](https://docs.unity3d.com/ScriptReference/Physics.OverlapSphereNonAlloc.html), [Graphics.DrawMesh](https://docs.unity3d.com/ScriptReference/Graphics.DrawMesh.html). 충돌과 투영·렌즈·클립 재생은 Unity 기본 기능, 발사/걷기 규칙은 별도 일반 C#으로 구현.
+
+- 최종 편집 상태 재확인: PlayerTestScene만 저장 성공(dirtyFalse), playFalse/compilingFalse/compileFailedFalse, MissingScripts0, 산탄4/비줌4도/줌1.5도, 연결된 클립0.5초/3곡선, 원 셰이더 오류False, 임시 검증 객체0/가상 입력 장치0. final_editor_state.txt에 기록. 최종 범위1462파일 비교에서 삭제0, 요청 밖 내용 변경0, 위 EditorBuildSettings 줄바꿈 예외만 유지.
+
+## 2026-10-06 — GitHub Desktop 표시와 커밋 전 경고 확인
+
+- 사용자 첨부 화면의 붉은 diff는 수정 전 줄, 초록 diff는 수정 후 줄. 표시된 m_LocalRotation 값 변경을 비교 중이며 이 색 자체는 오류가 아님. Summary가 비어 있으므로 커밋 메시지 작성이 필요함을 안내.
+- 읽기 전용 확인: git status, diff --name-only --diff-filter=U(충돌 파일0), diff --numstat, diff --check, core.autocrlf 조회(true), 저장소 루트와 check-attr/ls-files --eol. 자격증명 설정/계정/원격 연결은 읽거나 실행하지 않음.
+- 노란 LF→CRLF는 다음 checkout 시 줄바꿈 변환 안내. PlayerTestScene.unity는 i/lf w/lf로 현재 저장본과 작업 파일 모두LF. 빨간 diff 또는 현재 손상을 뜻하지 않음.
+- 별도 실제 설정 문제: 저장소 루트는 Team3rd3DProject, .gitattributes는 하위3rd3DProject에 있어10~12행 [attr]lfs/unity-json/unity-yaml 선언이 not allowed. 해당 씬의 eol/text/merge 규칙은 unspecified. 파일 이동 없이 약식 매크로를 실제 속성으로 풀어 쓰는 수정 방향을 안내하되 Git/LFS 동작 변경은 실행하지 않음.
+- diff --check는 Unity 직렬화의 빈 m_Name 행4개 뒤 공백도 보고함. 컴파일/씬 손상이나 병합 충돌로 판단하지 않고 그대로 보존.
+- 변경: 요청된 지속 기록 원칙에 따라 이 로그와 PLAYER_IMPLEMENTATION_GUIDE.md의 Git 표시 안내만 추가. 코드/씬/.gitattributes/Git설정 변경·add·commit·push·파일삭제 없음.
+- 공식 근거: https://docs.github.com/en/desktop/making-changes-in-a-branch/committing-and-reviewing-changes-to-your-project-in-github-desktop 및 https://git-scm.com/docs/gitattributes/2.50.0 .
+
+## 2026-10-06 — OneDrive 밖 작업 경로로 옮기는 방법 안내
+
+- 사용자 요청은 이전 방법 설명이며 실제 복사/이동 실행 요청으로 확대하지 않음. PLAYER_WORK_RULES.md를 읽고 저장소 루트와 폴더 구조·Unity 버전을 확인.
+- 현재 Git 루트는 C:/Users/307/OneDrive/바탕 화면/게임개발/3D Project/Team3rd3DProject이며 그 안3rd3DProject가 Unity 프로젝트. .git은 폴더, .gitmodules 없음. 제안 경로C:/UnityProjects/Team3rd3DProject는 현재 존재하지 않음.
+- Packages/manifest.json에는 file: 로컬 종속성 없음. 요청 제작 코드 Assets/02Scripts/01Player에 드라이브 절대경로/OneDrive 참조 없음. 작업 문서의 과거 기록 경로는 존재. 모든 외부 도구·다른 담당 코드의 경로 독립성을 검사한 것으로 확대하지 않음.
+- 안내: Unity 저장/종료와 Git 작업 중지 → 온라인 전용 파일이 있으면 로컬 다운로드 완료 → .git 포함 저장소 전체를 OneDrive 밖에 복사 → GitHub Desktop File/Add local repository에는 바깥Team3rd3DProject 등록 → Unity Hub Add project from disk에는 안쪽3rd3DProject 등록(6000.5.6f1) → Player 브랜치/History/미커밋 변경/PlayerTestScene 실행 확인. 검증 전 원본 보존.
+- OneDrive가 실제 커밋 오류의 원인이라고 확정하지 않음. 앞서 확인된 하위 .gitattributes 매크로 경고는 경로 이전만으로 해결되지 않으며 별도 문제임을 안내.
+- 실행한 변경은 이 기록과 PLAYER_IMPLEMENTATION_GUIDE.md 이전 안내 추가뿐. 파일/폴더 복사·이동·삭제·이름변경, 코드/씬/프로젝트/Git 설정 변경, 커밋·푸시·로그인·설치 없음.
+- 공식 근거: https://support.microsoft.com/en-us/onedrive/delete-files-or-folders-in-onedrive , https://docs.github.com/en/desktop/adding-and-cloning-repositories/adding-a-repository-from-your-local-computer-to-github-desktop , https://docs.unity.com/en-us/hub/projects-window-reference .
+
+
+## 2026-10-06 — 승인된 OneDrive 밖 복사·연결·검증 완료
+
+- 승인: 사용자 '진행해줘'. 원본을 보존한 저장소 전체 복사와 GitHub Desktop·Unity Hub 등록 및 검증. 삭제·이름변경·설치·커밋·푸시·.gitattributes 수정은 하지 않음.
+- 원본: C:/Users/307/OneDrive/바탕 화면/게임개발/3D Project/Team3rd3DProject. 사본: C:/UnityProjects/Team3rd3DProject. Unity 프로젝트는 그 안3rd3DProject.
+- 시작 확인: Unity 편집기·GitHub Desktop 종료, 대상 폴더 없음, Git/Unity 잠금 없음, Offline 파일0, 파일/디렉터리 ReparsePoint0, C드라이브 여유 약231GB.
+- Robocopy /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /XJ /MT:8. 80,531파일, 4,100,641,912바이트, 하위4,424디렉터리 복사. 종료코드1은 복사 성공; 실패0, 누락0. /MIR·삭제 옵션 없음.
+- .git·숨김·무시·미커밋 파일까지 크기와 SHA-256 비교: 전80,531개 일치. 파일/폴더 추가·누락0. 긴 원본 경로의 패키지 캐시7파일은 첫 Python 검사에서 FileNotFoundError가 났으나 Windows 확장 길이 경로로 재검사해 모두 일치. 실제 누락이 아니었음.
+- Git 읽기 전용 비교: HEAD b385e64632cafd7735bf224d5b99c46bca52b152, Player 브랜치, refs12개, 상태42행(미추적29) 일치. 기존 사용자 TextMesh Pro 폰트 변경도 보존.
+- GitHub Desktop 공식 github.bat에 새 경로 전달 → Add local repository 경로 확인·등록. Current branch Player/Changes42 확인. Show in Explorer의 실제 주소도 C:/UnityProjects/Team3rd3DProject 확인. 앱 시작 시 기존 원본의 자동 fetch가 관찰됐으나 직접 fetch/pull/push/commit하지 않음; HEAD/refs/작업 상태 재비교도 일치.
+- Unity CLI projects add로 새 안쪽 프로젝트를 Hub에 등록, 기존6000.5.6f1로 open. 원본 등록 항목도 보존. 설치·새 프로젝트 생성·Cloud 연결 변경·로그인 없음.
+- UI 화면 캡처 timed out 및 coordinate input geometry unavailable로 좌표 조작을 중단하고 공식 CLI·접근성·키보드를 사용. 프로세스 진단에 라이선스 관련 필드가 보여 해당 상세 조회 중단. 값은 사용하거나 이 기록에 복사하지 않음.
+- 새 경로용 로컬 MCP helper는 저장소 밖 MigrationRecords에 생성. 기존 원본 helper 미변경. Unity 시작 중 빈 도구 목록은 시작 완료 뒤 연결됨. 유료 생성 도구 호출 없음.
+- 새 편집기 실제 확인: Application.dataPath 새 경로, PlayerTestScene만 열림, sceneCount1, dirtyFalse, playFalse, compilingFalse, compileFailedFalse, MissingScripts0. CatPlayerValidation.Inspect 통과. 총구/벽검사 기준점/손 자세/산탄 원 연결 정상, 셰이더 오류False.
+- 실제 Play에서 기존 CatCombatInputValidation 실행: 15검사, 실패0, 중단False. 장착·비줌/줌 4산탄·누름 유지 시 연사 방지·W+Shift Run·줌 Walk와 속도 상한·줌 복귀·커서 해제/재잠금·장착 해제·빈손 입력 확인. 가상 장치 정리 및 Play 종료. 전체 빌드/모든 물리 회귀를 수행한 것으로 확대하지 않음.
+- Play 후 편집 상태 재검사도 정상이며 씬 저장 없음. Assets·Packages·ProjectSettings 각1,730파일의 원본/사본 해시 일치. 이후 새 사본의 이 로그와 설명서만 이전 결과 갱신.
+- 증거: C:/UnityProjects/MigrationRecords/20261006-OneDrive/copy.log, copy_verification_complete.json, editor_state.txt. Play 결과: 새 프로젝트 Logs/CatCombatInputValidation_20261006_133909_177.txt.
+- 남은 기존 문제: 하위3rd3DProject/.gitattributes 10~12행의 매크로 경고 및 LF→CRLF 안내는 이번 경로 이전과 별개, 미수정.
+- 삭제 없음: 원본은 보존 대상, 검증 도구·결과는 증거이며 대체되어 불필요해진 제품 코드 없음. 기존 씬/코드/프리팹/설정 변경 없음. 새 사본 문서2개만 갱신.
+- 공식 근거: https://docs.github.com/en/desktop/overview/launching-github-desktop-from-the-command-line?platform=windows , https://docs.unity.com/en-us/unity-cli/unity-cli-reference .
+- 최종 독립 재검사: Play 종료·문서 갱신 후에도 Assets/Packages/ProjectSettings 1,730파일 내용 동일, Git HEAD/branch/refs/status 경로·코드 동일(42행). final_scope_verification.json 기록.
