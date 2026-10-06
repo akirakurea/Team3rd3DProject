@@ -12,7 +12,6 @@ using UnityEngine.SceneManagement;
 /// <summary>가상 장치의 원래 입력 이벤트로 실제 기본 입력·장비·발사 경로를 검사합니다.</summary>
 public static class CatCombatInputValidation
 {
-    const string ScenePath = "Assets/01Scenes/PlayerTestScene.unity";
     static readonly StringBuilder report = new StringBuilder();
     static CatShotgunCombat combat;
     static CatShotgunEquipment equipment;
@@ -48,33 +47,37 @@ public static class CatCombatInputValidation
     public static void Start()
     {
         RequireScene();
+        CatPlayerEditorScope.RequireValidationIdle();
         if (!EditorApplication.isPlaying || EditorApplication.isPaused || running)
-            throw new InvalidOperationException("PlayerTestScene의 일시정지하지 않은 새 Play 모드에서 실행하세요.");
+            throw new InvalidOperationException("PlaytestScene01의 일시정지하지 않은 새 Play 모드에서 실행하세요.");
         if (InputSystem.settings.updateMode != InputSettings.UpdateMode.ProcessEventsInDynamicUpdate)
             throw new InvalidOperationException("Dynamic Update 입력 설정에서만 검증합니다. 프로젝트 설정은 변경하지 않습니다.");
-        var roots = SceneManager.GetActiveScene().GetRootGameObjects();
-        combat = roots.SelectMany(r => r.GetComponentsInChildren<CatShotgunCombat>(true)).Single();
-        cursor = roots.SelectMany(r => r.GetComponentsInChildren<CatCinemachineCursor>(true)).Single();
+        combat = CatPlayerEditorScope.FindSingle<CatShotgunCombat>();
+        cursor = CatPlayerEditorScope.FindSingle<CatCinemachineCursor>();
         equipment = combat.equipment; motor = combat.GetComponent<CatPlayerMotor>();
         interaction = combat.GetComponent<CatInteractionController>();
         animator = combat.GetComponent<Animator>(); body = combat.GetComponent<Rigidbody>();
         if (!combat.isActiveAndEnabled || !cursor.isActiveAndEnabled || !equipment || !equipment.IsReady ||
             !motor || !motor.isActiveAndEnabled || !interaction || !interaction.isActiveAndEnabled || !animator || !body || !combat.view)
             throw new InvalidOperationException("전투·장비·기본 이동·상호작용·카메라 연결을 먼저 확인하세요.");
+        CatPlayerEditorScope.RequireOwned(combat, cursor, equipment, motor, interaction, animator, body,
+            combat.view, combat.pose, combat.muzzle, combat.guardOrigin, equipment.weaponRoot,
+            equipment.motionRoot, equipment.leftHand, equipment.rightHand, equipment.leftGrip, equipment.rightGrip);
         if (equipment.IsEquipped || !interaction.HasFreeHands)
             throw new InvalidOperationException("물건·장비를 들지 않은 새 Play 모드에서 시작하세요.");
-        string logs = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Logs");
-        Directory.CreateDirectory(logs);
+        string logs = CatPlayerEditorScope.OutputDirectory;
         logPath = Path.Combine(logs, "CatCombatInputValidation_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + ".txt");
         report.Clear(); checks = failures = pellets = 0; left = right = false; keys = default;
         report.AppendLine("Cat combat default device input validation " + DateTime.Now.ToString("s"));
-        report.AppendLine("PlayerTestScene Play 전용. QueueStateEvent → 실제 기본 입력 → 이동/조준/발사. 씬·에셋 저장 없음.");
+        report.AppendLine("PlaytestScene01 Play 전용. QueueStateEvent → 실제 기본 입력 → 이동/조준/발사. 씬·에셋 저장 없음.");
         previousBackground = Application.runInBackground; previousLock = Cursor.lockState; previousVisible = Cursor.visible;
         previousWindow = EditorWindow.focusedWindow; originalKeyboard = Keyboard.current; originalMouse = Mouse.current;
         originalPosition = body.position; originalRotation = body.rotation; originalFov = combat.view.fieldOfView;
-        running = true; started = EditorApplication.timeSinceStartup;
+        CatPlayerEditorScope.BeginValidation(nameof(CatCombatInputValidation));
+        running = true;
         try
         {
+            started = EditorApplication.timeSinceStartup;
             keyboard = InputSystem.AddDevice<Keyboard>("CatCombatValidationKeyboard");
             mouse = InputSystem.AddDevice<Mouse>("CatCombatValidationMouse");
             keyboard.MakeCurrent(); mouse.MakeCurrent();
@@ -99,11 +102,7 @@ public static class CatCombatInputValidation
     [MenuItem("Tools/Cat Player/실제 조준 입력 검증 중단", true)]
     static bool CanStop() => running;
 
-    static void RequireScene()
-    {
-        if (SceneManager.sceneCount != 1 || SceneManager.GetActiveScene().path != ScenePath)
-            throw new InvalidOperationException("PlayerTestScene 하나만 열려 있어야 합니다.");
-    }
+    static void RequireScene() => CatPlayerEditorScope.RequireScene();
 
     static void QueueDevices()
     {
@@ -193,33 +192,37 @@ public static class CatCombatInputValidation
     {
         if (!running) return;
         running = false;
-        InputSystem.onBeforeUpdate -= QueueDevices; InputSystem.onAfterUpdate -= SelectDevices;
-        EditorApplication.update -= Tick; EditorApplication.playModeStateChanged -= Mode;
-        AssemblyReloadEvents.beforeAssemblyReload -= Reload;
-        if (interruption != null) { failures++; report.AppendLine(interruption); }
         try
         {
-            if (combat) { combat.PelletResolved -= OnPellet; combat.SetInputSource(null); }
-            if (equipment) equipment.Unequip();
-            if (interaction) { interaction.ReleaseHeld(); interaction.SetInputSource(null); }
-            if (motor) motor.SetInputSource(null);
-            if (body) { body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; body.position = originalPosition; body.rotation = originalRotation; }
+            InputSystem.onBeforeUpdate -= QueueDevices; InputSystem.onAfterUpdate -= SelectDevices;
+            EditorApplication.update -= Tick; EditorApplication.playModeStateChanged -= Mode;
+            AssemblyReloadEvents.beforeAssemblyReload -= Reload;
+            if (interruption != null) { failures++; report.AppendLine(interruption); }
+            try
+            {
+                if (combat) { combat.PelletResolved -= OnPellet; combat.SetInputSource(null); }
+                if (equipment) equipment.Unequip();
+                if (interaction) { interaction.ReleaseHeld(); interaction.SetInputSource(null); }
+                if (motor) motor.SetInputSource(null);
+                if (body) { body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; body.position = originalPosition; body.rotation = originalRotation; }
+            }
+            catch (Exception exception) { failures++; report.AppendLine("FAIL 정리 오류: " + exception); }
+            finally
+            {
+                if (keyboard != null && keyboard.added) InputSystem.RemoveDevice(keyboard);
+                if (mouse != null && mouse.added) InputSystem.RemoveDevice(mouse);
+                keyboard = null; mouse = null;
+                if (originalKeyboard != null && originalKeyboard.added) originalKeyboard.MakeCurrent();
+                if (originalMouse != null && originalMouse.added) originalMouse.MakeCurrent();
+                Application.runInBackground = previousBackground;
+                Cursor.lockState = previousLock; Cursor.visible = previousVisible;
+                cases?.Dispose(); cases = null;
+                report.AppendLine($"RESULT checks={checks}, failures={failures}, interrupted={interruption != null}"); Flush();
+                Debug.Log($"[Cat Combat Input] 검사 {checks}, 실패 {failures}. {logPath}");
+                if (previousWindow) previousWindow.Focus();
+                if (EditorApplication.isPlaying) EditorApplication.ExitPlaymode();
+            }
         }
-        catch (Exception exception) { failures++; report.AppendLine("FAIL 정리 오류: " + exception); }
-        finally
-        {
-            if (keyboard != null && keyboard.added) InputSystem.RemoveDevice(keyboard);
-            if (mouse != null && mouse.added) InputSystem.RemoveDevice(mouse);
-            keyboard = null; mouse = null;
-            if (originalKeyboard != null && originalKeyboard.added) originalKeyboard.MakeCurrent();
-            if (originalMouse != null && originalMouse.added) originalMouse.MakeCurrent();
-            Application.runInBackground = previousBackground;
-            Cursor.lockState = previousLock; Cursor.visible = previousVisible;
-            cases?.Dispose(); cases = null;
-            report.AppendLine($"RESULT checks={checks}, failures={failures}, interrupted={interruption != null}"); Flush();
-            Debug.Log($"[Cat Combat Input] 검사 {checks}, 실패 {failures}. {logPath}");
-            if (previousWindow) previousWindow.Focus();
-            if (EditorApplication.isPlaying) EditorApplication.ExitPlaymode();
-        }
+        finally { CatPlayerEditorScope.EndValidation(nameof(CatCombatInputValidation)); }
     }
 }

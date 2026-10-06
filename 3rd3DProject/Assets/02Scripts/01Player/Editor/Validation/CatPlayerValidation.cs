@@ -9,10 +9,10 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.SceneManagement;
 
-/// <summary>PlayerTestScene의 기존 오브젝트만 사용하는 수동 회귀 검증입니다.</summary>
+/// <summary>허용 씬의 이동·턱·카메라를 검사하는 수동 회귀 검증입니다.</summary>
 public static class CatPlayerValidation
 {
-    const string ScenePath = "Assets/01Scenes/PlayerTestScene.unity";
+    const string ScenePath = CatPlayerEditorScope.ScenePath;
     const string Menu = "Tools/Cat Player/";
     static readonly StringBuilder report = new StringBuilder();
     static readonly KeyboardState walkInput = new KeyboardState(Key.W);
@@ -40,22 +40,100 @@ public static class CatPlayerValidation
     static CatPlayerValidationSample sample;
     static Collider[] sceneColliders;
 
+    [MenuItem(Menu + "협업 에셋 연결 검사 %#F8")]
+    public static void InspectSharedAssets()
+    {
+        var scene = CatPlayerEditorScope.RequireScene();
+        CatPlayerEditorScope.RequireValidationIdle();
+        var text = new StringBuilder("Player shared asset inspection | " + DateTime.Now.ToString("s") + "\n");
+        int errors = 0;
+        Action<bool, string> check = (ok, message) =>
+        { text.AppendLine((ok ? "PASS " : "FAIL ") + message); if (!ok) errors++; };
+        text.AppendLine($"Scene={scene.path} dirty={scene.isDirty} play={EditorApplication.isPlaying} compiling={EditorApplication.isCompiling}");
+        try
+        {
+            check(!EditorUtility.scriptCompilationFailed, "스크립트 컴파일 상태");
+            var player = CatPlayerEditorScope.FindSingle<CatPlayerMotor>();
+            text.AppendLine("Player=" + player.name + " prefab=" + PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(player));
+            foreach (var transform in player.GetComponentsInChildren<Transform>(true))
+            {
+                check(GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(transform.gameObject) == 0,
+                    "Missing Script: " + transform.name);
+                check(PrefabUtility.GetPrefabAssetType(transform.gameObject) != PrefabAssetType.MissingAsset,
+                    "Prefab source: " + transform.name);
+            }
+            foreach (var component in CatPlayerEditorScope.FindAll<MonoBehaviour>())
+            {
+                if (!component || !component.GetType().Name.StartsWith("Cat", StringComparison.Ordinal)) continue;
+                text.AppendLine("Component=" + component.GetType().Name + " owner=" + component.name);
+                using var serialized = new SerializedObject(component);
+                var property = serialized.GetIterator();
+                while (property.Next(true))
+                {
+                    if (property.propertyType != SerializedPropertyType.ObjectReference) continue;
+#if UNITY_6000_5_OR_NEWER
+                    bool missing = property.objectReferenceValue == null && property.objectReferenceEntityIdValue != EntityId.None;
+#else
+                    bool missing = property.objectReferenceValue == null && property.objectReferenceInstanceIDValue != 0;
+#endif
+                    check(!missing, component.GetType().Name + "." + property.propertyPath + "=" +
+                        (property.objectReferenceValue ? property.objectReferenceValue.name : "None"));
+                }
+            }
+            foreach (var renderer in player.GetComponentsInChildren<Renderer>(true))
+            {
+                var skin = renderer as SkinnedMeshRenderer;
+                var filter = renderer.GetComponent<MeshFilter>();
+                var mesh = skin ? skin.sharedMesh : filter ? filter.sharedMesh : null;
+                check(mesh != null, "Mesh: " + renderer.name);
+                if (mesh) text.AppendLine("  mesh=" + AssetDatabase.GetAssetPath(mesh) + " vertices=" + mesh.vertexCount);
+                if (skin) check(skin.bones.All(bone => bone != null), "Skin bones: " + renderer.name);
+                foreach (var material in renderer.sharedMaterials)
+                    check(material && material.shader && !ShaderUtil.ShaderHasError(material.shader),
+                        "Material/shader: " + renderer.name + " / " + (material ? AssetDatabase.GetAssetPath(material) : "Missing"));
+            }
+            var animator = player.GetComponent<Animator>();
+            check(animator && animator.runtimeAnimatorController, "Animator controller");
+            if (animator && animator.runtimeAnimatorController)
+            {
+                foreach (var clip in animator.runtimeAnimatorController.animationClips.Distinct())
+                {
+                    var paths = AnimationUtility.GetCurveBindings(clip).Select(binding => binding.path).Distinct();
+                    foreach (var path in paths) check(string.IsNullOrEmpty(path) || player.transform.Find(path),
+                        "Animation binding: " + clip.name + " / " + path);
+                }
+            }
+            try { Inspect(); text.AppendLine("PASS 이동·물리·카메라 필수 연결"); }
+            catch (Exception exception) { check(false, "이동·물리·카메라 연결: " + exception.Message); }
+            var combat = player.GetComponent<CatShotgunCombat>();
+            check(combat && combat.pose && combat.pose.fireMotion && combat.muzzle && combat.guardOrigin,
+                "전투·발사 클립·총구·차단점 필수 연결");
+            if (combat) text.AppendLine($"Combat pellets={combat.pelletCount} hip={combat.spreadDegrees} aim={combat.aimedSpreadDegrees}");
+        }
+        catch (Exception exception) { check(false, exception.ToString()); }
+        text.AppendLine("RESULT failures=" + errors + "; 파일·meta·씬 저장 없음");
+        string output = Path.Combine(CatPlayerEditorScope.OutputDirectory, "SharedAssets.txt");
+        File.WriteAllText(output, text.ToString());
+        Debug.Log("[Cat Player] 협업 에셋 검사 오류 " + errors + ": " + output);
+    }
+
     [MenuItem(Menu + "연결 검사")]
     public static void Inspect()
     {
         RequireScene();
-        if (running) throw new InvalidOperationException("검증 실행 중에는 연결 검사를 실행할 수 없습니다.");
+        CatPlayerEditorScope.RequireValidationIdle();
         ResolveReferences();
         Debug.Log("[Cat Player] PASS 연결 검사: 이동·물리·Idle/Walk/Run·Cinemachine 추적 및 입력 참조 정상.");
     }
 
-    [MenuItem(Menu + "Play 모드 전체 검증")]
+    [MenuItem(Menu + "Play 모드 이동·턱·카메라 검증")]
     public static void Start()
     {
         RequireScene();
+        CatPlayerEditorScope.RequireValidationIdle();
         if (running) throw new InvalidOperationException("이미 플레이어 검증이 실행 중입니다.");
         if (!EditorApplication.isPlaying)
-            throw new InvalidOperationException("PlayerTestScene에서 Play를 시작한 뒤 검증을 실행하세요. 씬을 자동 저장하거나 열지 않습니다.");
+            throw new InvalidOperationException("PlaytestScene01에서 Play를 시작한 뒤 검증을 실행하세요. 씬을 자동 저장하거나 열지 않습니다.");
         ResolveReferences();
         keyboard = Keyboard.current;
         mouse = Mouse.current;
@@ -79,14 +157,15 @@ public static class CatPlayerValidation
         if (mouse.rightButton.isPressed) previousMouse.buttons |= 2;
         if (mouse.middleButton.isPressed) previousMouse.buttons |= 4;
 
+        CatPlayerEditorScope.BeginValidation(nameof(CatPlayerValidation));
         running = true;
-        failures = unavailable = caseIndex = 0;
-        sessionStart = EditorApplication.timeSinceStartup;
-        report.Clear();
-        report.AppendLine("Cat Player 수동 회귀 검증 | " + DateTime.Now.ToString("s"));
-        report.AppendLine("씬: " + ScenePath + " | 기존 씬·프리팹은 저장하지 않음");
         try
         {
+            failures = unavailable = caseIndex = 0;
+            sessionStart = EditorApplication.timeSinceStartup;
+            report.Clear();
+            report.AppendLine("Cat Player 수동 회귀 검증 | " + DateTime.Now.ToString("s"));
+            report.AppendLine("씬: " + ScenePath + " | 기존 씬·프리팹은 저장하지 않음");
             Application.runInBackground = true;
             var gameView = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.GameView");
             if (gameView != null) EditorWindow.GetWindow(gameView).Focus();
@@ -105,17 +184,12 @@ public static class CatPlayerValidation
     [MenuItem(Menu + "검증 중단", true)]
     static bool CanStop() => running;
 
-    static void RequireScene()
-    {
-        if (SceneManager.GetActiveScene().path != ScenePath)
-            throw new InvalidOperationException("PlayerTestScene 이외의 씬에서는 실행할 수 없습니다.");
-    }
+    static void RequireScene() => CatPlayerEditorScope.RequireScene();
 
     static void ResolveReferences()
     {
-        var roots = SceneManager.GetActiveScene().GetRootGameObjects();
-        sceneColliders = roots.SelectMany(r => r.GetComponentsInChildren<Collider>(true)).ToArray();
-        var motors = roots.SelectMany(r => r.GetComponentsInChildren<CatPlayerMotor>(true)).ToArray();
+        sceneColliders = CatPlayerEditorScope.FindAll<Collider>();
+        var motors = CatPlayerEditorScope.FindAll<CatPlayerMotor>();
         if (motors.Length != 1 || !motors[0].isActiveAndEnabled)
             throw new InvalidOperationException("활성 CatPlayerMotor가 정확히 하나 있어야 합니다.");
         motor = motors[0];
@@ -138,7 +212,7 @@ public static class CatPlayerValidation
         }
         camera = motor.view.GetComponent<Camera>();
         brain = camera ? camera.GetComponent<CinemachineBrain>() : null;
-        var orbits = roots.SelectMany(r => r.GetComponentsInChildren<CinemachineOrbitalFollow>(true))
+        var orbits = CatPlayerEditorScope.FindAll<CinemachineOrbitalFollow>()
             .Where(o => o.isActiveAndEnabled).ToArray();
         if (!camera || !camera.isActiveAndEnabled || !brain || !brain.isActiveAndEnabled || orbits.Length != 1)
             throw new InvalidOperationException("출력 Camera·CinemachineBrain 및 단일 활성 Orbital Follow 연결이 필요합니다.");
@@ -148,7 +222,8 @@ public static class CatPlayerValidation
         if (!virtualCamera || !virtualCamera.Follow || !virtualCamera.Follow.IsChildOf(motor.transform) ||
             !input || !orbit.GetComponent<CatCinemachineCursor>())
             throw new InvalidOperationException("Cinemachine의 플레이어 추적 대상·입력·커서 컴포넌트를 확인하세요.");
-        int outputCount = roots.SelectMany(r => r.GetComponentsInChildren<Camera>(true))
+        CatPlayerEditorScope.RequireOwned(motor, camera, brain, orbit, virtualCamera.Follow);
+        int outputCount = CatPlayerEditorScope.FindAll<Camera>()
             .Count(c => c.isActiveAndEnabled && c.targetTexture == null);
         if (outputCount != 1) throw new InvalidOperationException("화면 출력용 활성 카메라 수가 1이 아닙니다: " + outputCount);
     }
@@ -259,51 +334,157 @@ public static class CatPlayerValidation
     {
         if (!running) return;
         running = false;
-        InputSystem.onAfterUpdate -= PumpInput;
-        EditorApplication.update -= Tick;
-        EditorApplication.playModeStateChanged -= OnPlayModeChanged;
-        AssemblyReloadEvents.beforeAssemblyReload -= BeforeReload;
-        if (interruption != null)
-        {
-            report.AppendLine(interruption);
-            if (interruption.StartsWith("FAIL")) failures++;
-        }
-        report.AppendLine($"RESULT completed={caseIndex}/{CatPlayerValidationCases.All.Length}, failed={failures}, unavailable={unavailable}, interrupted={interruption != null}");
         try
         {
-            if (motor) motor.view = originalView;
-            if (motor)
+            InputSystem.onAfterUpdate -= PumpInput;
+            EditorApplication.update -= Tick;
+            EditorApplication.playModeStateChanged -= OnPlayModeChanged;
+            AssemblyReloadEvents.beforeAssemblyReload -= BeforeReload;
+            if (interruption != null)
             {
-                if (!motor.gameObject.activeSelf) motor.gameObject.SetActive(true);
-                motor.ResetRuntimeState();
+                report.AppendLine(interruption);
+                if (interruption.StartsWith("FAIL")) failures++;
             }
-            if (body)
-            {
-                body.position = originalPosition;
-                body.rotation = originalRotation;
-                body.linearVelocity = originalVelocity;
-                body.angularVelocity = originalAngularVelocity;
-            }
-            if (orbit) { orbit.HorizontalAxis.Value = originalYaw; orbit.VerticalAxis.Value = originalPitch; }
-            if (keyboard != null && keyboard.added) InputSystem.QueueStateEvent(keyboard, previousKeyboard);
-            if (mouse != null && mouse.added) InputSystem.QueueStateEvent(mouse, previousMouse);
-        }
-        catch (Exception exception) { report.AppendLine("FAIL 상태 복원: " + exception.Message); }
-        finally
-        {
-            Application.runInBackground = previousBackground;
-            Cursor.lockState = previousCursor;
-            Cursor.visible = previousCursorVisible;
+            report.AppendLine($"RESULT completed={caseIndex}/{CatPlayerValidationCases.All.Length}, failed={failures}, unavailable={unavailable}, interrupted={interruption != null}");
             try
             {
-                string directory = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Logs");
-                Directory.CreateDirectory(directory);
-                string path = Path.Combine(directory, "CatPlayerValidation.txt");
-                File.WriteAllText(path, report.ToString());
-                Debug.Log($"[Cat Player] 검증 종료. 완료 {caseIndex}/{CatPlayerValidationCases.All.Length}, 실패 {failures}, 검증불가 {unavailable}. {path}");
+                if (motor) motor.view = originalView;
+                if (motor)
+                {
+                    if (!motor.gameObject.activeSelf) motor.gameObject.SetActive(true);
+                    motor.ResetRuntimeState();
+                }
+                if (body)
+                {
+                    body.position = originalPosition;
+                    body.rotation = originalRotation;
+                    body.linearVelocity = originalVelocity;
+                    body.angularVelocity = originalAngularVelocity;
+                }
+                if (orbit) { orbit.HorizontalAxis.Value = originalYaw; orbit.VerticalAxis.Value = originalPitch; }
+                if (keyboard != null && keyboard.added) InputSystem.QueueStateEvent(keyboard, previousKeyboard);
+                if (mouse != null && mouse.added) InputSystem.QueueStateEvent(mouse, previousMouse);
             }
-            catch (Exception exception) { Debug.LogError("검증 보고서 저장 실패: " + exception.Message + "\n" + report); }
-            if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
+            catch (Exception exception) { report.AppendLine("FAIL 상태 복원: " + exception.Message); }
+            finally
+            {
+                Application.runInBackground = previousBackground;
+                Cursor.lockState = previousCursor;
+                Cursor.visible = previousCursorVisible;
+                try
+                {
+                    string directory = CatPlayerEditorScope.OutputDirectory;
+                    string path = Path.Combine(directory, "CatPlayerValidation.txt");
+                    File.WriteAllText(path, report.ToString());
+                    Debug.Log($"[Cat Player] 검증 종료. 완료 {caseIndex}/{CatPlayerValidationCases.All.Length}, 실패 {failures}, 검증불가 {unavailable}. {path}");
+                }
+                catch (Exception exception) { Debug.LogError("검증 보고서 저장 실패: " + exception.Message + "\n" + report); }
+                if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
+            }
         }
+        finally { CatPlayerEditorScope.EndValidation(nameof(CatPlayerValidation)); }
+    }
+}
+
+/// <summary>수동 설치·검증 도구의 씬 경계입니다. 다른 씬을 열거나 에셋을 만들지 않습니다.</summary>
+internal static class CatPlayerEditorScope
+{
+    internal const string ScenePath = "Assets/01Scenes/PlaytestScene01.unity";
+    static string validationOwner;
+
+    // Play 검증기가 같은 씬·입력·카메라를 동시에 제어하지 않도록 실행 소유자를 공유합니다.
+    internal static void RequireValidationIdle()
+    {
+        if (validationOwner != null)
+            throw new InvalidOperationException("Play 검증이 실행 중입니다: " + validationOwner + ". 종료하거나 중단한 뒤 실행하세요.");
+    }
+
+    internal static void BeginValidation(string owner)
+    {
+        RequireValidationIdle();
+        validationOwner = owner;
+    }
+
+    internal static void EndValidation(string owner)
+    {
+        if (validationOwner == owner) validationOwner = null;
+    }
+
+    internal static string OutputDirectory
+    {
+        get
+        {
+            string path = Path.Combine(Path.GetTempPath(), "CatPlayerValidation");
+            Directory.CreateDirectory(path);
+            return path;
+        }
+    }
+
+    internal static Scene RequireScene(bool editMode = false)
+    {
+        var scene = SceneManager.GetActiveScene();
+        if (SceneManager.sceneCount != 1 || !scene.IsValid() || !scene.isLoaded || scene.path != ScenePath)
+            throw new InvalidOperationException("PlaytestScene01 하나만 열려 있어야 합니다. 다른 씬은 자동으로 열거나 변경하지 않습니다.");
+        if (editMode && EditorApplication.isPlayingOrWillChangePlaymode)
+            throw new InvalidOperationException("PlaytestScene01 편집 모드에서만 연결을 수정할 수 있습니다.");
+        return scene;
+    }
+
+    internal static bool Owns(Component component)
+        => component && component.gameObject.scene == RequireScene();
+
+    internal static void RequireOwned(params UnityEngine.Object[] objects)
+    {
+        var scene = RequireScene();
+        foreach (var target in objects)
+        {
+            GameObject owner = target is Component component ? component.gameObject : target as GameObject;
+            if (!target || !owner || owner.scene != scene)
+                throw new InvalidOperationException("필수 연결이 없거나 다른 씬·프리팹 에셋을 가리킵니다: " +
+                    (target ? target.name : "Missing"));
+        }
+    }
+
+    internal static T[] FindAll<T>() where T : Component
+        => RequireScene().GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<T>(true)).ToArray();
+
+    internal static T FindSingle<T>() where T : Component
+    {
+        var matches = FindAll<T>();
+        if (matches.Length != 1)
+            throw new InvalidOperationException(typeof(T).Name + " 연결 대상이 정확히 하나 필요합니다. 발견: " + matches.Length);
+        return matches[0];
+    }
+
+    internal static GameObject FindObject(string name)
+    {
+        var matches = FindAll<Transform>().Where(item => item.name == name).ToArray();
+        if (matches.Length > 1)
+            throw new InvalidOperationException("같은 이름의 객체가 여러 개라 자동으로 선택하지 않습니다: " + name);
+        return matches.Length == 1 ? matches[0].gameObject : null;
+    }
+
+    internal static Camera OutputCamera(CatPlayerMotor motor)
+    {
+        var linked = Owns(motor.view) ? motor.view.GetComponent<Camera>() : null;
+        if (linked && linked.isActiveAndEnabled && !linked.targetTexture) return linked;
+        var matches = FindAll<Camera>().Where(camera => camera.isActiveAndEnabled && !camera.targetTexture).ToArray();
+        if (matches.Length != 1)
+            throw new InvalidOperationException("허용 씬의 출력 카메라가 정확히 하나 필요합니다. 발견: " + matches.Length);
+        return matches[0];
+    }
+
+    // 기존 직렬화 참조가 없는 경우에만 사용합니다. 폴더를 옮겨도 기존 meta의 GUID로 찾습니다.
+    internal static T ExistingPlayerAsset<T>(string guid, string label) where T : UnityEngine.Object
+    {
+        string path = AssetDatabase.GUIDToAssetPath(guid);
+        // 기존 Player 에셋 보관 폴더만 허용합니다. 끝의 /로 비슷한 이름의 다른 폴더를 제외합니다.
+        bool playerPath = path.StartsWith("Assets/04Prefabs/Player/", StringComparison.Ordinal) ||
+            path.StartsWith("Assets/03Sprites/Player/", StringComparison.Ordinal) ||
+            path.StartsWith("Assets/03Sprites/Cat_Player/", StringComparison.Ordinal);
+        var asset = playerPath ? AssetDatabase.LoadAssetAtPath<T>(path) : null;
+        if (!asset)
+            throw new InvalidOperationException(label + " 기존 Player 에셋을 찾을 수 없습니다. 에셋이나 meta를 새로 만들지 않습니다.");
+        return asset;
     }
 }

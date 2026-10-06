@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 /// <summary>실제 입력으로 현재 상호작용·장비·카메라를 검사합니다. 임시 변경은 Play 종료와 함께 사라집니다.</summary>
 public static class CatInteractionValidation
 {
-    const string ScenePath = "Assets/01Scenes/PlayerTestScene.unity";
+    const string ScenePath = CatPlayerEditorScope.ScenePath;
     static readonly StringBuilder report = new StringBuilder();
     static CatInteractionController control;
     static CatInventoryPickupPresenter presenter;
@@ -71,16 +71,16 @@ public static class CatInteractionValidation
     public static void Start()
     {
         RequireScene();
+        CatPlayerEditorScope.RequireValidationIdle();
         if (!EditorApplication.isPlaying || EditorApplication.isPaused || running)
-            throw new InvalidOperationException("새 PlayerTestScene의 일시정지하지 않은 Play 모드에서 실행하세요.");
+            throw new InvalidOperationException("새 PlaytestScene01의 일시정지하지 않은 Play 모드에서 실행하세요.");
         Resolve();
         keyboard = Keyboard.current; mouse = Mouse.current;
         if (keyboard == null || mouse == null) throw new InvalidOperationException("Input System 키보드·마우스가 필요합니다.");
         if (control.Held != null || presenter.IsBusy || equipment.IsEquipped)
             throw new InvalidOperationException("빈손·미장착 상태에서 검증을 시작하세요.");
 
-        string logs = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Logs");
-        Directory.CreateDirectory(logs);
+        string logs = CatPlayerEditorScope.OutputDirectory;
         string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
         logPath = Path.Combine(logs, "CatInteractionValidation_" + stamp + ".txt");
         capturePrefix = Path.Combine(logs, "interaction_" + stamp + "_");
@@ -95,9 +95,11 @@ public static class CatInteractionValidation
         pickupDuration = new SerializedObject(presenter).FindProperty("duration").floatValue;
         trackingOrbit = false; observedEquipmentPose = false; motionInput = new MotionInput();
         observeRelease = false;
-        running = true; started = EditorApplication.timeSinceStartup;
+        CatPlayerEditorScope.BeginValidation(nameof(CatInteractionValidation));
+        running = true;
         try
         {
+            started = EditorApplication.timeSinceStartup;
             Application.runInBackground = true;
             motor.enabled = false; body.isKinematic = true; brain.enabled = false; cursor.enabled = false;
             control.SetInputSource(null);
@@ -122,32 +124,27 @@ public static class CatInteractionValidation
     [MenuItem("Tools/Cat Player/상호작용 검증 중단", true)]
     static bool CanStop() => running;
 
-    static void RequireScene()
-    {
-        if (SceneManager.sceneCount != 1 || SceneManager.GetActiveScene().path != ScenePath)
-            throw new InvalidOperationException("PlayerTestScene 하나만 열려 있어야 합니다.");
-    }
+    static void RequireScene() => CatPlayerEditorScope.RequireScene();
 
     static void Resolve()
     {
-        var roots = SceneManager.GetActiveScene().GetRootGameObjects();
-        control = roots.SelectMany(x => x.GetComponentsInChildren<CatInteractionController>(true)).Single();
+        control = CatPlayerEditorScope.FindSingle<CatInteractionController>();
         presenter = control.pickup; equipment = control.equipment as CatShotgunEquipment; view = control.view;
         motor = control.GetComponent<CatPlayerMotor>(); body = control.GetComponent<Rigidbody>();
         brain = view ? view.GetComponent<CinemachineBrain>() : null;
-        cursor = roots.SelectMany(x => x.GetComponentsInChildren<CatCinemachineCursor>(true)).Single();
+        cursor = CatPlayerEditorScope.FindSingle<CatCinemachineCursor>();
         orbit = cursor.GetComponent<CinemachineOrbitalFollow>();
         cameraInput = cursor.GetComponent<CinemachineInputAxisController>();
         orbitLimit = cursor.GetComponent<CatCameraOrbitLimit>();
-        var items = roots.SelectMany(x => x.GetComponentsInChildren<CatInteractionItem>(true)).ToArray();
+        var items = CatPlayerEditorScope.FindAll<CatInteractionItem>();
         cylinders = Enumerable.Range(1, 3).Select(i => items.Single(x => x.name == "Cylinder_" + i)).ToArray();
         cubes = Enumerable.Range(1, 2).Select(i => items.Single(x => x.name == "Cube_" + i)).ToArray();
         if (!control.isActiveAndEnabled || !presenter || !equipment || !equipment.IsReady || !view || !motor ||
             !body || !brain || !orbit || !cameraInput || !orbitLimit || !orbitLimit.isActiveAndEnabled)
             throw new InvalidOperationException("상호작용·장비·카메라 제한 연결을 먼저 확인하세요.");
-        if (view.gameObject.scene.path != ScenePath || cursor.gameObject.scene.path != ScenePath ||
-            equipment.gameObject.scene.path != ScenePath)
-            throw new InvalidOperationException("다른 씬의 객체는 검증할 수 없습니다.");
+        CatPlayerEditorScope.RequireOwned(control, presenter, equipment, view, motor, body, brain, cursor,
+            orbit, cameraInput, orbitLimit, equipment.weaponRoot, equipment.motionRoot,
+            equipment.leftHand, equipment.rightHand, equipment.leftGrip, equipment.rightGrip);
     }
 
     static void Pump()
@@ -227,8 +224,12 @@ public static class CatInteractionValidation
         Check(control.Held == null && cylinders[1].Shape.enabled && cylinders[1].IsAvailable &&
             equipment.IsEquipped && equipment.weaponRoot.gameObject.activeSelf,
             "보유 중 숫자 1: 안전하게 내려놓은 뒤 기존 샷건 장착");
+        // 물건을 들던 우클릭은 장착 후 조준 입력이 됩니다. 기본 장착 자세 검사는
+        // 버튼을 놓고 조준 자세가 내려온 뒤 실시합니다. 조준 자세 자체는 전투 검증에서 검사합니다.
+        keys = default; rightButton = false;
+        yield return new Pause(equipment.aimingPose ? equipment.aimingPose.raiseSeconds + .15f : .25f, 8);
         Check(observedEquipmentPose && renderedHandError < .003f && renderedWeaponError < .003f,
-            "장착 양손과 잡는 위치 일치·몸통 기준 샷건 추적");
+            $"비조준 장착 양손과 잡는 위치 일치·몸통 기준 샷건 추적: hand={renderedHandError:F5}, weapon={renderedWeaponError:F5}");
         Check(!control.HasFreeHands && !control.TryPickup(), "장비 장착 중 직접 집기 호출 차단");
         Capture("equipped");
         keys = default; rightButton = false; yield return new Pause();
@@ -465,40 +466,45 @@ public static class CatInteractionValidation
 
     static void Finish(string interruption)
     {
-        if (!running) return; running = false;
-        InputSystem.onAfterUpdate -= Pump; EditorApplication.update -= Tick;
-        EditorApplication.playModeStateChanged -= Mode; AssemblyReloadEvents.beforeAssemblyReload -= Reload;
-        RenderPipelineManager.endCameraRendering -= EndCamera; Camera.onPostRender -= ObserveEquipmentPose;
-        if (interruption != null) { report.AppendLine(interruption); if (interruption.StartsWith("FAIL")) failures++; }
+        if (!running) return;
+        running = false;
         try
         {
-            if (presenter)
+            InputSystem.onAfterUpdate -= Pump; EditorApplication.update -= Tick;
+            EditorApplication.playModeStateChanged -= Mode; AssemblyReloadEvents.beforeAssemblyReload -= Reload;
+            RenderPipelineManager.endCameraRendering -= EndCamera; Camera.onPostRender -= ObserveEquipmentPose;
+            if (interruption != null) { report.AppendLine(interruption); if (interruption.StartsWith("FAIL")) failures++; }
+            try
             {
-                presenter.Collected.RemoveListener(OnCollected); presenter.RegisterTarget(null);
-                var settings = new SerializedObject(presenter); settings.FindProperty("duration").floatValue = pickupDuration;
-                settings.ApplyModifiedPropertiesWithoutUndo();
+                if (presenter)
+                {
+                    presenter.Collected.RemoveListener(OnCollected); presenter.RegisterTarget(null);
+                    var settings = new SerializedObject(presenter); settings.FindProperty("duration").floatValue = pickupDuration;
+                    settings.ApplyModifiedPropertiesWithoutUndo();
+                }
+                if (motor) motor.SetInputSource(null);
+                if (control) { control.ReleaseHeld(); control.SetInputSource(null); }
+                if (equipment) equipment.Unequip();
+                if (keyboard != null && keyboard.added) InputState.Change(keyboard, new KeyboardState());
+                if (mouse != null && mouse.added) InputState.Change(mouse, new MouseState { position = mousePosition });
             }
-            if (motor) motor.SetInputSource(null);
-            if (control) { control.ReleaseHeld(); control.SetInputSource(null); }
-            if (equipment) equipment.Unequip();
-            if (keyboard != null && keyboard.added) InputState.Change(keyboard, new KeyboardState());
-            if (mouse != null && mouse.added) InputState.Change(mouse, new MouseState { position = mousePosition });
+            catch (Exception exception) { failures++; report.AppendLine("FAIL 종료 정리: " + exception); }
+            finally
+            {
+                // DontSave 객체는 Play 종료만으로 정리되지 않을 수 있으므로 직접 제거합니다.
+                if (obstruction) UnityEngine.Object.DestroyImmediate(obstruction);
+                if (testCanvas) UnityEngine.Object.DestroyImmediate(testCanvas);
+                if (genericRoot) UnityEngine.Object.DestroyImmediate(genericRoot);
+                obstruction = testCanvas = genericRoot = null;
+                sequence?.Dispose(); sequence = null;
+                Application.runInBackground = previousBackground;
+                Cursor.lockState = previousLock; Cursor.visible = previousVisible;
+                report.AppendLine($"RESULT checks={checks}, failures={failures}, interrupted={interruption != null}");
+                Flush();
+                Debug.Log($"[Cat Interaction] 검사 {checks}, 실패 {failures}. {logPath}");
+                if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
+            }
         }
-        catch (Exception exception) { failures++; report.AppendLine("FAIL 종료 정리: " + exception); }
-        finally
-        {
-            // DontSave 객체는 Play 종료만으로 정리되지 않을 수 있으므로 직접 제거합니다.
-            if (obstruction) UnityEngine.Object.DestroyImmediate(obstruction);
-            if (testCanvas) UnityEngine.Object.DestroyImmediate(testCanvas);
-            if (genericRoot) UnityEngine.Object.DestroyImmediate(genericRoot);
-            obstruction = testCanvas = genericRoot = null;
-            sequence?.Dispose(); sequence = null;
-            Application.runInBackground = previousBackground;
-            Cursor.lockState = previousLock; Cursor.visible = previousVisible;
-            report.AppendLine($"RESULT checks={checks}, failures={failures}, interrupted={interruption != null}");
-            Flush();
-            Debug.Log($"[Cat Interaction] 검사 {checks}, 실패 {failures}. {logPath}");
-            if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
-        }
+        finally { CatPlayerEditorScope.EndValidation(nameof(CatInteractionValidation)); }
     }
 }

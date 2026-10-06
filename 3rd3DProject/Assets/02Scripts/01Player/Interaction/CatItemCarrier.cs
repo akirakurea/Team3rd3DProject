@@ -27,7 +27,9 @@ public sealed class CatItemCarrier : IDisposable
     Vector3 halfExtents;
     Vector3 liftedPosition;
     Quaternion heldRotation;
-    int pickupStage;
+    // 선반에서 위로 든 뒤 수평으로 꺼내고, 이후 조준점을 따라갑니다.
+    enum PickupStage { Following, Lifting, ClearingShelf }
+    PickupStage pickupStage;
     bool disposed;
 
     public CatInteractionItem Held => held;
@@ -51,7 +53,7 @@ public sealed class CatItemCarrier : IDisposable
         heldRotation = item.transform.rotation;
         lastSafePosition = item.transform.position;
         liftedPosition = lastSafePosition + Vector3.up * 0.08f;
-        pickupStage = 1;
+        pickupStage = PickupStage.Lifting;
         Vector3 scale = item.transform.lossyScale;
         halfExtents = Vector3.Scale(item.Shape.size * 0.5f,
             new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
@@ -99,8 +101,8 @@ public sealed class CatItemCarrier : IDisposable
 
         Vector3 target = HoldPoint(holdDistance) - centerOffset;
         // 선반에서 바로 대각선으로 당기면 턱에 걸리므로 먼저 들고, 수평으로 꺼냅니다.
-        if (pickupStage == 1) target = liftedPosition;
-        else if (pickupStage == 2) target.y = Mathf.Max(target.y, liftedPosition.y);
+        if (pickupStage == PickupStage.Lifting) target = liftedPosition;
+        else if (pickupStage == PickupStage.ClearingShelf) target.y = Mathf.Max(target.y, liftedPosition.y);
         Vector3 desired = Vector3.Lerp(lastSafePosition, target, 1 - Mathf.Exp(-16 * Mathf.Max(0, dt)));
         Vector3 delta = desired - lastSafePosition;
         float distance = delta.magnitude;
@@ -244,8 +246,8 @@ public sealed class CatItemCarrier : IDisposable
 
     void AdvancePickup(Vector3 target)
     {
-        if (pickupStage == 0 || (lastSafePosition - target).sqrMagnitude > 0.0001f) return;
-        pickupStage = pickupStage == 1 ? 2 : 0;
+        if (pickupStage == PickupStage.Following || (lastSafePosition - target).sqrMagnitude > 0.0001f) return;
+        pickupStage = pickupStage == PickupStage.Lifting ? PickupStage.ClearingShelf : PickupStage.Following;
     }
 
     void Restore()
@@ -276,6 +278,6 @@ public sealed class CatItemCarrier : IDisposable
         heldBody = null;
         heldColliders = null;
         colliderWasEnabled = null;
-        pickupStage = 0;
+        pickupStage = PickupStage.Following;
     }
 }

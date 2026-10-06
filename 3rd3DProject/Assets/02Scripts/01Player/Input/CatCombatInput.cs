@@ -15,8 +15,14 @@ public interface ICatCombatInputSource
     CatCombatInputFrame Read();
 }
 
+/// <summary>포커스 상실·비활성화 때 내부 상태를 비워야 하는 입력 공급자만 구현합니다.</summary>
+public interface ICatResettableInputSource
+{
+    void Reset();
+}
+
 /// <summary>우클릭 유지와 좌클릭 누름을 읽는 Unity 연결부. 재잠금 클릭은 발사로 사용하지 않습니다.</summary>
-public sealed class CatCombatInput : ICatCombatInputSource
+public sealed class CatCombatInput : ICatCombatInputSource, ICatResettableInputSource
 {
     bool wasEnabled;
     int enabledSinceFrame;

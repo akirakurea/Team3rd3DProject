@@ -75,6 +75,12 @@ public sealed class CatShotgunCombat : MonoBehaviour, ICatAimState, ICatShotSpre
     void ResolveAim()
     {
         if (!pose || !view) return;
+        // 총을 내린 상태에서는 자세가 조준점을 사용하지 않습니다. 줌 해제 중의 자세 전환은 유지합니다.
+        if (pose.CurrentRaise <= 0 && !pose.IsShotPlaying)
+        {
+            aimPointValid = false;
+            return;
+        }
         query ??= new CatHitscanQuery(transform);
         aimPointValid = query.TryGetAimPoint(view, range, hitLayers.value, out Vector3 target);
         pose.SetTarget(target, aimPointValid, view.transform.forward);
@@ -113,12 +119,12 @@ public sealed class CatShotgunCombat : MonoBehaviour, ICatAimState, ICatShotSpre
     void OnApplicationFocus(bool focused)
     {
         if (focused) return;
-        if (inputSource is CatCombatInput deviceInput) deviceInput.Reset();
+        if (inputSource is ICatResettableInputSource resettableInput) resettableInput.Reset();
         ResetCombat();
     }
     void OnDisable()
     {
-        if (inputSource is CatCombatInput deviceInput) deviceInput.Reset();
+        if (inputSource is ICatResettableInputSource resettableInput) resettableInput.Reset();
         ResetCombat(); Unbind();
     }
 }
