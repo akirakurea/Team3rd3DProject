@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -43,6 +43,8 @@ namespace TexasJawTrap
                 Quaternion facing = Quaternion.LookRotation(forward, Vector3.up);
                 Quaternion rotation = Quaternion.FromToRotation(Vector3.up, hit.normal) * facing;
                 ConsumableJawTrap placed = Instantiate(trapPrefab, hit.point + hit.normal * .01f, rotation);
+                // 기존 프리팹의 설정과 관계없이 설치한 플레이어는 덫에 걸리지 않습니다.
+                placed.ignoreOwner = true;
                 placed.SetOwner(transform);
                 remaining--; return true;
             }
