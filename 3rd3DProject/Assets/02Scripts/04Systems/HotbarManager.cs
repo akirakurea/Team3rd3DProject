@@ -29,6 +29,9 @@ public class HotbarManager : MonoBehaviour
     /// <summary>선택 칸이 바뀔 때마다 UI가 구독해서 테두리를 갱신한다.</summary>
     public event Action<int> OnSelectedChanged;
 
+    /// <summary>한 칸의 아이템이 바뀔 때(획득/사용) UI가 구독해서 그 칸을 갱신한다.</summary>
+    public event Action<int> OnSlotChanged;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -65,6 +68,27 @@ public class HotbarManager : MonoBehaviour
         if (index < 0 || index >= slots.Length || index == SelectedIndex) return;
         SelectedIndex = index;
         OnSelectedChanged?.Invoke(SelectedIndex);
+    }
+
+    /// <summary>아이템 획득. 왼쪽 빈 칸부터 채운다. 가득 차면 false.</summary>
+    public bool TryAdd(HotbarItemData item)
+    {
+        for (int i = 0; i < slots.Length; i++)
+        {
+            if (slots[i] != null) continue;
+            slots[i] = item;
+            OnSlotChanged?.Invoke(i);
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>선택 칸의 아이템을 사용한 것으로 처리해 칸을 비운다.</summary>
+    public void ConsumeSelected()
+    {
+        if (SelectedItem == null) return;
+        slots[SelectedIndex] = null;
+        OnSlotChanged?.Invoke(SelectedIndex);
     }
 
     private void HandleNumberKeys()
