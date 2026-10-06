@@ -28,6 +28,12 @@ public sealed class CatShotgunEquipment : MonoBehaviour, ICatEquipmentPort
     public Transform rightGrip;
     [Tooltip("켜면 표시점 회전에 손을 맞춥니다. 끄면 기존 애니메이션의 손 회전을 유지합니다.")]
     public bool matchGripRotation = true;
+    [Tooltip("손을 앞으로 뻗는 발사·조준 자세. 비어 있으면 기존 장착 자세만 사용합니다.")]
+    public CatShotgunPose aimingPose;
+
+    public event System.Action BeforePoseApplied;
+    public event System.Action PoseApplied;
+    public event System.Action Unequipped;
 
     public bool IsEquipped { get; private set; }
     public bool IsReady => isActiveAndEnabled && HasValidBindings();
@@ -86,9 +92,12 @@ public sealed class CatShotgunEquipment : MonoBehaviour, ICatEquipmentPort
     /// <summary>다른 장비 전환·상태 종료를 위한 표시 해제 진입점입니다.</summary>
     public void Unequip()
     {
+        bool wasEquipped = IsEquipped;
         IsEquipped = false;
+        aimingPose?.ResetPose();
         RestoreHands();
         SetWeaponVisible(false);
+        if (wasEquipped) Unequipped?.Invoke();
     }
 
     void LateUpdate()
@@ -104,6 +113,7 @@ public sealed class CatShotgunEquipment : MonoBehaviour, ICatEquipmentPort
         rightPose.Capture(rightHand);
         ApplyGrip(leftHand, leftGrip);
         ApplyGrip(rightHand, rightGrip);
+        PoseApplied?.Invoke();
     }
 
     bool HasValidBindings()
@@ -118,8 +128,11 @@ public sealed class CatShotgunEquipment : MonoBehaviour, ICatEquipmentPort
 
     void UpdateWeaponPose()
     {
+        BeforePoseApplied?.Invoke();
         weaponRoot.SetPositionAndRotation(motionRoot.TransformPoint(weaponLocalPosition),
             motionRoot.rotation * Quaternion.Euler(weaponLocalEulerAngles));
+        if (aimingPose && aimingPose.isActiveAndEnabled)
+            aimingPose.Apply(weaponRoot, motionRoot);
     }
 
     void ApplyGrip(Transform hand, Transform grip)
