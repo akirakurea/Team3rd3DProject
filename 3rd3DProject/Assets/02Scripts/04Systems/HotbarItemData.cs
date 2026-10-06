@@ -10,6 +10,8 @@ public class HotbarItemData : ScriptableObject
 {
     public string itemId = "trap";          // 코드에서 분기할 때 쓰는 식별자
     public string displayName = "덫";
-    public Sprite icon;
+    
     [TextArea] public string description;
+    public Sprite icon;
+    public GameObject placePrefab;   // 추가: F키로 설치될 오브젝트
 }

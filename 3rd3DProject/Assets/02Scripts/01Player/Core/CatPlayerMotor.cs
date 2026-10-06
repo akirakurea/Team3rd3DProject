@@ -7,6 +7,8 @@ public sealed class CatPlayerMotor : MonoBehaviour, ICatMotionState
     [Header("연결")]
     [Tooltip("이동 방향의 기준 카메라. 비어 있으면 월드 전방을 사용합니다.")]
     public Transform view;
+    [Tooltip("조준 상태를 제공하는 컴포넌트. 조준 중에는 Shift를 눌러도 걷습니다.")]
+    public MonoBehaviour aimSource;
     [Header("이동 · 회전")]
     [Tooltip("걷기 속도 (월드 단위/초)")]
     [Min(0)] public float walkSpeed = 1.6f;
@@ -49,13 +51,19 @@ public sealed class CatPlayerMotor : MonoBehaviour, ICatMotionState
     void Update()
     {
         currentInput = inputSource.Read();
+        if (aimSource && aimSource.isActiveAndEnabled && aimSource is ICatAimState aim)
+        {
+            var intent = CatCombatPolicy.RestrictMovement(currentInput.Intent, aim.IsAiming);
+            currentInput = new CatPlayerInputFrame(new Vector2(intent.Horizontal, intent.Forward), intent.Sprint);
+        }
         animationPresenter.Apply(currentInput.Intent);
     }
 
     void FixedUpdate()
     {
         var settings = new CatMovementSettings(walkSpeed, runSpeed, acceleration, turnSpeed);
-        locomotion.Apply(currentInput.Intent, view, settings, Time.fixedDeltaTime);
+        bool faceView = aimSource && aimSource.isActiveAndEnabled && aimSource is ICatAimState aim && aim.WantsCameraFacing;
+        locomotion.Apply(currentInput.Intent, view, settings, Time.fixedDeltaTime, faceView);
     }
 
     /// <summary>게임패드·AI·재생 입력을 연결할 확장점. null은 기본 키보드 입력으로 복귀합니다.</summary>

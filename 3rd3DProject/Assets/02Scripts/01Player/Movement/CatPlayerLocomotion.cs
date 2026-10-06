@@ -18,7 +18,7 @@ public sealed class CatPlayerLocomotion
         float acceleration, float turnSpeed, float deltaTime)
         => Apply(input.Intent, view, new CatMovementSettings(walkSpeed, runSpeed, acceleration, turnSpeed), deltaTime);
 
-    public void Apply(CatMovementIntent intent, Transform view, CatMovementSettings settings, float deltaTime)
+    public void Apply(CatMovementIntent intent, Transform view, CatMovementSettings settings, float deltaTime, bool faceView = false)
     {
         Vector3 direction = GetDirection(new Vector2(intent.Horizontal, intent.Forward), view);
         Vector3 target = direction * CatMovementPolicy.SelectSpeed(intent, settings);
@@ -31,9 +31,10 @@ public sealed class CatPlayerLocomotion
             vertical = stepSpeed;
         body.linearVelocity = new Vector3(horizontal.x, vertical, horizontal.z);
 
-        if (direction.sqrMagnitude > 0.01f)
+        Vector3 facing = faceView && view ? Vector3.ProjectOnPlane(view.forward, Vector3.up).normalized : direction;
+        if (facing.sqrMagnitude > 0.01f)
             body.MoveRotation(Quaternion.RotateTowards(body.rotation,
-                Quaternion.LookRotation(direction), settings.TurnSpeed * deltaTime));
+                Quaternion.LookRotation(facing), settings.TurnSpeed * deltaTime));
     }
 
     Vector3 GetDirection(Vector2 move, Transform view)

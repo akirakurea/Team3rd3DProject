@@ -43,13 +43,8 @@ public class HotbarUI : MonoBehaviour
 
         for (int i = 0; i < slots.Length; i++)
         {
-            var item = hb.GetSlot(i);
-            if (slots[i].icon != null)
-            {
-                slots[i].icon.raycastTarget = false;
-                slots[i].icon.enabled = item != null && item.icon != null;
-                if (item != null) slots[i].icon.sprite = item.icon;
-            }
+            if (slots[i].icon != null) slots[i].icon.raycastTarget = false;
+            RefreshSlot(i);
             if (slots[i].border != null)
             {
                 var borderImage = slots[i].border.GetComponent<Graphic>();
@@ -66,12 +61,25 @@ public class HotbarUI : MonoBehaviour
         }
 
         hb.OnSelectedChanged += HandleSelectedChanged;
+        hb.OnSlotChanged += RefreshSlot;
         HandleSelectedChanged(hb.SelectedIndex);
     }
 
     private void OnDestroy()
     {
-        if (hb != null) hb.OnSelectedChanged -= HandleSelectedChanged;
+        if (hb == null) return;
+        hb.OnSelectedChanged -= HandleSelectedChanged;
+        hb.OnSlotChanged -= RefreshSlot;
+    }
+
+    private void RefreshSlot(int i)
+    {
+        var icon = slots[i].icon;
+        if (icon == null) return;   // Inspector에 Icon이 연결 안 된 칸은 건너뜀
+
+        var item = hb.GetSlot(i);
+        icon.enabled = item != null && item.icon != null;
+        icon.sprite = item != null ? item.icon : null;
     }
 
     private void HandleSelectedChanged(int selectedIndex)
