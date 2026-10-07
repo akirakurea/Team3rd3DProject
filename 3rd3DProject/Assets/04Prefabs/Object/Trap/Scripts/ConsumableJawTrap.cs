@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.AI;
 
@@ -22,10 +22,13 @@ namespace TexasJawTrap
         public string requiredTag = "";
         [Tooltip("Rigidbody, CharacterController 또는 NavMeshAgent가 있는 캐릭터를 감지합니다.")]
         public bool requireActorComponent = true;
-        public bool ignoreOwner;
+        public bool ignoreOwner = true;
         [Header("Consumption")]
         public bool removeAfterUse = true;
-        [Min(0)] public float removeDelay = 3f;
+        [Tooltip("적이 밟은 순간부터 스턴과 덫 유지 시간이 함께 시작됩니다.")]
+        [Min(.01f)] public float stunDuration = 3f;
+        // 이전 프리팹/외부 코드와 호환하기 위한 필드. 삭제 시점은 stunDuration으로 결정합니다.
+        [HideInInspector] public float removeDelay = 3f;
         public TrapActorEvent onTriggered = new TrapActorEvent();
         public UnityEvent onClosed = new UnityEvent();
         public bool IsUsed { get; private set; }
@@ -33,7 +36,7 @@ namespace TexasJawTrap
         public bool IsArmed { get { return initialized && !IsUsed && Time.time >= readyTime; } }
         Quaternion frontOpen, backOpen;
         Vector3 plateOpen;
-        float readyTime, progress;
+        float readyTime, progress, consumedTime;
         bool initialized, closing;
         Transform owner;
 
@@ -61,7 +64,8 @@ namespace TexasJawTrap
             Rigidbody body = other.attachedRigidbody;
             CharacterController controller = other.GetComponentInParent<CharacterController>();
             NavMeshAgent agent = other.GetComponentInParent<NavMeshAgent>();
-            Transform actorRoot = controller != null ? controller.transform : agent != null ? agent.transform : body != null ? body.transform : other.transform;
+            EnemyTrapStun stun = other.GetComponentInParent<EnemyTrapStun>();
+            Transform actorRoot = stun != null ? stun.transform : controller != null ? controller.transform : agent != null ? agent.transform : body != null ? body.transform : other.transform;
             actor = actorRoot.gameObject;
             if (ignoreOwner && owner != null && (actorRoot == owner || actorRoot.IsChildOf(owner) || owner.IsChildOf(actorRoot))) return false;
             bool layerMatches = ((1 << other.gameObject.layer) & targetLayers.value) != 0 || ((1 << actor.layer) & targetLayers.value) != 0;
@@ -81,10 +85,24 @@ namespace TexasJawTrap
             if (!IsArmed) return;
             IsUsed = true; CaughtActor = actor; closing = true; progress = 0;
             contactTrigger.enabled = false;
+            float duration = Mathf.Max(.01f, stunDuration);
+            consumedTime = Time.time + duration;
+            if (actor != null)
+            {
+                EnemyTrapStun stun = actor.GetComponent<EnemyTrapStun>();
+                if (stun == null) stun = actor.AddComponent<EnemyTrapStun>();
+                stun.ApplyStun(duration);
+            }
             onTriggered.Invoke(actor);
         }
         void Update()
         {
+            // 설치할 때는 삭제하지 않습니다. 적이 밟고 스턴 시간이 끝났을 때만 삭제합니다.
+            if (IsUsed && removeAfterUse && Time.time >= consumedTime)
+            {
+                Destroy(gameObject);
+                return;
+            }
             if (!closing) return;
             progress = Mathf.MoveTowards(progress, 1f, Time.deltaTime / Mathf.Max(.01f, closeDuration));
             float t = 1f - (1f - progress) * (1f - progress);
@@ -94,7 +112,6 @@ namespace TexasJawTrap
             if (progress >= 1f)
             {
                 closing = false;
-                if (removeAfterUse) Destroy(gameObject, Mathf.Max(0, removeDelay));
                 onClosed.Invoke();
             }
         }

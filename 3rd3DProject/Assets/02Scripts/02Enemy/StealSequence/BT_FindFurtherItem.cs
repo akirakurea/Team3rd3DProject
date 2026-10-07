@@ -11,6 +11,11 @@ public class BT_FindFurtherItem : BT_Leaf
 
     public override BT_NodeStatus Evaluate()
     {
+        //타겟이 있으면 성공처리해서 밑에 매서드 안읽게
+        if(blackboard.TargetItem != null)
+        {
+            return BT_NodeStatus.Success;
+        }
         var items = ItemManager2.Instance.GetRemainingItems();
         if (items == null || items.Count == 0)
         {
@@ -32,6 +37,11 @@ public class BT_FindFurtherItem : BT_Leaf
         foreach(var item in items)
         {
             if(item == null) continue;
+            if (item.activeInHierarchy == false) continue;
+
+            var itemComp = item.GetComponent<Items2>();
+            if (itemComp != null && itemComp.IsReserved) continue;//다른 도둑이 노릴경우
+
             float distanceToPlayer = Vector3.Distance(item.transform.position, player.position);
             float distanceToThiedf = Vector3.Distance(item.transform.position, thief.position);
 
@@ -48,7 +58,9 @@ public class BT_FindFurtherItem : BT_Leaf
         }
         if(furherItem != null)
         {
-            blackboard.TargetItem = furherItem;
+            blackboard.SetTarget(furherItem);//타겟 지정 및 예약
+            //blackboard.TargetItem = furherItem;
+            //furherItem.GetComponent<Items2>().IsReserved = true; //예약
             Debug.Log($"[BT]아이템 찾기 성공 : {furherItem.name}");
             return BT_NodeStatus.Success;
         }
