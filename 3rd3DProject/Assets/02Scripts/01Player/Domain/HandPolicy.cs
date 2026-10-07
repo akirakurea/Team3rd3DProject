@@ -37,3 +37,22 @@ public interface IEquipmentPort
     bool TryEquip();
     void Unequip();
 }
+
+public enum RegisteredCommand { None, Capture, Hold, Store, Drop }
+
+/// <summary>F 대상과 저장 가능 여부만 판단합니다. 손 상태는 변경하지 않습니다.</summary>
+public static class RegisteredInteractionPolicy
+{
+    public static RegisteredCommand Decide(bool enabled, bool busy, bool hasTarget, bool enemy,
+        bool inventoryReady, bool hasSpace)
+    {
+        if (!enabled || busy || !hasTarget) return RegisteredCommand.None;
+        if (enemy) return RegisteredCommand.Capture;
+        return inventoryReady && hasSpace ? RegisteredCommand.Store : RegisteredCommand.None;
+    }
+
+    // 이전 호출 형식과 호환됩니다. 두 손 상태는 더 이상 F 획득 결과에 영향을 주지 않습니다.
+    public static RegisteredCommand Decide(bool enabled, bool busy, bool hasTarget, bool enemy,
+        bool inventoryReady, bool hasSpace, bool holdingRegistered, bool holdingOther) =>
+        Decide(enabled, busy, hasTarget, enemy, inventoryReady, hasSpace);
+}

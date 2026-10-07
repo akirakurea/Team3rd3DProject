@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 ///
 /// - 숫자키 1~5로 직접 선택
 /// - 마우스 휠로 이전/다음 칸 순환 선택
-/// - 결과 화면/승패 화면처럼 시간이 정지(Time.timeScale = 0)된 동안에는 키/휠 입력을 무시한다
+/// - 직접 입력이 꺼졌거나 창의 포커스가 없거나 시간이 정지된 동안에는 키/휠 입력을 무시한다
 ///
 /// 고양이 컨트롤러는 SelectedIndex / SelectedItem을 읽어서 사용하면 된다.
 ///   예) var item = HotbarManager.Instance.SelectedItem;
@@ -20,8 +20,21 @@ public class HotbarManager : MonoBehaviour
     public static HotbarManager Instance { get; private set; }
 
     [SerializeField] private HotbarItemData[] slots = new HotbarItemData[5];
+    [Tooltip("끄면 숫자키·휠로 칸을 선택하지 않습니다. 코드와 UI의 Select 호출은 유지됩니다.")]
+    public bool readSelectionInput = true;
 
     public int SlotCount => slots.Length;
+    public bool HasSpace => FirstEmptySlot >= 0;
+    /// <summary>가장 왼쪽 빈 칸의 번호입니다. 빈 칸이 없으면 -1입니다.</summary>
+    public int FirstEmptySlot
+    {
+        get
+        {
+            for (int i = 0; i < slots.Length; i++)
+                if (slots[i] == null) return i;
+            return -1;
+        }
+    }
     public int SelectedIndex { get; private set; } = 0;
     public HotbarItemData SelectedItem => (SelectedIndex >= 0 && SelectedIndex < slots.Length) ? slots[SelectedIndex] : null;
     public HotbarItemData GetSlot(int index) => (index >= 0 && index < slots.Length) ? slots[index] : null;
@@ -55,8 +68,8 @@ public class HotbarManager : MonoBehaviour
 
     private void Update()
     {
-        // 시간이 멈춘 화면(결과창, 승리/패배)에서는 핫바 선택을 바꾸지 않는다
-        if (Time.timeScale <= 0f) return;
+        // 다른 입력 담당자가 선택을 제어할 때는 직접 키·휠 입력을 읽지 않습니다.
+        if (!readSelectionInput || !Application.isFocused || Time.timeScale <= 0f) return;
 
         HandleNumberKeys();
         HandleScrollWheel();
@@ -71,24 +84,36 @@ public class HotbarManager : MonoBehaviour
     }
 
     /// <summary>아이템 획득. 왼쪽 빈 칸부터 채운다. 가득 차면 false.</summary>
-    public bool TryAdd(HotbarItemData item)
+    public bool TryAdd(HotbarItemData item) => TryAdd(item, out _);
+
+    /// <summary>아이템을 넣은 칸도 반환합니다. null 또는 빈 칸 없음이면 false와 -1입니다.</summary>
+    public bool TryAdd(HotbarItemData item, out int slotIndex)
     {
-        for (int i = 0; i < slots.Length; i++)
-        {
-            if (slots[i] != null) continue;
-            slots[i] = item;
-            OnSlotChanged?.Invoke(i);
-            return true;
-        }
-        return false;
+        slotIndex = -1;
+        if (item == null) return false;
+        slotIndex = FirstEmptySlot;
+        if (slotIndex < 0) return false;
+
+        slots[slotIndex] = item;
+        OnSlotChanged?.Invoke(slotIndex);
+        return true;
+    }
+
+    /// <summary>지정한 칸에 예상한 아이템이 있을 때만 제거합니다. 다른 아이템은 변경하지 않습니다.</summary>
+    public bool TryRemove(int slotIndex, HotbarItemData expected)
+    {
+        if (expected == null || slotIndex < 0 || slotIndex >= slots.Length || slots[slotIndex] != expected)
+            return false;
+
+        slots[slotIndex] = null;
+        OnSlotChanged?.Invoke(slotIndex);
+        return true;
     }
 
     /// <summary>선택 칸의 아이템을 사용한 것으로 처리해 칸을 비운다.</summary>
     public void ConsumeSelected()
     {
-        if (SelectedItem == null) return;
-        slots[SelectedIndex] = null;
-        OnSlotChanged?.Invoke(SelectedIndex);
+        TryRemove(SelectedIndex, SelectedItem);
     }
 
     private void HandleNumberKeys()

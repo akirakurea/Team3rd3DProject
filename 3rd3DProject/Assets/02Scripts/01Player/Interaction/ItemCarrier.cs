@@ -7,7 +7,6 @@ public sealed class ItemCarrier : IDisposable
     const float Skin = 0.015f;
     const float HoldHeight = 0.75f;
     const float HoldDistance = 0.8f;
-    const float DropDistance = 3f;
     readonly Transform actor;
     readonly Camera view;
     readonly RaycastHit[] hits = new RaycastHit[64];
@@ -16,12 +15,8 @@ public sealed class ItemCarrier : IDisposable
     Rigidbody heldBody;
     Collider[] heldColliders;
     bool[] colliderWasEnabled;
-    bool wasKinematic;
-    bool usedGravity;
     bool wasAvailable;
     CollisionDetectionMode collisionMode;
-    Vector3 linearVelocity;
-    Vector3 angularVelocity;
     Vector3 lastSafePosition;
     Vector3 centerOffset;
     Vector3 halfExtents;
@@ -66,13 +61,9 @@ public sealed class ItemCarrier : IDisposable
 
         heldColliders = item.GetComponentsInChildren<Collider>(true);
         colliderWasEnabled = new bool[heldColliders.Length];
-        wasKinematic = heldBody.isKinematic;
-        usedGravity = heldBody.useGravity;
         wasAvailable = item.IsAvailable;
         collisionMode = heldBody.collisionDetectionMode;
-        linearVelocity = wasKinematic ? Vector3.zero : heldBody.linearVelocity;
-        angularVelocity = wasKinematic ? Vector3.zero : heldBody.angularVelocity;
-        if (!wasKinematic)
+        if (!heldBody.isKinematic)
         {
             heldBody.linearVelocity = Vector3.zero;
             heldBody.angularVelocity = Vector3.zero;
@@ -120,45 +111,13 @@ public sealed class ItemCarrier : IDisposable
 
     public bool TryDrop()
     {
-        if (disposed || !held || !heldBody || !actor) return false;
-        Vector3 forward = Forward();
-        Vector3 right = Vector3.Cross(Vector3.up, forward);
-        for (int candidate = 0; candidate < 5; candidate++)
-        {
-            Vector3 start = lastSafePosition;
-            if (candidate > 0)
-            {
-                float sideways = candidate <= 2 ? (candidate == 1 ? 0.6f : -0.6f) : 0;
-                float ahead = candidate == 3 ? 1.15f : candidate == 4 ? 0.45f : HoldDistance;
-                start = actor.position + Vector3.up * HoldHeight + forward * ahead + right * sideways - centerOffset;
-            }
-            if (!ClearPath(lastSafePosition, start) || !ClearSpace(start, true)) continue;
-            if (!TrySweep(start, Vector3.down, DropDistance, out var ground, out bool supported) ||
-                !supported || ground.normal.y < 0.55f) continue;
-
-            Vector3 landing = start + Vector3.down * Mathf.Max(0, ground.distance - Skin);
-            // 복원한 충돌체가 플레이어를 밀지 않도록 최종 착지는 플레이어도 검사합니다.
-            if (!ClearSpace(landing, false)) continue;
-            MoveTo(landing);
-            Restore();
-            return true;
-        }
-        return false;
+        if (disposed || !held || !heldBody) return false;
+        Restore();
+        return true;
     }
 
-    /// <summary>보유를 즉시 끝냅니다. 안전한 착지가 불가능하면 아이템이 직접 분리·물리 복구를 맡습니다.</summary>
-    public void Release()
-    {
-        if (!held || !heldBody) return;
-        if (TryDrop()) return;
-        var releasedItem = held;
-        var savedColliders = heldColliders;
-        var savedFlags = colliderWasEnabled;
-        bool savedAvailability = wasAvailable;
-        // 물리 복구를 기다리더라도 손은 즉시 비우고 카메라 추적을 끝냅니다.
-        ClearCache();
-        releasedItem.BeginReleaseRecovery(savedColliders, savedFlags, savedAvailability);
-    }
+    /// <summary>현재 위치에서 손을 비우고 기존 Rigidbody의 중력으로 놓습니다.</summary>
+    public void Release() => TryDrop();
 
     Vector3 HoldPoint(float distance)
     {
@@ -171,7 +130,7 @@ public sealed class ItemCarrier : IDisposable
     public void Dispose()
     {
         if (disposed) return;
-        // 물리 복구 대기는 아이템이 소유하므로 플레이어가 비활성화되어도 유실되지 않습니다.
+        // 플레이어가 비활성화되어도 물건은 현재 위치에서 낙하합니다.
         Release();
         Restore();
         disposed = true;
@@ -229,14 +188,6 @@ public sealed class ItemCarrier : IDisposable
         return true;
     }
 
-    bool ClearPath(Vector3 from, Vector3 to)
-    {
-        Vector3 delta = to - from;
-        float distance = delta.magnitude;
-        if (distance <= 0.0001f) return true;
-        return TrySweep(from, delta / distance, distance, out _, out bool blocked) && !blocked;
-    }
-
     void MoveTo(Vector3 position)
     {
         lastSafePosition = position;
@@ -252,24 +203,26 @@ public sealed class ItemCarrier : IDisposable
 
     void Restore()
     {
-        if (heldBody)
-        {
-            heldBody.position = lastSafePosition;
-            heldBody.rotation = heldRotation;
-            heldBody.isKinematic = wasKinematic;
-            heldBody.useGravity = usedGravity;
-            heldBody.collisionDetectionMode = collisionMode;
-            if (!wasKinematic)
-            {
-                heldBody.linearVelocity = linearVelocity;
-                heldBody.angularVelocity = angularVelocity;
-            }
-        }
-        if (heldColliders != null)
-            for (int i = 0; i < heldColliders.Length; i++)
-                if (heldColliders[i]) heldColliders[i].enabled = colliderWasEnabled[i];
-        if (held) held.IsAvailable = wasAvailable;
+        var released = held;
+        var body = heldBody;
+        var colliders = heldColliders;
+        var enabled = colliderWasEnabled;
+        bool available = wasAvailable;
         ClearCache();
+        if (colliders != null)
+            for (int i = 0; i < colliders.Length; i++)
+                if (colliders[i]) colliders[i].enabled = enabled[i];
+        if (body)
+        {
+            // 위치·회전은 그대로 두며, 집기 전 속도를 다시 적용하지 않습니다.
+            body.isKinematic = false;
+            body.useGravity = true;
+            body.collisionDetectionMode = collisionMode;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+            body.WakeUp();
+        }
+        if (released) released.IsAvailable = available;
     }
 
     void ClearCache()
@@ -279,5 +232,283 @@ public sealed class ItemCarrier : IDisposable
         heldColliders = null;
         colliderWasEnabled = null;
         pickupStage = PickupStage.Following;
+    }
+}
+
+
+/// <summary>등록된 월드 원본을 복제하거나 재부모화하지 않고 운반합니다.</summary>
+public sealed class RegisteredItemCarrier : IDisposable
+{
+    const float Skin = .015f;
+    const float HoldHeight = .75f;
+    readonly Transform actor;
+    readonly Camera view;
+    readonly RaycastHit[] hits = new RaycastHit[64];
+    readonly Collider[] overlaps = new Collider[64];
+    GameObject held;
+    Transform originalParent;
+    Quaternion originalRotation;
+    Vector3 centerOffset, halfExtents, lastSafePosition;
+    BodyState[] bodies;
+    Collider[] colliders;
+    bool[] colliderEnabled;
+    CatInteractionItem[] items;
+    bool[] itemAvailable;
+    bool disposed;
+
+    struct BodyState
+    {
+        public Rigidbody Body;
+        public bool Kinematic, Gravity;
+        public CollisionDetectionMode CollisionMode;
+        public Vector3 Velocity, AngularVelocity;
+    }
+
+    public GameObject Held => held;
+
+    public RegisteredItemCarrier(Transform actor, Camera view)
+    {
+        this.actor = actor;
+        this.view = view;
+    }
+
+    public bool TryBegin(GameObject root)
+    {
+        if (disposed || held || colliders != null || !actor || !root || !root.activeInHierarchy) return false;
+        Transform target = root.transform;
+        // 플레이어 본체나 플레이어가 포함된 부모를 실수로 운반하지 않습니다.
+        if (target == actor || target.IsChildOf(actor) || actor.IsChildOf(target)) return false;
+
+        var foundColliders = root.GetComponentsInChildren<Collider>(true);
+        var foundBodies = root.GetComponentsInChildren<Rigidbody>(true);
+        var foundItems = root.GetComponentsInChildren<CatInteractionItem>(true);
+        var foundRenderers = root.GetComponentsInChildren<Renderer>(true);
+        Bounds bounds = default;
+        bool hasBounds = false;
+        foreach (var collider in foundColliders)
+        {
+            var attachedBody = collider.attachedRigidbody;
+            if (attachedBody && attachedBody.transform != target && !attachedBody.transform.IsChildOf(target))
+                return false; // 다른 등록 루트의 복합 충돌체 일부만 떼어 움직이지 않습니다.
+            if (collider.enabled && collider.gameObject.activeInHierarchy && !collider.isTrigger)
+                IncludeBounds(collider.bounds, ref bounds, ref hasBounds);
+        }
+        foreach (var renderer in foundRenderers)
+            if (renderer.enabled && renderer.gameObject.activeInHierarchy)
+                IncludeBounds(renderer.bounds, ref bounds, ref hasBounds);
+        foreach (var item in foundItems)
+            if (item.isActiveAndEnabled && !item.IsAvailable) return false;
+        if (!hasBounds || !Finite(bounds.center) || !Finite(bounds.extents) || bounds.size.sqrMagnitude < .000001f)
+            return false;
+
+        // 성공 전 검사는 캐시에만 기록하며, 원본 Transform과 물리 상태를 건드리지 않습니다.
+        held = root;
+        originalParent = target.parent;
+        originalRotation = target.rotation;
+        lastSafePosition = target.position;
+        centerOffset = bounds.center - lastSafePosition;
+        halfExtents = bounds.extents;
+        colliders = foundColliders;
+        colliderEnabled = new bool[colliders.Length];
+        for (int i = 0; i < colliders.Length; i++) colliderEnabled[i] = colliders[i].enabled;
+        if (!ClearSpace(lastSafePosition, true))
+        {
+            ClearCache();
+            return false;
+        }
+        bodies = new BodyState[foundBodies.Length];
+        for (int i = 0; i < bodies.Length; i++)
+        {
+            var body = foundBodies[i];
+            bodies[i] = new BodyState
+            {
+                Body = body, Kinematic = body.isKinematic, Gravity = body.useGravity,
+                CollisionMode = body.collisionDetectionMode,
+                Velocity = body.isKinematic ? Vector3.zero : body.linearVelocity,
+                AngularVelocity = body.isKinematic ? Vector3.zero : body.angularVelocity
+            };
+        }
+        items = foundItems;
+        itemAvailable = new bool[items.Length];
+        for (int i = 0; i < items.Length; i++) itemAvailable[i] = items[i].IsAvailable;
+        try
+        {
+            foreach (var state in bodies)
+            {
+                var body = state.Body;
+                if (!body.isKinematic) { body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; }
+                body.collisionDetectionMode = CollisionDetectionMode.Discrete;
+                body.isKinematic = true;
+                body.useGravity = false;
+            }
+            foreach (var collider in colliders) collider.enabled = false;
+            foreach (var item in items) item.IsAvailable = false;
+            return true;
+        }
+        catch
+        {
+            // 시작 도중 실패하면 속도까지 원래 상태로 돌려 실패를 원자적으로 처리합니다.
+            Restore(false);
+            return false;
+        }
+    }
+
+    public void Tick(float dt, float holdDistance = .8f)
+    {
+        if (disposed) return;
+        if (!held || !held.activeInHierarchy)
+        {
+            Restore(true);
+            return;
+        }
+        if (!actor || !PoseUnchanged() || !Finite(dt) || dt <= 0 || !Finite(holdDistance)) return;
+        if (!ClearSpace(lastSafePosition, true)) return;
+        Vector3 target = HoldPoint(holdDistance) - centerOffset;
+        Vector3 desired = Vector3.Lerp(lastSafePosition, target, 1 - Mathf.Exp(-16 * dt));
+        Vector3 delta = desired - lastSafePosition;
+        float distance = delta.magnitude;
+        if (distance < .0001f) return;
+        Vector3 direction = delta / distance;
+        int count = Physics.BoxCastNonAlloc(lastSafePosition + centerOffset, QueryExtents,
+            direction, hits, Quaternion.identity, distance, ~0, QueryTriggerInteraction.Ignore);
+        if (count == hits.Length) return; // 결과가 잘렸다면 보이지 않은 벽을 통과하지 않습니다.
+        float allowedDistance = distance;
+        for (int i = 0; i < count; i++)
+            if (IsBlocking(hits[i].collider, true))
+                allowedDistance = Mathf.Min(allowedDistance, Mathf.Max(0, hits[i].distance - Skin));
+        desired = lastSafePosition + direction * allowedDistance;
+        if (!ClearSpace(desired, true)) return;
+        MoveTo(desired);
+    }
+
+    /// <summary>현재 위치에서 기존 Rigidbody의 중력으로 놓습니다.</summary>
+    public bool TryDrop() => TryDrop(null);
+
+    /// <summary>슬롯 변경이 성공했을 때만 손을 비우고 현재 위치에서 놓습니다.</summary>
+    public bool TryDrop(Func<bool> commit)
+    {
+        if (disposed || !held || !held.activeInHierarchy) return false;
+        if (commit != null && !commit()) return false;
+        Restore(true, true);
+        return true;
+    }
+
+    /// <summary>월드 원본의 위치는 유지하고 비활성화하여 인벤토리에서 보관합니다.</summary>
+    public void Store()
+    {
+        if (disposed) return;
+        GameObject stored = held;
+        Restore(true);
+        if (stored) stored.SetActive(false);
+    }
+
+    public void Dispose()
+    {
+        if (disposed) return;
+        disposed = true;
+        // 정리 시에도 원본 삭제·복제·원래 위치로의 순간 이동을 하지 않습니다.
+        Restore(true);
+    }
+
+    static void IncludeBounds(Bounds candidate, ref Bounds bounds, ref bool hasBounds)
+    {
+        if (!hasBounds) { bounds = candidate; hasBounds = true; }
+        else bounds.Encapsulate(candidate);
+    }
+
+    static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+    static bool Finite(Vector3 value) => Finite(value.x) && Finite(value.y) && Finite(value.z);
+    Vector3 QueryExtents => Vector3.Max(halfExtents - Vector3.one * (Skin * .25f), Vector3.one * .002f);
+
+    bool PoseUnchanged() => held.transform.parent == originalParent &&
+        Quaternion.Angle(held.transform.rotation, originalRotation) < .01f;
+
+    Vector3 HoldPoint(float distance)
+    {
+        float reach = Mathf.Max(.3f, distance);
+        if (!view) return actor.position + Vector3.up * HoldHeight + actor.forward * reach;
+        var ray = view.ViewportPointToRay(new Vector3(.5f, .5f));
+        float actorDepth = Vector3.Dot(actor.position + Vector3.up * HoldHeight - ray.origin, ray.direction);
+        return ray.GetPoint(Mathf.Max(.4f, actorDepth + reach));
+    }
+
+    bool IsBlocking(Collider other, bool ignoreActor)
+    {
+        if (!other || !held || other.isTrigger || other.transform == held.transform ||
+            other.transform.IsChildOf(held.transform)) return false;
+        if (ignoreActor && actor && (other.transform == actor || other.transform.IsChildOf(actor))) return false;
+        bool hadSolidCollider = false;
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            var own = colliders[i];
+            if (!own || !colliderEnabled[i] || own.isTrigger || !own.gameObject.activeInHierarchy) continue;
+            hadSolidCollider = true;
+            if (!Physics.GetIgnoreLayerCollision(own.gameObject.layer, other.gameObject.layer) &&
+                !Physics.GetIgnoreCollision(own, other)) return true;
+        }
+        return !hadSolidCollider && !Physics.GetIgnoreLayerCollision(held.layer, other.gameObject.layer);
+    }
+
+    bool ClearSpace(Vector3 position, bool ignoreActor)
+    {
+        // 시작 때의 월드 경계와 회전을 유지합니다. 모델·Collider 모양은 수정하지 않습니다.
+        int count = Physics.OverlapBoxNonAlloc(position + centerOffset, QueryExtents, overlaps,
+            Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+        if (count == overlaps.Length) return false;
+        for (int i = 0; i < count; i++) if (IsBlocking(overlaps[i], ignoreActor)) return false;
+        return true;
+    }
+
+    void MoveTo(Vector3 position)
+    {
+        held.transform.position = position;
+        // 보간을 사용하는 하위 Rigidbody도 같은 원본 계층의 현재 위치에 동기화합니다.
+        foreach (var state in bodies)
+            if (state.Body) state.Body.position = state.Body.transform.position;
+        lastSafePosition = position;
+    }
+
+    void Restore(bool clearVelocity, bool drop = false)
+    {
+        // 먼저 캐시를 분리해 반복 Dispose나 원본의 비활성화 콜백에도 한 번만 복원합니다.
+        var savedBodies = bodies;
+        var savedColliders = colliders;
+        var savedColliderEnabled = colliderEnabled;
+        var savedItems = items;
+        var savedItemAvailable = itemAvailable;
+        ClearCache();
+        if (savedColliders != null)
+            for (int i = 0; i < savedColliders.Length; i++)
+                if (savedColliders[i]) savedColliders[i].enabled = savedColliderEnabled[i];
+        if (savedBodies != null)
+            foreach (var state in savedBodies)
+            {
+                var body = state.Body;
+                if (!body) continue;
+                body.isKinematic = !drop && state.Kinematic;
+                body.useGravity = drop || state.Gravity;
+                body.collisionDetectionMode = state.CollisionMode;
+                if (!body.isKinematic)
+                {
+                    body.linearVelocity = drop || clearVelocity ? Vector3.zero : state.Velocity;
+                    body.angularVelocity = drop || clearVelocity ? Vector3.zero : state.AngularVelocity;
+                    if (drop) body.WakeUp();
+                }
+            }
+        if (savedItems != null)
+            for (int i = 0; i < savedItems.Length; i++)
+                if (savedItems[i]) savedItems[i].IsAvailable = savedItemAvailable[i];
+        if (savedColliders != null || savedBodies != null) Physics.SyncTransforms();
+    }
+
+    void ClearCache()
+    {
+        held = null;
+        originalParent = null;
+        bodies = null;
+        colliders = null;
+        colliderEnabled = null;
+        items = null;
+        itemAvailable = null;
     }
 }

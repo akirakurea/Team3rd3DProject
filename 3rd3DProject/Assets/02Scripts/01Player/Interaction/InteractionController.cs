@@ -1,5 +1,15 @@
 using UnityEngine;
 
+/// <summary>등록 대상의 F 상호작용과 기존 손 조작이 공유하는 최소 상태입니다.</summary>
+public interface IRegisteredInteraction
+{
+    GameObject HeldObject { get; }
+    bool ConsumesHandInput { get; }
+    IHighlightSource HoveredHighlight { get; }
+    bool TryStowHeld();
+    bool AcceptsTrigger(Collider collider);
+}
+
 /// <summary>화면 중심 조준 → 거리·가림 검사 → 모델 강조 및 아이템별 동작 연결.</summary>
 [DefaultExecutionOrder(10000)]
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "CatInteractionController")]
@@ -8,6 +18,8 @@ public sealed class InteractionController : MonoBehaviour
     [Header("연결")]
     public Camera view;
     public InventoryPickupEffect pickup;
+    [Tooltip("등록 물체의 F 획득과 손 점유 상태를 공유하는 기존 ItemInteractor입니다.")]
+    public MonoBehaviour registeredInteraction;
     [Tooltip("양손을 사용하는 장비. 장착 중에는 아이템을 집을 수 없습니다.")]
     public MonoBehaviour equipment;
     public Material highlightFill, highlightEdge, highlightHalo;
@@ -17,13 +29,17 @@ public sealed class InteractionController : MonoBehaviour
     public CatInteractionItem Target { get; private set; }
     public IHighlightSource HoveredHighlight { get; private set; }
     public CatInteractionItem Held => carrier?.Held;
+    IRegisteredInteraction Registered => registeredInteraction && registeredInteraction.isActiveAndEnabled
+        ? registeredInteraction as IRegisteredInteraction : null;
+    public bool IsInteractionEnabled => isActiveAndEnabled && input.Enabled && Time.timeScale > 0f;
+    public bool IsPickupBusy => Pickup != null && Pickup.IsBusy;
     public bool HasFreeHands
     {
         get
         {
             var pickupPort = Pickup;
             var weapon = Equipment;
-            return Held == null && (pickupPort == null || !pickupPort.IsBusy) &&
+            return Held == null && (Registered == null || !Registered.HeldObject) && (pickupPort == null || !pickupPort.IsBusy) &&
                 (weapon == null || !weapon.IsEquipped);
         }
     }
@@ -83,12 +99,14 @@ public sealed class InteractionController : MonoBehaviour
         ApplyHandCommand();
         // 장착이 실패해도 버튼을 뗀 물건을 계속 들지는 않습니다. 포커스 상실도 동일합니다.
         if (Held != null && (!input.Enabled || !input.GrabHeld)) ReleaseHeld();
-        highlight.SetTarget(HoveredHighlight);
+        highlight.SetTarget(Registered?.HoveredHighlight ?? HoveredHighlight);
         highlight.Draw();
     }
 
     void ApplyHandCommand()
     {
+        // 동시 입력의 이중 실행을 막습니다. 등록 대상 F 동작을 먼저 처리합니다.
+        if (Registered != null && Registered.ConsumesHandInput) return;
         var weapon = Equipment;
         var pickupPort = Pickup;
         var state = new HandState(Held != null, weapon != null && weapon.IsEquipped,
@@ -96,7 +114,7 @@ public sealed class InteractionController : MonoBehaviour
         switch (HandPolicy.Decide(input, state))
         {
             case HandCommand.Pickup:
-                TryPickup();
+                if (Registered == null || !Registered.HeldObject) TryPickup();
                 break;
             case HandCommand.Release:
                 ReleaseHeld();
@@ -126,6 +144,29 @@ public sealed class InteractionController : MonoBehaviour
         HoveredHighlight = source;
         Target = source as CatInteractionItem;
     }
+    /// <summary>손 점유와 무관한 중앙 포인터 검사. 실제 F 대상은 등록 목록으로 판별합니다.</summary>
+    public bool TryGetInteractionHit(float range, out RaycastHit hit)
+    {
+        hit = default;
+        if (!IsInteractionEnabled || !view || float.IsNaN(range) || float.IsInfinity(range) || range <= 0f) return false;
+        var ray = view.ViewportPointToRay(new Vector3(.5f, .5f, 0));
+        if (!Nearest(ray.origin, ray.direction, Vector3.Distance(view.transform.position, transform.position) + range + 1f, out hit, true)) return false;
+        Vector3 origin = transform.position + Vector3.up * .65f;
+        Vector3 delta = hit.point - origin;
+        if (delta.sqrMagnitude > range * range) return false;
+        return true;
+    }
+
+    public bool IsRegisteredTargetVisible(RaycastHit hit, Transform targetRoot)
+    {
+        if (!targetRoot || !hit.collider || !hit.collider.transform.IsChildOf(targetRoot)) return false;
+        Vector3 origin = transform.position + Vector3.up * .65f;
+        Vector3 delta = hit.point - origin;
+        RaycastHit obstruction = default;
+        bool blocked = delta.magnitude > .025f && Nearest(origin, delta.normalized, delta.magnitude, out obstruction);
+        return !queryOverflow && (!blocked || obstruction.collider.transform.IsChildOf(targetRoot));
+    }
+
     static IHighlightSource FindHighlightSource(Collider collider)
     {
         // 기존 아이템의 예약·비활성 상태가 별도 강조 컴포넌트로 우회되지 않게 합니다.
@@ -133,17 +174,20 @@ public sealed class InteractionController : MonoBehaviour
         if (item != null) return item;
         return collider.GetComponentInParent<IHighlightSource>();
     }
-    bool Nearest(Vector3 origin, Vector3 direction, float distance, out RaycastHit result)
+    bool Nearest(Vector3 origin, Vector3 direction, float distance, out RaycastHit result, bool registeredTriggers = false)
     {
         result = default; float closest = float.PositiveInfinity;
-        int count = Physics.RaycastNonAlloc(origin, direction, hits, distance, solidLayers, QueryTriggerInteraction.Ignore);
+        int count = Physics.RaycastNonAlloc(origin, direction, hits, distance, solidLayers, registeredTriggers ? QueryTriggerInteraction.Collide : QueryTriggerInteraction.Ignore);
         // 버퍼가 넘치면 벽을 건너뛰는 대신 이번 프레임 선택을 거부합니다.
         queryOverflow = count == hits.Length;
         if (queryOverflow) return false;
         for (int i = 0; i < count; i++)
         {
             var h = hits[i];
+            // 덫의 기존 Trigger를 변경하지 않습니다. 등록된 대상만 F 선택 후보로 허용합니다.
+            if (h.collider.isTrigger && (!registeredTriggers || Registered == null || !Registered.AcceptsTrigger(h.collider))) continue;
             if (h.collider.transform.IsChildOf(transform) || (Held != null && h.collider.transform.IsChildOf(Held.transform))) continue;
+            if (Registered != null && Registered.HeldObject && h.collider.transform.IsChildOf(Registered.HeldObject.transform)) continue;
             if (h.distance < closest) { closest = h.distance; result = h; }
         }
         return closest < float.PositiveInfinity;
@@ -173,6 +217,7 @@ public sealed class InteractionController : MonoBehaviour
         }
         var pickupPort = Pickup;
         if (!weapon.IsReady || (pickupPort != null && pickupPort.IsBusy)) return false;
+        if (Registered != null && Registered.HeldObject && !Registered.TryStowHeld()) return false;
         if (Held != null && !carrier.TryDrop()) return false;
         ClearTarget();
         return weapon.TryEquip();
