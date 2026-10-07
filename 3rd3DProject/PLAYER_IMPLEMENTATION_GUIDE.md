@@ -18,7 +18,7 @@
 | 발사 클립 | `Assets/03Sprites/Player/Animations/Shotgun_Fire.anim` |
 | 산탄 원 재질 | `Assets/03Sprites/Player/Weapons/Shotgun/Shotgun_SpreadRing.mat` |
 
-이번 재구현은 기존 Player C#, 허용 씬의 플레이어·카메라 연결, 기존 작업 문서 3개를 수정하는 범위입니다. 현재 `.meta` 1,046개와 GUID를 유지하고, 파일 정리·이동·삭제·이름 변경을 하지 않습니다. Rat·Enemy·Mouse 코드, 다른 씬과 프로젝트 설정도 수정하지 않습니다. 과거 삭제 승인이나 다른 프로젝트 사본을 자동 복원 근거로 사용하지 않습니다.
+이번 작업은 기존 Player C#의 좌클릭 집기·가독성·책임 분리를 다듬고 작업 문서를 갱신하는 범위입니다. 사용자가 요청한 C# 40개의 이름을 간단하게 바꾸되 폴더 구조를 유지합니다. 짝이 되는 `.meta`는 경로만 함께 바꾸고 내용과 GUID는 그대로 보존합니다. 다른 파일의 정리·이동·삭제·이름 변경은 포함하지 않습니다. Rat·Enemy·Mouse 코드, 다른 씬과 프로젝트 설정도 수정하지 않습니다. 과거 삭제 승인이나 다른 프로젝트 사본을 자동 복원 근거로 사용하지 않습니다.
 
 ## 조작 방법
 
@@ -28,16 +28,18 @@
 | Shift + WASD | 달리기. 샷건 줌 중에는 걷기 |
 | 이동 키를 누르지 않음 | 대기 |
 | 마우스 이동 | 정지: 멈춘 방향에서 좌우60도 / 이동: 수평360도. 상하 범위는 기존과 같음 |
-| 빈손에서 마우스 우클릭을 누르고 유지 | 중앙 커서가 가리키는 물건을 화면 중앙에 들기 |
-| 우클릭에서 손을 뗌 | 즉시 보유 종료·내려놓기 |
+| 빈손에서 마우스 좌클릭을 누르고 유지 | 중앙 커서가 가리키는 물건을 화면 중앙에 들기 |
+| 빈손 집기에 사용한 좌클릭에서 손을 뗌 | 즉시 보유 종료·내려놓기 |
 | 숫자 1 | 기존 빨강·파랑 샷건을 즉시 양손으로 잡기 / 다시 누르면 해제 |
 | 샷건 장착 중 우클릭 유지 | 줌·조준, 이동은 걷기로 고정. 떼면 기본 시야로 복귀 |
 | 샷건 장착 중 좌클릭 | 한 번 누를 때 4발 산탄 발사. 누르고 있어도 연속 발사하지 않음 |
-| Esc / 왼쪽 클릭 | 마우스 잠금 해제 / 다시 잠금 |
+| Esc / 왼쪽 클릭 | 마우스 잠금 해제 / 다시 잠금. 재잠금 클릭으로는 집기·발사하지 않음 |
 
-실린더는 우클릭을 새로 누를 때 집고 버튼을 누르는 동안만 듭니다. 떼면 내려놓습니다. 기존 F 보유 토글은 제거했습니다. 장애물이 없으면 물건의 중심이 중앙 포인터와 겹칩니다. 벽에 걸리거나 선반에서 빠져나오는 동안에는 충돌을 피하는 위치가 우선합니다. 바닥을 못 찾으면 빈 공간에서 중력으로 놓습니다. 새 장애물과 완전히 겹쳐 안전한 위치가 없다면 손은 즉시 비우고 물건은 그 자리에 잠시 멈춥니다. 공간이 생긴 뒤 충돌과 중력을 켜므로 플레이어나 벽을 강제로 밀지 않습니다. 큐브는 기존처럼 등록된 인벤토리 UI로 이동하는 획득 연출이며, UI가 없으면 그대로 남습니다.
+빈손 우클릭은 물건을 집지 않습니다. Esc로 마우스를 푼 뒤 화면을 다시 잠그는 좌클릭도 집기에 쓰지 않습니다. 다시 잠근 다음 새로 클릭해야 집습니다.
 
-물건을 든 상태에서 1을 누르면 안전하게 내려놓을 수 있을 때만 내려놓고 샷건을 잡습니다. 바닥이나 공간이 부족하면 기존 물건을 계속 듭니다. 총을 이미 들었을 때 1을 또 누르면 총을 숨기고 원래 손 동작으로 돌아갑니다. 총 장착 중에는 다른 물건 집기를 막습니다. 소환 효과·소환 애니메이션은 사용하지 않습니다. 발사는 아래 조준·발사 기능에서 처리합니다. 외부 입력·버튼에서는 `CatInteractionController.TryToggleEquipment()`를 사용합니다. `CatShotgunEquipment`는 장비와 손 자세만 맡으므로 그 안에 입력 검사나 아이템 내려놓기 규칙을 넣지 않습니다.
+실린더는 좌클릭을 새로 누를 때 집고 버튼을 누르는 동안만 듭니다. 떼면 내려놓습니다. 기존 F 보유 토글은 제거했습니다. 장애물이 없으면 물건의 중심이 중앙 포인터와 겹칩니다. 벽에 걸리거나 선반에서 빠져나오는 동안에는 충돌을 피하는 위치가 우선합니다. 바닥을 못 찾으면 빈 공간에서 중력으로 놓습니다. 새 장애물과 완전히 겹쳐 안전한 위치가 없다면 손은 즉시 비우고 물건은 그 자리에 잠시 멈춥니다. 공간이 생긴 뒤 충돌과 중력을 켜므로 플레이어나 벽을 강제로 밀지 않습니다. 큐브는 기존처럼 등록된 인벤토리 UI로 이동하는 획득 연출이며, UI가 없으면 그대로 남습니다.
+
+물건을 든 상태에서 1을 누르면 안전하게 내려놓을 수 있을 때만 내려놓고 샷건을 잡습니다. 바닥이나 공간이 부족하면 기존 물건을 계속 듭니다. 총을 이미 들었을 때 1을 또 누르면 총을 숨기고 원래 손 동작으로 돌아갑니다. 총 장착 중에는 다른 물건 집기를 막습니다. 소환 효과·소환 애니메이션은 사용하지 않습니다. 발사는 아래 조준·발사 기능에서 처리합니다. 외부 입력·버튼에서는 `InteractionController.TryToggleEquipment()`를 사용합니다. `ShotgunEquipment`는 장비와 손 자세만 맡으므로 그 안에 입력 검사나 아이템 내려놓기 규칙을 넣지 않습니다.
 
 ## 어디에 무엇이 있나요?
 
@@ -45,21 +47,21 @@
 
 | 폴더·파일 | 맡은 일 |
 | --- | --- |
-| `Core/CatPlayerMotor.cs` | 입력·이동·동작 재생을 연결하는 중심 |
-| `Input/CatPlayerInput.cs` | WASD와 Shift를 이동 의도로 바꿈 |
+| `Core/PlayerController.cs` | 입력·이동·동작 재생을 연결하는 중심 |
+| `Input/PlayerInput.cs` | WASD와 Shift를 이동 의도로 바꿈 |
 | `Movement/` | 실제 이동과 작은 턱 넘기 |
-| `Animation/CatPlayerAnimation.cs` | 대기·걷기·달리기 선택 |
+| `Animation/PlayerAnimation.cs` | 대기·걷기·달리기 선택 |
 | `Camera/` | Cinemachine 마우스 입력과 커서 잠금 |
-| `Interaction/CatInteractionController.cs` | 중앙 조준 검사, 순수 손 규칙 결과를 들기·장착 기능에 연결 |
-| `Interaction/CatItemCarrier.cs` | 선반에서 꺼내기, 들고 이동하기, 안전하게 내려놓기 |
+| `Interaction/InteractionController.cs` | 중앙 조준 검사, 순수 손 규칙 결과를 들기·장착 기능에 연결 |
+| `Interaction/ItemCarrier.cs` | 선반에서 꺼내기, 들고 이동하기, 안전하게 내려놓기 |
 | `Interaction/CatInteractionItem.cs` | 물건 종류와 교체 가능한 외형 지정 |
 | `Interaction/Presentation/` | 중앙 커서, 노란 강조, 인벤토리로 날아가는 표시 |
-| `Equipment/CatShotgunEquipment.cs` | 총 표시·숨김과 양손 위치 맞추기. 입력을 직접 읽지 않음 |
-| `Editor/Setup/CatEquipmentSetup.cs` | 기존 샷건 에셋을 연결. 이미 조절한 자세는 보존 |
-| `Editor/Validation/CatInteractionValidation.cs` | 변경된 들기·1번 토글·UI·카메라·마찰을 Play에서 검사 |
+| `Equipment/ShotgunEquipment.cs` | 총 표시·숨김과 양손 위치 맞추기. 입력을 직접 읽지 않음 |
+| `Editor/Setup/EquipmentSetup.cs` | 기존 샷건 에셋을 연결. 이미 조절한 자세는 보존 |
+| `Editor/Validation/InteractionValidation.cs` | 변경된 들기·1번 토글·UI·카메라·마찰을 Play에서 검사 |
 | `Domain/` | Unity 없는 이동·손 사용·카메라 제한 규칙 |
-| `Input/CatInteractionInput.cs` | 우클릭 유지 상태와 숫자1을 단순한 값으로 변환 |
-| `Camera/CatCameraOrbitLimit.cs` | 순수 회전 범위 규칙을 Cinemachine 수평 축에 적용 |
+| `Input/InteractionInput.cs` | 좌클릭 유지 상태와 숫자1을 단순한 값으로 변환 |
+| `Camera/CameraOrbitLimit.cs` | 순수 회전 범위 규칙을 Cinemachine 수평 축에 적용 |
 
 샷건 모델과 프리팹은 `Assets/04Prefabs/Player/Weapons/Shotgun/`에 있습니다. `Shotgun01_RedBlue.fbx`가 모델이고, `Shotgun_Ready.prefab`은 외형과 양손 기준점을 묶은 재사용 묶음입니다. 같은 폴더의 빨강 총열·파랑 손잡이 등의 `.mat` 파일은 색상을 맡습니다. 산탄 범위 원 재질만 `Assets/03Sprites/Player/Weapons/Shotgun/Shotgun_SpreadRing.mat`에 있습니다.
 
@@ -68,12 +70,12 @@ Editor의 Setup 도구는 현재 연결을 재사용하고, 연결이 비었을 
 ## 어떻게 움직이나요?
 
 1. 카메라 정중앙에서 눈에 보이지 않는 검사 선을 쏩니다. 가까운 물건인지, 벽 뒤에 있지는 않은지 확인합니다.
-2. 빈손이고 우클릭을 새로 눌렀으면 기존 집기 기능을 호출합니다. `CatHandPolicy`가 집기·놓기·장착·해제 중 어떤 일을 할지 결정합니다. 입력 장치 자체는 `CatInteractionInput`만 읽습니다.
+2. 빈손이고 좌클릭을 새로 눌렀으면 기존 집기 기능을 호출합니다. `HandPolicy`가 집기·놓기·장착·해제 중 어떤 일을 할지 결정합니다. 입력 장치 자체는 `InteractionInput`만 읽습니다.
 3. 숫자 1은 장착 담당 코드로 들어갑니다. 연결이 올바른지 먼저 확인하고, 들고 있던 물건을 안전하게 내려놓습니다. 실패하면 장착하지 않습니다.
 4. 총은 미리 연결한 하나의 모델을 켜서 표시합니다. 매번 새 총을 만들지 않습니다. 예전 소환 동작의 마지막 잡는 자세를 참고했지만 소환 애니메이션 자체는 가져오지 않았습니다.
 5. Animator가 몸·꼬리·발의 기존 동작을 계산한 뒤, `LateUpdate`에서 양손 뼈만 `LeftGrip`·`RightGrip` 위치에 맞춥니다. Grip은 손이 놓일 기준점입니다. 다음 프레임에는 이전 손 보정을 풀고 다시 계산하여 위치가 계속 틀어지지 않게 합니다.
 
-강조할 모델은 `ICatHighlightSource`라는 공통 약속으로 찾습니다. 기존 아이템의 예약·사용 불가 상태를 먼저 확인하므로 강조용 컴포넌트로 집기 제한을 우회하지 않습니다. `CatItemHighlight`는 최근 모델의 강조용 메시를 보관해 조준을 잠깐 벗어났다가 돌아와도 재사용합니다. 대상 교체·외형 변경·대상 비활성화·파괴 때 임시 메시를 정리하며, 상호작용 컨트롤러가 비활성화될 때도 모두 해제합니다. 원본 모델 메시와 재질은 수정하지 않습니다.
+강조할 모델은 `IHighlightSource`라는 공통 약속으로 찾습니다. 기존 아이템의 예약·사용 불가 상태를 먼저 확인하므로 강조용 컴포넌트로 집기 제한을 우회하지 않습니다. `ItemHighlight`는 최근 모델의 강조용 메시를 보관해 조준을 잠깐 벗어났다가 돌아와도 재사용합니다. 대상 교체·외형 변경·대상 비활성화·파괴 때 임시 메시를 정리하며, 상호작용 컨트롤러가 비활성화될 때도 모두 해제합니다. 원본 모델 메시와 재질은 수정하지 않습니다.
 
 ## 직접 바꾸는 방법
 
@@ -82,7 +84,7 @@ Editor의 Setup 도구는 현재 연결을 재사용하고, 연결이 비었을 
 ### 샷건 위치 또는 손 위치
 
 1. Play를 끕니다. Hierarchy에서 `Cat_Player`를 선택합니다.
-2. `Cat Shotgun Equipment`의 `Weapon Local Position`으로 총의 위치, `Weapon Local Euler Angles`로 기울기를 바꿉니다. 이 값은 몸통 뼈를 기준으로 합니다. Unity 좌표의 Y가 위·아래입니다.
+2. `Shotgun Equipment`의 `Weapon Local Position`으로 총의 위치, `Weapon Local Euler Angles`로 기울기를 바꿉니다. 이 값은 몸통 뼈를 기준으로 합니다. Unity 좌표의 Y가 위·아래입니다.
 3. 손만 옮기려면 `Cat_Player > Cat_Shotgun > LeftGrip / RightGrip`의 위치를 조절합니다. 왼손은 앞쪽 파란 손잡이, 오른손은 뒤쪽 파란 손잡이에 놓습니다.
 4. Play에서 숫자 1을 누르고 대기·걷기·달리기, 정면·측면을 모두 봅니다. Play 중 수정한 값은 Play 종료 시 돌아가므로 편집 모드에서 적용합니다.
 
@@ -94,19 +96,19 @@ Editor의 Setup 도구는 현재 연결을 재사용하고, 연결이 비었을 
 
 ### 집기 거리와 모델 교체
 
-- `Cat_Player > Cat Interaction Controller > Reach`가 플레이어 기준 집기 거리입니다.
+- `Cat_Player > Interaction Controller > Reach`가 플레이어 기준 집기 거리입니다.
 - 물건의 `Visual` 아래 외형만 바꾸고 루트의 `CatInteractionItem`, `BoxCollider`, `Rigidbody`는 유지합니다. 컴포넌트 메뉴의 `Visual 크기에 맞춰 충돌 갱신`을 실행합니다.
-- 물건이 아닌 일반 모델을 노랗게 강조하려면 `CatHighlightTarget`과 기존 비트리거 Collider를 사용합니다. 강조만 있는 모델은 자동으로 집을 수 있는 물건이 되지 않습니다.
+- 물건이 아닌 일반 모델을 노랗게 강조하려면 `HighlightTarget`과 기존 비트리거 Collider를 사용합니다. 강조만 있는 모델은 자동으로 집을 수 있는 물건이 되지 않습니다.
 
 ### 인벤토리 담당자 연결
 
-`CatInventoryPickupPresenter > Inventory Target`에 실제 UI의 RectTransform을 등록합니다. 코드에서는 `RegisterTarget(...)`을 사용할 수 있습니다. 도착 시 `Collected` 이벤트로 물건 식별자가 한 번 전달됩니다. 실제 인벤토리 데이터 저장은 별도 담당 코드에서 처리합니다. 등록된 UI가 없거나 도중에 사라지면 물건은 사라지지 않습니다.
+`InventoryPickupEffect > Inventory Target`에 실제 UI의 RectTransform을 등록합니다. 코드에서는 `RegisterTarget(...)`을 사용할 수 있습니다. 도착 시 `Collected` 이벤트로 물건 식별자가 한 번 전달됩니다. 실제 인벤토리 데이터 저장은 별도 담당 코드에서 처리합니다. 등록된 UI가 없거나 도중에 사라지면 물건은 사라지지 않습니다.
 
 ## 수정 뒤 확인하기
 
-`PlaytestScene01`만 열고 Play한 뒤 `Tools > Cat Player`의 해당 검증 메뉴를 실행합니다. 자동 검증은 잠시 입력과 카메라를 제어하므로 실행 중 직접 조작하지 않습니다. 이동·상호작용·전투·실제 입력 검증은 한 번에 하나씩 실행합니다. 종료 시 Play가 끝나며 결과는 프로젝트 밖 `%TEMP%/CatPlayerValidation`에 남습니다. 파일 탐색기 주소창에 이 경로를 넣으면 열 수 있습니다. 마지막 `RESULT`와 실패 항목을 확인합니다. 확인되지 않은 결과를 성공으로 기록하지 않습니다.
+`PlaytestScene01`만 열고 Play한 뒤 `Tools > Cat Player`의 해당 검증 메뉴를 실행합니다. 자동 검증은 잠시 입력과 카메라를 제어하므로 실행 중 직접 조작하지 않습니다. 이동·상호작용·전투·실제 입력 검증은 한 번에 하나씩 실행합니다. 종료 시 Play가 끝나며 결과는 프로젝트 밖 `%TEMP%/PlayerValidation`에 남습니다. 파일 탐색기 주소창에 이 경로를 넣으면 열 수 있습니다. 마지막 `RESULT`와 실패 항목을 확인합니다. 확인되지 않은 결과를 성공으로 기록하지 않습니다.
 
-손으로도 빈손 우클릭 유지·해제, 물건을 든 채 1, 다시1로 해제, 총을 든 채 이동, 정지 좌우60도·이동360도를 확인합니다. 다른 씬·다른 담당자의 스크립트·기존 애니메이션 에셋은 이 수정에 포함하지 않습니다.
+손으로도 빈손 좌클릭 유지·해제, 물건을 든 채 1, 다시1로 해제, 총을 든 채 이동, 정지 좌우60도·이동360도를 확인합니다. 다른 씬·다른 담당자의 스크립트·기존 애니메이션 에셋은 이 수정에 포함하지 않습니다.
 
 
 ## 다른 Unity 버전이나 엔진으로 옮기는 방법
@@ -115,22 +117,22 @@ Editor의 Setup 도구는 현재 연결을 재사용하고, 연결이 비었을 
 
 | 부분 | 지금 역할 | 엔진을 바꾸면 |
 | --- | --- | --- |
-| `CatMovementPolicy`, `CatHandPolicy`, `CatOrbitPolicy` | 이동 상태·손 사용·카메라 각도 판단. 일반 C# 값만 사용 | C# 지원 엔진에서는 규칙 파일 재사용, 다른 언어라면 같은 규칙 번역 |
-| `ICatMotionState`, `ICatEquipmentPort` | 다른 기능에 필요한 최소 약속 | 새 연결부가 같은 약속을 지키도록 구현 |
-| Input·Motor·Locomotion·Animation | 실제 키 입력, Rigidbody, Animator 연결 | 해당 엔진의 입력·몸체·애니메이션 API로 교체 |
-| CatStepSolver·CatItemCarrier | 충돌·바닥·벽 검사와 물체 이동 | 새 엔진의 레이/형상 검사·물리 API로 교체 |
+| `MovementPolicy`, `HandPolicy`, `OrbitPolicy` | 이동 상태·손 사용·카메라 각도 판단. 일반 C# 값만 사용 | C# 지원 엔진에서는 규칙 파일 재사용, 다른 언어라면 같은 규칙 번역 |
+| `IMotionState`, `IEquipmentPort` | 다른 기능에 필요한 최소 약속 | 새 연결부가 같은 약속을 지키도록 구현 |
+| Input·PlayerController·PlayerMovement·PlayerAnimation | 실제 키 입력, Rigidbody, Animator 연결 | 해당 엔진의 입력·몸체·애니메이션 API로 교체 |
+| StepSolver·ItemCarrier | 충돌·바닥·벽 검사와 물체 이동 | 새 엔진의 레이/형상 검사·물리 API로 교체 |
 | 카메라 연결부 | 기존 Cinemachine에 순수 각도 제한을 전달 | 새 엔진 카메라에 같은 각도 규칙 연결 |
 | 강조·아이콘 촬영·중앙 포인터·UI 연출 | Unity 렌더·Canvas·셰이더 표현 | 해당 엔진의 화면 표시 기능으로 교체 |
 
-이동·손 사용·회전 정책은 Unity DLL 없이 독립 컴파일해 검사합니다. 물리·UI·렌더 코드 전체가 엔진 독립인 것은 아닙니다. 기존 `ICatPlayerInputSource`, `ICatStepSolver`, `ICatHighlightSource`는 Unity 타입을 포함한 연결용 인터페이스입니다. 복잡한 범용 물리·UI 프레임워크를 추가하지 않고 교체할 부분을 분명하게 유지합니다. 실제 다른 엔진에 옮겨 실행한 상태는 아닙니다.
+이동·손 사용·회전 정책은 Unity DLL 없이 독립 컴파일해 검사합니다. 물리·UI·렌더 코드 전체가 엔진 독립인 것은 아닙니다. 기존 `IPlayerInputSource`, `IStepSolver`, `IHighlightSource`와 `IPickupPort`는 Unity 타입을 포함한 연결용 인터페이스입니다. 복잡한 범용 물리·UI 프레임워크를 추가하지 않고 교체할 부분을 분명하게 유지합니다. 실제 다른 엔진에 옮겨 실행한 상태는 아닙니다.
 
 ### 값을 바꿀 위치
 
 - 마찰: `Assets/04Prefabs/Player/Physics/Player_NoFriction.physicMaterial`. Static/Dynamic Friction=0, Combine=Multiply. 플레이어 충돌체에 연결합니다. 프로젝트 전체 물리 설정은 바꾸지 않습니다. 이동 키를 뗐을 때 멈추는 감속은 마찰과 다른 이동 제어이므로 유지합니다.
-- 보유 거리: `Cat_Player > Cat Interaction Controller > Hold Distance`. 물건 중심은 카메라 중앙 조준선에 두고 이 거리만 조절합니다.
-- 정지 회전 폭: `Cat_CinemachineCamera > Cat Camera Orbit Limit > Stationary Half Angle`. 60이면 왼쪽60도+오른쪽60도입니다. 멈출 때마다 기준 방향을 새로 잡습니다.
-- 손 사용 규칙: `Domain/CatHandPolicy.cs`. 장비 종류를 바꾸려면 입력 코드를 복제하는 대신 `ICatEquipmentPort` 구현을 연결합니다.
-- 이동 속도: 기존 Motor의 Walk Speed/Run Speed. 어떤 상황에 어떤 속도를 선택하는지는 `Domain/CatMovementPolicy.cs`입니다.
+- 보유 거리: `Cat_Player > Interaction Controller > Hold Distance`. 물건 중심은 카메라 중앙 조준선에 두고 이 거리만 조절합니다.
+- 정지 회전 폭: `Cat_CinemachineCamera > Camera Orbit Limit > Stationary Half Angle`. 60이면 왼쪽60도+오른쪽60도입니다. 멈출 때마다 기준 방향을 새로 잡습니다.
+- 손 사용 규칙: `Domain/HandPolicy.cs`. 장비 종류를 바꾸려면 입력 코드를 복제하는 대신 `IEquipmentPort` 구현을 연결합니다.
+- 이동 속도: PlayerController의 Walk Speed/Run Speed. 어떤 상황에 어떤 속도를 선택하는지는 `Domain/MovementPolicy.cs`입니다.
 - 독립 규칙 검사: `Tools > Cat Player > 순수 규칙 검증`. 결과와 실제 Play 검사를 둘 다 확인합니다.
 - 해제 후 물리 복구 대기: `CatInteractionItem.IsReleasePending`으로 읽습니다. 이때는 보유 중이 아니며 새 집기도 막습니다. 공간 검사·물리 복구는 해당 물건이 맡습니다.
 
@@ -178,11 +180,11 @@ Editor의 Setup 도구는 현재 연결을 재사용하고, 연결이 비었을 
 
 ### 바꿀 위치
 
-1. `PlaytestScene01 > Cat_Player > Cat Shotgun Combat`: `Pellet Count`=4, `Spread Degrees`=4°, `Aimed Spread Degrees`=1.5°, `Shot Interval`=0.55초, `Range`=75. 퍼짐 값은 원의 중심부터 가장자리까지의 각도입니다. 줌 퍼짐을 비줌보다 크게 설정해도 비줌 값을 넘지 않습니다.
-2. `Cat_CinemachineCamera > Cat Aim Zoom`: `Aimed Field Of View`=40, `Transition Seconds`=0.16. 시야각을 작게 하면 더 확대됩니다. 기본 시야각60은 줌을 놓으면 복귀합니다.
-3. `Cat_Player > Cat Shotgun Pose`: `Aimed Local Position`은 몸통 본 기준 조준 위치입니다. `Raise Seconds`는 우클릭으로 총을 드는 시간, `Fire Moment`는 발사 클립에서 실제 판정하는 시각입니다.
+1. `PlaytestScene01 > Cat_Player > Shotgun Combat`: `Pellet Count`=4, `Spread Degrees`=4°, `Aimed Spread Degrees`=1.5°, `Shot Interval`=0.55초, `Range`=75. 퍼짐 값은 원의 중심부터 가장자리까지의 각도입니다. 줌 퍼짐을 비줌보다 크게 설정해도 비줌 값을 넘지 않습니다.
+2. `Cat_CinemachineCamera > Aim Zoom`: `Aimed Field Of View`=40, `Transition Seconds`=0.16. 시야각을 작게 하면 더 확대됩니다. 기본 시야각60은 줌을 놓으면 복귀합니다.
+3. `Cat_Player > Shotgun Pose`: `Aimed Local Position`은 몸통 본 기준 조준 위치입니다. `Raise Seconds`는 우클릭으로 총을 드는 시간, `Fire Moment`는 발사 클립에서 실제 판정하는 시각입니다.
 4. `Assets/03Sprites/Player/Animations/Shotgun_Fire.anim`: 준비와 반동 곡선입니다. `raiseWeight`는 총을 드는 양, `recoilDistance`는 뒤로 밀리는 양, `recoilPitch`는 위로 들리는 각도입니다. 발사 시각은 총을 다 드는 순간과 맞춥니다. 기존 Idle/Walk/Run 클립은 수정하지 않았습니다.
-5. `Cat_Player > Cat Shot Spread Ring`: `Line Width Pixels`와 `Outline Width Pixels`로 원의 선과 얇은 검은 테두리를 조절합니다. 기존 중앙 점의 위치·크기는 유지합니다.
+5. `Cat_Player > Shot Spread Ring`: `Line Width Pixels`와 `Outline Width Pixels`로 원의 선과 얇은 검은 테두리를 조절합니다. 기존 중앙 점의 위치·크기는 유지합니다.
 6. 총 모델을 교체하면 `Cat_Shotgun > Muzzle`을 실제 총열 끝에 맞추고 파란 Z축이 발사 방향을 가리키게 합니다. `LeftGrip`과 `RightGrip`은 양손 위치입니다. `ShotGuardOrigin`은 몸통 안의 검사 시작점으로 유지합니다.
 
 ### 코드 담당 구분
@@ -191,27 +193,27 @@ Editor의 Setup 도구는 현재 연결을 재사용하고, 연결이 비었을 
 
 | 파일 | 역할 |
 | --- | --- |
-| `Domain/CatCombatPolicy.cs` | 발사 간격·줌 중 걷기 규칙, 조준/퍼짐 상태 약속. Unity 타입 없음 |
-| `Input/CatCombatInput.cs` | 실제 마우스 입력·포커스·재잠금 클릭 구분, 필요한 입력만 초기화하는 약속 |
-| `Equipment/CatShotgunCombat.cs` | 입력·장비·자세·명중 결과 연결 |
-| `Equipment/CatHitscanQuery.cs` | 카메라 조준점, 실제 총구4광선에 쓰는 충돌·벽 검사 |
-| `Animation/CatShotgunPose.cs` | 새 발사 클립을 총과 양손 자세로 표현 |
-| `Camera/CatAimZoom.cs` | 조준 상태를 기존 Cinemachine 렌즈에 전달 |
-| `Equipment/Presentation/CatShotSpreadRing.cs`와 `.shader` | 현재 퍼짐 각도와 카메라 투영으로 속 빈 원 표시 |
-| `Editor/Setup/CatCombatSetup.cs` | 허용된 씬에서 기존 발사 클립·재질을 GUID로 찾아 연결 |
-| `Editor/Validation/CatHitscanValidation.cs` | 실제 충돌·벽 검사 |
-| `Editor/Validation/CatCombatValidation.cs` | 이동·줌·손 자세·산탄·링·밀착 벽 통합 검사 |
-| `Editor/Validation/CatCombatInputValidation.cs` | 가상 입력 장치로 실제 기본 키·마우스 처리 검사 |
+| `Domain/CombatPolicy.cs` | 발사 간격·줌 중 걷기 규칙, 조준/퍼짐 상태 약속. Unity 타입 없음 |
+| `Input/CombatInput.cs` | 실제 마우스 입력·포커스·재잠금 클릭 구분, 필요한 입력만 초기화하는 약속 |
+| `Equipment/ShotgunCombat.cs` | 입력·장비·자세·명중 결과 연결 |
+| `Equipment/HitscanQuery.cs` | 카메라 조준점, 실제 총구4광선에 쓰는 충돌·벽 검사 |
+| `Animation/ShotgunPose.cs` | 새 발사 클립을 총과 양손 자세로 표현 |
+| `Camera/AimZoom.cs` | 조준 상태를 기존 Cinemachine 렌즈에 전달 |
+| `Equipment/Presentation/ShotSpreadRing.cs`와 기존 `CatShotSpreadRing.shader` | 현재 퍼짐 각도와 카메라 투영으로 속 빈 원 표시 |
+| `Editor/Setup/CombatSetup.cs` | 허용된 씬에서 기존 발사 클립·재질을 GUID로 찾아 연결 |
+| `Editor/Validation/HitscanValidation.cs` | 실제 충돌·벽 검사 |
+| `Editor/Validation/CombatValidation.cs` | 이동·줌·손 자세·산탄·링·밀착 벽 통합 검사 |
+| `Editor/Validation/CombatInputValidation.cs` | 가상 입력 장치로 실제 기본 키·마우스 처리 검사 |
 
-적에게 맞았을 때의 결과는 `ICatShotReceiver.ReceiveShot(CatShotHit)`에 전달합니다. 적 담당자가 이 약속을 구현해 체력을 줄이면 됩니다. 이 작업에는 적 체력·대미지 수치·탄약·재장전·효과음을 추가하지 않았습니다. `PelletResolved`는 산탄마다, `ShotFired`는 한 번 발사할 때마다 알려주는 이벤트입니다.
+적에게 맞았을 때의 결과는 `IShotReceiver.ReceiveShot(ShotHit)`에 전달합니다. 적 담당자가 이 약속을 구현해 체력을 줄이면 됩니다. 이 작업에는 적 체력·대미지 수치·탄약·재장전·효과음을 추가하지 않았습니다. `PelletResolved`는 산탄마다, `ShotFired`는 한 번 발사할 때마다 알려주는 이벤트입니다.
 
 발사 규칙은 일반 C#으로 재사용할 수 있습니다. 엔진을 바꾸면 입력·물리·클립 재생·Cinemachine·화면 표시 연결부를 교체해야 합니다. 다른 엔진에서 실행 검증한 상태는 아닙니다.
 
-전투 입력을 교체할 때는 `ICatCombatInputSource`를 구현합니다. 버튼의 이전 상태를 기억하는 입력만 추가로 `ICatResettableInputSource`를 구현하면, 창의 포커스를 잃거나 전투가 비활성화될 때 `Reset()`이 호출됩니다. 초기화가 필요 없는 입력에는 이 함수를 억지로 넣지 않아도 됩니다. 총을 내린 채 대기할 때는 불필요한 조준 검사를 건너뛰고, 조준·발사·총을 내리는 전환 중에는 기존 검사를 유지합니다.
+전투 입력을 교체할 때는 `ICombatInputSource`를 구현합니다. 버튼의 이전 상태를 기억하는 입력만 추가로 `IResettableInputSource`를 구현하면, 창의 포커스를 잃거나 전투가 비활성화될 때 `Reset()`이 호출됩니다. 초기화가 필요 없는 입력에는 이 함수를 억지로 넣지 않아도 됩니다. 총을 내린 채 대기할 때는 불필요한 조준 검사를 건너뛰고, 조준·발사·총을 내리는 전환 중에는 기존 검사를 유지합니다.
 
 ### 확인 방법
 
-`PlaytestScene01`만 열고 Play한 뒤 `Tools > Cat Player > Play 모드 조준 발사 검증` 또는 `Play 모드 실제 조준 입력 검증`을 실행합니다. 각각 새 Play에서 실행하고 도중에 직접 조작하지 않습니다. 검증은 종료 시 Play를 끝내고 `%TEMP%/CatPlayerValidation`에 결과를 씁니다. `순수 규칙 검증`은 편집 모드에서도 가능하며 결과는 Unity Console에 표시됩니다. 물리 검사 코드는 Play 전용이며 테스트에 사용한 임시 물체는 씬에 저장하지 않습니다.
+`PlaytestScene01`만 열고 Play한 뒤 `Tools > Cat Player > Play 모드 조준 발사 검증` 또는 `Play 모드 실제 조준 입력 검증`을 실행합니다. 각각 새 Play에서 실행하고 도중에 직접 조작하지 않습니다. 검증은 종료 시 Play를 끝내고 `%TEMP%/PlayerValidation`에 결과를 씁니다. `순수 규칙 검증`은 편집 모드에서도 가능하며 결과는 Unity Console에 표시됩니다. 물리 검사 코드는 Play 전용이며 테스트에 사용한 임시 물체는 씬에 저장하지 않습니다.
 
 공식 자료: [클립의 지정 시각 재생](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AnimationClip.SampleAnimation.html), [Cinemachine 렌즈](https://docs.unity3d.com/Packages/com.unity.cinemachine@3.1/manual/CinemachineCamera.html), [광선 검사와 시작점 내부 제한](https://docs.unity3d.com/ScriptReference/Physics.Raycast.html), [구형 경로 검사](https://docs.unity3d.com/ScriptReference/Physics.SphereCastNonAlloc.html), [겹침 검사](https://docs.unity3d.com/ScriptReference/Physics.OverlapSphereNonAlloc.html). 좁은 벽 검사는 광선 하나에만 맡기지 않고 경로와 양 끝 겹침을 함께 검사합니다.
 
@@ -255,3 +257,80 @@ OneDrive 밖에서 작업하는 것과 .gitattributes의 잘못된 매크로 선
 - 원본 삭제·커밋·푸시는 하지 않았습니다. 기존 하위 .gitattributes 매크로 경고는 경로 이전과 별개로 남아 있습니다.
 
 앱 등록에는 공식 명령줄 기능을 사용했습니다. 참고: [GitHub Desktop 명령줄](https://docs.github.com/en/desktop/overview/launching-github-desktop-from-the-command-line?platform=windows), [Unity CLI](https://docs.unity.com/en-us/unity-cli/unity-cli-reference).
+
+## 현재 스크립트 이름과 수정 지점 (2026-10-07)
+
+앞부분의 기능 안내는 아래 새 이름을 사용합니다. 날짜가 적힌 과거 검사·이전 기록의 파일명은 당시 이름을 보존했습니다. 이번 변경의 검사 결과는 `PLAYER_WORK_LOG.md`에서 따로 확인합니다.
+
+### 이름을 바꿔도 연결을 지키는 방법
+
+GUID는 Unity가 파일을 구분하는 이름표입니다. C# 파일명을 바꾸면서 이 이름표를 새로 만들면 기존 연결이 끊길 수 있습니다. 이번 40개 스크립트는 기존 `.meta`를 짝으로 유지하고 파일명만 함께 바꾸는 대상입니다. 모델·프리팹·클립·재질·입력 액션·셰이더의 이름은 바꾸지 않습니다.
+
+`Interaction/CatInteractionItem.cs`는 예외입니다. 물건을 놓은 뒤 충돌을 안전하게 복구하는 내부 상태를 저장하므로, 저장 형식의 이름까지 달라지지 않도록 파일명과 클래스명을 유지합니다. 저장되는 필드 이름, 컴포넌트 연결과 발사 애니메이션의 세 필드도 유지합니다.
+
+변경 전후 `.meta` 내용과 GUID가 같은지, 새 파일명으로 스크립트가 로드되는지, 모델·프리팹·애니메이션 연결에 Missing이 없는지를 함께 확인합니다. 다른 씬을 수정하거나 기존 에셋을 새로 만드는 방식으로 연결을 고치지 않습니다. Unity의 [에셋 이동 API](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AssetDatabase.MoveAsset.html)와 [에셋 메타데이터 안내](https://docs.unity3d.com/6000.0/Documentation/Manual/AssetMetadata.html)를 기준으로 확인합니다.
+
+### 입력과 획득 연출을 바꾸려면
+
+- 기본 집기 버튼은 `Input/InteractionInput.cs`에서 읽습니다. 빈손은 좌클릭, 샷건은 `Input/CombatInput.cs`의 좌클릭 발사·우클릭 조준으로 나뉩니다. 손에 총이 있으면 `HandPolicy`가 물건 집기를 막습니다.
+- 두 입력이 함께 사용하는 `InputActivationGate`는 `CombatInput.cs`에 있습니다. “입력이 다시 켜진 첫 프레임에는 새 클릭을 전달하지 않는다”는 규칙만 담당합니다. 장치와 Unity 상태를 직접 읽지 않아 같은 규칙을 별도로 검사할 수 있습니다.
+- 입력을 바꾸려면 `IInteractionInputSource` 또는 `ICombatInputSource`를 구현해 해당 컴포넌트의 `SetInputSource(...)`로 연결합니다. 이전 버튼 상태를 기억하는 입력만 `IResettableInputSource.Reset()`도 구현하면 됩니다. `null`을 넘기면 기본 입력으로 돌아갑니다.
+- 인벤토리 도착 UI는 `InventoryPickupEffect.RegisterTarget(rectTransform)`으로 등록합니다. UI가 등록되어 활성화된 뒤에만 획득 연출을 시작합니다. 실제 인벤토리 저장은 기존처럼 `Collected` 이벤트를 받은 담당 코드가 처리합니다.
+- 다른 획득 연출을 연결하려면 `IPickupPort`의 `IsBusy`, `TryCollect(...)`를 구현하고 `InteractionController.TrySetPickupSource(source)`를 호출합니다. 이 함수가 `false`이면 현재 연출 중이므로 교체되지 않은 것입니다. `null`이면 인스펙터의 기존 `pickup`으로 돌아갑니다. 실제 인벤토리 저장 규칙을 이 인터페이스에 추가하지 않습니다.
+
+수정 후에는 새 Play에서 빈손 좌클릭 집기·유지·해제, 빈손 우클릭으로 집히지 않음, Esc 후 재잠금 클릭으로 집히지 않음, 숫자1 토글, 샷건 좌클릭 발사·우클릭 조준을 확인합니다. UI 미등록 시 아이템이 남고, 등록 후에는 완료 이벤트가 한 번만 오는지도 확인합니다. 검증을 끝내기 전에는 통과했다고 기록하지 않습니다.
+
+### 이름 대응표
+
+모든 경로는 `Assets/02Scripts/01Player/` 아래입니다. 표의 각 C# 파일과 기존 `.meta`가 한 쌍으로 이름을 바꿉니다.
+
+| 변경 전 | 현재 이름 |
+| --- | --- |
+| `Animation/CatPlayerAnimation.cs` | `Animation/PlayerAnimation.cs` |
+| `Animation/CatShotgunPose.cs` | `Animation/ShotgunPose.cs` |
+| `Camera/CatAimZoom.cs` | `Camera/AimZoom.cs` |
+| `Camera/CatCameraOrbitLimit.cs` | `Camera/CameraOrbitLimit.cs` |
+| `Camera/CatCinemachineCursor.cs` | `Camera/CameraCursorLock.cs` |
+| `Core/CatPlayerMotor.cs` | `Core/PlayerController.cs` |
+| `Domain/CatCombatPolicy.cs` | `Domain/CombatPolicy.cs` |
+| `Domain/CatHandPolicy.cs` | `Domain/HandPolicy.cs` |
+| `Domain/CatMovementPolicy.cs` | `Domain/MovementPolicy.cs` |
+| `Domain/CatOrbitPolicy.cs` | `Domain/OrbitPolicy.cs` |
+| `Domain/ICatMotionState.cs` | `Domain/IMotionState.cs` |
+| `Editor/Setup/CatCombatSetup.cs` | `Editor/Setup/CombatSetup.cs` |
+| `Editor/Setup/CatEquipmentSetup.cs` | `Editor/Setup/EquipmentSetup.cs` |
+| `Editor/Setup/CatInteractionSetup.cs` | `Editor/Setup/InteractionSetup.cs` |
+| `Editor/Setup/CatPlayerInteractionSettings.cs` | `Editor/Setup/InteractionSettings.cs` |
+| `Editor/Validation/CatCombatInputValidation.cs` | `Editor/Validation/CombatInputValidation.cs` |
+| `Editor/Validation/CatCombatValidation.cs` | `Editor/Validation/CombatValidation.cs` |
+| `Editor/Validation/CatHitscanValidation.cs` | `Editor/Validation/HitscanValidation.cs` |
+| `Editor/Validation/CatInteractionValidation.cs` | `Editor/Validation/InteractionValidation.cs` |
+| `Editor/Validation/CatPlayerValidation.cs` | `Editor/Validation/PlayerValidation.cs` |
+| `Editor/Validation/CatPlayerValidationCases.cs` | `Editor/Validation/PlayerValidationCases.cs` |
+| `Editor/Validation/CatPolicyValidation.cs` | `Editor/Validation/PolicyValidation.cs` |
+| `Equipment/CatHitscanQuery.cs` | `Equipment/HitscanQuery.cs` |
+| `Equipment/CatShotgunCombat.cs` | `Equipment/ShotgunCombat.cs` |
+| `Equipment/CatShotgunEquipment.cs` | `Equipment/ShotgunEquipment.cs` |
+| `Equipment/Presentation/CatShotSpreadRing.cs` | `Equipment/Presentation/ShotSpreadRing.cs` |
+| `Input/CatCombatInput.cs` | `Input/CombatInput.cs` |
+| `Input/CatInteractionInput.cs` | `Input/InteractionInput.cs` |
+| `Input/CatPlayerInput.cs` | `Input/PlayerInput.cs` |
+| `Interaction/CatInteractionController.cs` | `Interaction/InteractionController.cs` |
+| `Interaction/CatItemCarrier.cs` | `Interaction/ItemCarrier.cs` |
+| `Interaction/Presentation/CatCenterCursor.cs` | `Interaction/Presentation/CenterCursor.cs` |
+| `Interaction/Presentation/CatHighlightTarget.cs` | `Interaction/Presentation/HighlightTarget.cs` |
+| `Interaction/Presentation/CatInventoryPickupPresenter.cs` | `Interaction/Presentation/InventoryPickupEffect.cs` |
+| `Interaction/Presentation/CatItemHighlight.cs` | `Interaction/Presentation/ItemHighlight.cs` |
+| `Interaction/Presentation/CatItemIconCapture.cs` | `Interaction/Presentation/ItemIconCapture.cs` |
+| `Interaction/Presentation/ICatHighlightSource.cs` | `Interaction/Presentation/IHighlightSource.cs` |
+| `Movement/CatPlayerLocomotion.cs` | `Movement/PlayerMovement.cs` |
+| `Movement/CatStepSettings.cs` | `Movement/StepSettings.cs` |
+| `Movement/CatStepSolver.cs` | `Movement/StepSolver.cs` |
+
+### 이번 변경의 확인 결과 (2026-10-07)
+
+컴파일과 총 165개 검사를 통과했습니다. 순수 규칙 35개, 상호작용 41개, 실제 전투 입력 15개, 전투 통합 32개, 히트스캔 18개, 강조 캐시 7개, 교체 가능한 입력·연출 10개, 현재 맵 이동 7개입니다. 이름이 바뀐 스크립트 40개의 GUID 연결과 프리팹 4개, 발사 클립의 연결도 확인했습니다.
+
+전체 메타 1,046개의 내용은 동일합니다. Play를 종료한 편집기에서 Missing Script·누락 메시·재질 오류는 0이었습니다. 기존 사용자 씬/폰트 변경, RAt 파일과 프로젝트 설정은 보존했습니다. 다른 씬 실행·팀원 PC·전체 게임 빌드를 검사한 결과는 아닙니다.
+
+검사 방법과 오류 처리 기록은 `PLAYER_WORK_LOG.md`, 원본 대비 결과와 백업은 `C:/Users/307/Documents/Codex/PlayerRefactor20261007`에 있습니다. Git으로 공유할 때에는 이름이 바뀐 `.cs`와 같은 이름의 `.meta`를 함께 포함해야 기존 식별 번호와 연결이 유지됩니다.

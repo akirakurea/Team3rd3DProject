@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-public enum CatItemKind
+public enum ItemKind
 {
     CarryOnly,
     InventoryPickup
@@ -10,11 +10,11 @@ public enum CatItemKind
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(BoxCollider), typeof(Rigidbody))]
-public sealed class CatInteractionItem : MonoBehaviour, ICatHighlightSource
+public sealed class CatInteractionItem : MonoBehaviour, IHighlightSource
 {
     [Tooltip("표시용 메시를 교체해도 유지되는 아이템 식별자입니다.")]
     public string itemId;
-    public CatItemKind kind;
+    public ItemKind kind;
     [Tooltip("교체할 메시가 들어 있는 Visual 자식입니다. 충돌과 Rigidbody는 이 루트에 둡니다.")]
     public Transform visualRoot;
 
