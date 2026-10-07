@@ -222,3 +222,28 @@
 - 최종 편집기: Play 종료, sceneCount1, dirtyFalse, compilingFalse, compileFailedFalse, 임포트 보류False, 씬 Missing Script0, Player 누락 메시0, 누락 재질/셰이더 오류0, RAt 루트2, Player 태그 유지. Play 안에서 오류/예외 수집기를 등록한 각 검사 구간에서 오류0·예외0. RAt의 모든 AI 상태 전환/게임 전체 빌드까지 검증한 결과로 확대하지 않는다.
 - 최종 Git/GUID 감사: meta_count1046, unmerged0, errors0, index_working_guid_mismatches0, Player 파일 인덱스 누락0. 코드15·허용 씬1·기존 문서3 변경, 파일 추가/삭제0. 범위 밖 내용 변경0이며 별도로 기록한 EditorBuildSettings 줄바꿈 차이1은 보존했다. 커밋·스테이징·푸시·설치 없음.
 - 현재 맵 외부 검증의 중첩 클래스가 MCP 실행기의 namespace 재작성으로 중복되어 첫 컴파일에 실패했다. 테스트 입력 클래스를 최상위로 분리하고 Motor를 생성자로 받도록 바꾼 뒤 실행해 7개 통과. 제품 코드나 메타에 검사용 파일을 추가하지 않았다.
+
+## 2026-10-07 — 좌클릭 집기와 Player 스크립트 이름·책임 정리
+
+- 요청: 빈손 물건 집기를 우클릭에서 좌클릭으로 변경하고, 기존 Player 스크립트를 가독성·SOLID 관점에서 검토·수정하며 이름을 간단하게 바꾼다. 이전에 프로세스 정보 조회에서 인증 관련 값이 보여 작업을 멈췄고, 사용자가 프로젝트 파일과 기존 Unity 연결만 사용하는 방식으로 계속하도록 승인했다. 이번 재개에서는 프로세스 명령줄·계정 정보·인증 로그를 조회하지 않았다.
+- 기준: 실제 Unity API로 현재 프로젝트와 PlaytestScene01 하나, 편집 상태, Missing Script 0을 확인했다. 시작 시 이미 수정돼 있던 PlaytestScene01과 TMP 폰트 파일을 포함해 1,992파일의 지문과 Git 인덱스를 기록했다. Player 코드·문서·허용 씬의 작업 전 사본은 프로젝트 밖 `C:/Users/307/Documents/Codex/PlayerRefactor20261007/backup`에 보관했다.
+- 검사 범위: 기존 Player C# 41개와 Assets 전체 C#의 사용처·이름 충돌, Player 프리팹·씬·클립의 저장 연결을 조사했다. 변경 대상 타입을 참조하는 Player 밖 C#은 없었다. 모델·재질·애니메이션·입력 액션·셰이더·Rat·Enemy·Mouse 파일은 변경하지 않았다.
+- 입력: `Input/InteractionInput.cs`의 빈손 집기를 좌클릭 누름·유지로 변경했다. 버튼을 떼거나 포커스를 잃으면 놓는다. `Input/CombatInput.cs`의 샷건 좌클릭 단발·우클릭 조준은 유지했다. 두 입력이 같은 `InputActivationGate`를 사용해 커서 재잠금 프레임의 클릭을 집기/발사로 쓰지 않으며, 같은 프레임에서 여러 번 읽어도 차단된다.
+- SRP·ISP: 입력 장치 읽기, 첫 활성 프레임 차단, 손 사용 판단, 실제 운반, 획득 연출의 책임을 구분했다. 초기화가 필요한 입력만 `IResettableInputSource`를 구현한다. `InteractionController`에 `ResetInput`과 `ApplyHandCommand`를 두어 수명주기와 실행 분기가 읽히도록 정리했다.
+- OCP·DIP·치환 검증: `InventoryPickupEffect`는 `IPickupPort`의 `IsBusy`/`TryCollect`만 제공하며, 손 사용 로직은 이 약속으로 연출을 호출한다. 기존 직렬화 `pickup` 필드는 보존하고 `TrySetPickupSource`로 대체 연출을 연결한다. 현재 수집 중에는 교체를 거부하고 null이면 원래 인스펙터 연결로 돌아간다. 임의의 대체 구현과 기본 구현 복귀를 Play에서 검사했다.
+- 이동·카메라·애니메이션의 기존 책임 분리는 유지했다. 구성 진입점이 서비스를 생성하는 구조를 잘못된 DIP 위반으로 취급하지 않았다. Assets C#에서 호출처가 없는 `PlayerMovement.Tick`과 `PlayerAnimation.Update` 전달용 메서드만 제거하고 `Apply`를 단일 진입점으로 남겼다. 기능별 파일을 불필요한 MonoBehaviour나 범용 프레임워크로 더 나누지 않았다.
+- 이름 변경: 설명서의 대응표대로 기존 C# 40개와 각 `.meta`를 Unity `AssetDatabase.MoveAsset`으로 한 쌍씩 이동했다. 대표 이름은 `PlayerController`, `PlayerMovement`, `CameraCursorLock`, `InteractionController`, `InventoryPickupEffect`, `ShotgunCombat`이다. 코드 내 타입/인터페이스 참조를 함께 변경하고 12개 MonoBehaviour에 이전 클래스명 `MovedFrom` 호환 정보를 남겼다. 저장 필드와 Shotgun_Fire의 `raiseWeight`/`recoilDistance`/`recoilPitch`는 유지했다.
+- 이름 보존 예외: `Interaction/CatInteractionItem.cs`의 내부 ReleaseRecovery는 SerializeReference로 저장하므로 바깥 클래스 이름까지 바꾸지 않았다. 타입 이름 변경에 따른 내부 복구 상태 유실 위험을 피하기 위한 예외다. 다른 스크립트에서 이 클래스와 연결하는 경로도 보존했다.
+- 검증 도구: `InteractionValidation`을 실제 마우스 왼쪽 버튼으로 전환하고 우클릭 미집기·재잠금 클릭 미집기·집기 버튼 유지 중 장착 시 오발 없음 3개를 추가했다. `PlayerValidation`의 문자열 Cat 접두사 필터는 이름이 바뀐 컴포넌트를 빠뜨리므로 MonoScript의 실제 Player 폴더 경로로 검사하게 변경했다. 현재 결과 폴더는 프로젝트 밖 `%TEMP%/PlayerValidation`이다.
+- 컴파일: 현재 Unity 설치본 참조로 Runtime 77소스·Editor 24소스 컴파일 성공. 이동·손·회전·발사 순수 정책 35개 통과, 해당 검사 어셈블리는 Unity DLL을 참조하지 않는다. 엔진 연결부까지 다른 엔진에 이식 완료했다고 주장하지 않는다.
+- 실제 Play: 상호작용 41/41, 기본 장치 전투 입력 15/15, 전투 통합 32/32, 히트스캔 물리 18/18, 강조 메시 캐시 7/7, 획득 연출 교체와 상호작용 초기화 8/8, 전투 대체 입력 초기화 2/2, 현재 맵 이동 7/7 통과. 순수 정책과 합쳐 165개다. 검사 구간의 오류/예외 집계는 모두 0이었다.
+- 확인한 동작: 왼쪽 버튼 유지 중 중앙 보유, 해제 첫 렌더 프레임에 내려놓기, 우클릭 미집기, 재잠금 클릭 미집기/미발사, 숫자1 안전한 장착·해제, 비줌/줌 한 클릭 4산탄, 줌 중 걷기 고정, 총구·몸통 사이 벽 차단, UI 미등록 거부·등록 후 완료 이벤트 1회, 정지 좌우60도·이동360도. 중앙 보유 위치 오차는 이번 검사에서 0.094픽셀이다.
+- 현재 맵 이동 검사는 대기·걷기·달리기·입력 해제·재활성화·걷기/달리기 턱 통과 7개를 11.33초에 완료했다. 도로 -0.03m에서 앞마당 0.07m로 올라가는 0.10m 턱을 통과했고 각각 1.6/3.4m/s를 유지했다. 과거 좌표 전제의 19개 검사 전체를 통과한 것으로 합산하지 않았다.
+- 연결 검증: Unity가 새 경로 40개의 기존 GUID를 해석하는지 확인했다. 재명명 MonoBehaviour 12개, Player 프리팹 4개와 발사 클립의 ShotgunPose 곡선 3개를 읽어 연결 오류 0을 확인했다. 모델·프리팹·클립을 다시 저장하지 않았다. 중앙 보유 화면도 직접 확인했다.
+- 작업 중 진단: 편집기 MCP 검색이 간헐적으로 실패해 Unity 창의 상태를 확인하고 재연결했다. 외부 스냅샷 코드의 Regex 참조 오류는 외부 코드에서 수정했다. 파일명/클래스명 변경의 중간 단계에서 누락 컴포넌트가 관찰됐으나 씬을 저장하지 않고 짝 이동 완료 후 Missing 0을 재확인했다. 첫 이동의 배치 처리 중 GUID API 조회가 비어 검사가 중단됐지만 실제 메타의 GUID는 그대로였다. 디스크 메타 검사로 재개한 뒤 배치 종료 후 Unity GUID 조회로 다시 확인했다. 존재하지 않는 과거 Cat_Player 폴더를 검사하던 외부 도구의 경고는 현재 존재하는 Player 폴더만 조회하도록 고쳐 재검증했다. 이런 외부 도구 오류를 제품 코드 컴파일 성공과 혼동하지 않았다.
+- 문서: `PLAYER_WORK_RULES.md`에 최신 좌클릭 규칙과 이번 40개 이름 변경 범위를 반영했다. `PLAYER_IMPLEMENTATION_GUIDE.md`에 이름 대응표, 입력 변경 위치, 새 연출 연결법과 확인 순서를 추가했다. 날짜별 과거 기록은 보존했다.
+- 공식 근거: [Unity 에셋 이동](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AssetDatabase.MoveAsset.html), [메타데이터와 연결](https://docs.unity3d.com/6000.0/Documentation/Manual/AssetMetadata.html), [Input System 검증](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.14/manual/Testing.html). 설치된 패키지의 MovedFrom 사용도 확인했다.
+- 삭제 없음. 이름 변경은 기존 파일/메타 쌍의 이동이며 새로운 GUID 발급이나 에셋 복사본 정리가 아니다. 씬 저장·RAt 파일 수정·설정 변경·설치·스테이징·커밋·푸시 없음. 최종 지문/GUID 감사 결과와 검증 한계는 아래에 추가한다.
+- 최종 독립 감사: 메타 1,046개 모두 경로 대응 후 원본 바이트 유지, GUID 중복·누락 메타·충돌 표식 0. Player 226파일의 GUID 참조 289개를 Assets 및 설치 패키지 GUID 22,987개와 대조해 누락 0. 40쌍 이름 변경을 고려한 범위 밖 수정·예상 밖 추가/누락 0. 시작 전 사용자 변경 씬·폰트 내용과 Git 인덱스도 그대로다. 일반 C# 타입 묶음인 PlayerInput.cs에 MonoBehaviour 파일명 규칙을 적용한 외부 감사기의 오탐은 백업 구조와 대조하여 수정했다.
+- 최종 Unity 상태: Play 종료, dirty=False, compiling=False, compileFailed=False, 임포트 보류 없음. 씬 Missing Script 0, Player 누락 메시 0, 누락 재질/셰이더 오류 0, 협업 에셋 연결 검사 failures=0, RAt 루트 2개와 Player 태그 유지. RAt 전체 AI 동작, 다른 씬 실행, 팀원 PC와 전체 게임 빌드는 이번 검증 범위가 아니다.
+- 증거: `C:/Users/307/Documents/Codex/PlayerRefactor20261007`의 `final_guid_audit.json`, `current_guard.json`, `asset_load_result.txt`, `final_health.txt`, 각 검사 결과. Play 통합 로그는 `%TEMP%/PlayerValidation`에 있다. 기존 하위 .gitattributes 10~12행 매크로 경고는 요청 범위 밖이므로 수정하지 않았다.
