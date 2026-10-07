@@ -6,7 +6,8 @@ public class BT_StealItem : BT_Leaf
     private float stealDuration = 2.5f;
     private float currentTimer = 0f;
     private bool isNotifying = false;
-
+    private Transform lastTarget;
+    private int lastEvalFrame = -1;
     public BT_StealItem(ThiefBlackboard blackboard)
     {
         this.blackboard = blackboard;
@@ -14,6 +15,17 @@ public class BT_StealItem : BT_Leaf
     public override BT_NodeStatus Evaluate()
     {
         if (blackboard.TargetItem == null) return BT_NodeStatus.Failure;
+        bool skippedFrame = lastEvalFrame != -1 && Time.frameCount - lastEvalFrame > 1;
+        bool targetChanged = blackboard.TargetItem != lastTarget;
+        if (targetChanged || skippedFrame)
+        {
+            Debug.Log($"{lastEvalFrame} / {skippedFrame}");
+            lastTarget = blackboard.TargetItem;
+            currentTimer = 0f;
+            isNotifying = false;
+        }
+
+        lastEvalFrame = Time.frameCount;
 
         if(!isNotifying)//훔치기 시작
         {
@@ -35,6 +47,7 @@ public class BT_StealItem : BT_Leaf
 
             currentTimer = 0f;
             isNotifying = false;
+            lastTarget = null;
             Debug.Log("[BT] 아이템 훔치기 완료");
             return BT_NodeStatus.Success;
 

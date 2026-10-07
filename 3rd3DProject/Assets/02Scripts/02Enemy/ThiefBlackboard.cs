@@ -67,11 +67,28 @@ public class ThiefBlackboard
         }
 
     }
+
+    public void SetTarget(Transform item)
+    {
+        TargetItem = item;
+        var itemComp = item != null ? item.GetComponent<Items2>() : null;
+        if(itemComp != null)
+        {
+            itemComp.IsReserved = true;
+        }
+    }
+
     public void PickUpTargetItem()
     {
         if(TargetItem != null)
         {
             CarriedItem = TargetItem.gameObject;
+            var itemComp = CarriedItem.GetComponent<Items2>();
+
+            if(itemComp != null)
+            {
+                itemComp.IsReserved = false;
+            }
             CarriedItem.SetActive(false);
 
             IsCarryingItem = true;
@@ -80,13 +97,24 @@ public class ThiefBlackboard
             UpdateAgentSpeed();
         }
     }
+
+    public void ClearTarget()
+    {
+        if(TargetItem != null)
+        {
+            var item = TargetItem.GetComponent<Items2>();
+            if(item != null) item.IsReserved = false;
+            TargetItem = null;
+        }
+
+    }
     public void DropCarriedItem()
     {
         if(IsCarryingItem && CarriedItem != null)
         {
             CarriedItem.transform.position = ThiefTransform.position;
             CarriedItem.SetActive(true);
-            Debug.Log("[BT]플레이어가 다가와 들고있던 아이템을 바닥에 버리고 도망칩니다.");
+            Debug.Log("[BT]들고있던 아이템을 바닥에 떨어뜨립니다.");
             //아이템매니저로 씬 내 아이템 재등록
             ItemManager2.Instance?.AddItem(CarriedItem);
 

@@ -16,6 +16,7 @@ public class BT_StunCheck : BT_Leaf
 
         if (blackboard.CurrentStunTimer == 0f)
         {
+            Debug.Log($"[Stun시작] 타겟 보유 여부 : {blackboard.TargetItem != null}");
             if (blackboard.Agent != null && blackboard.Agent.isOnNavMesh)
             {
                 blackboard.Agent.isStopped = true;//이동중이었으면 멈추기
