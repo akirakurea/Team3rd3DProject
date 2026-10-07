@@ -247,3 +247,19 @@
 - 최종 독립 감사: 메타 1,046개 모두 경로 대응 후 원본 바이트 유지, GUID 중복·누락 메타·충돌 표식 0. Player 226파일의 GUID 참조 289개를 Assets 및 설치 패키지 GUID 22,987개와 대조해 누락 0. 40쌍 이름 변경을 고려한 범위 밖 수정·예상 밖 추가/누락 0. 시작 전 사용자 변경 씬·폰트 내용과 Git 인덱스도 그대로다. 일반 C# 타입 묶음인 PlayerInput.cs에 MonoBehaviour 파일명 규칙을 적용한 외부 감사기의 오탐은 백업 구조와 대조하여 수정했다.
 - 최종 Unity 상태: Play 종료, dirty=False, compiling=False, compileFailed=False, 임포트 보류 없음. 씬 Missing Script 0, Player 누락 메시 0, 누락 재질/셰이더 오류 0, 협업 에셋 연결 검사 failures=0, RAt 루트 2개와 Player 태그 유지. RAt 전체 AI 동작, 다른 씬 실행, 팀원 PC와 전체 게임 빌드는 이번 검증 범위가 아니다.
 - 증거: `C:/Users/307/Documents/Codex/PlayerRefactor20261007`의 `final_guid_audit.json`, `current_guard.json`, `asset_load_result.txt`, `final_health.txt`, 각 검사 결과. Play 통합 로그는 `%TEMP%/PlayerValidation`에 있다. 기존 하위 .gitattributes 10~12행 매크로 경고는 요청 범위 밖이므로 수정하지 않았다.
+
+
+## 2026-10-07 — 모델 보존, 측면 검은자위 렌더 순서 수정
+
+- 요청: 측면·특정 각도에서 검은자위가 사라지는 문제 수정. 도중 사용자가 모델링은 그대로 두고 Unity 설정값만 확인·교정하도록 범위를 명확히 했다.
+- 작업 전 보존 기준: 현재 프로젝트 Assets/Packages/ProjectSettings와 기존 작업 문서 1,990파일 SHA-256, 메타 1,046개를 기록했다. PlaytestScene01, 편집 상태·dirty=False 확인. 처음에는 Git 추적 변경이 없었다. 모델링 원본은 한 번도 수정하지 않았다.
+- 연결 확인: Eye_L/R와 Pupil_L/R 모두 활성·메시/재질 연결 정상. CatEye.shader를 공용 사용하고 실제 Render Queue는 네 재질 모두 3000이었다. 현재 셰이더는 Transparent, Cull Back, ZWrite Off, ZTest LEqual이며 각도별 눈 비활성화 코드는 확인되지 않았다.
+- 재현: 실제 눈 메시를 Unity에서 복제 렌더한 14개 방향 중 좌우75/90/105도에서 흰자위가 검은자위를 덮었다. 정면은 정상. 원본 모델의 안쪽 검은자위를 마지막에 덧그리는 현재 표현 구조에서 같은 투명 렌더 순서의 거리 정렬이 문제였다.
+- 조사 중 실패/제외: 셰이더를 불투명·깊이 쓰기로 시험하니 안쪽 동공이 더 가려졌고, 임시 표면 보정 시험은 경계가 거칠어 채택하지 않았다. 사용자의 모델 보존 지시 후 해당 셰이더 실험을 모두 제거해 작업 전 바이트와 동일하게 했다. 시험에서 Unity가 재질에 기억한 미사용 `_SurfaceOffset`도 삭제했다. 흰자위 두 재질 재저장 때 생긴 줄바꿈 차이만 교정해 작업 전 SHA-256과 동일하게 했다. 외부 첫 렌더의 BakeMesh 배율은 수정한 뒤 baseline을 다시 만들었으며 초기 배율 오류 이미지는 검증 결과에 쓰지 않았다. 첫 shader import의 혼합 줄바꿈 경고도 정규화 후 해소했다.
+- Git 이력 확인: `5d7d582`(2026-10-02)에서 양쪽 검은자위 Render Queue 3100. `ba840e8`(2026-10-06)에서 3100 → -1로 바뀌었고 재질의 셰이더 연결도 현재 CatEye.shader로 변경됐다. 셰이더 파일의 Transparent/ZWrite Off 설정 자체는 유지됐다. 누가 바꿨는지 또는 Unity가 자동 초기화했는지는 Git만으로 단정하지 않는다. 첫 순서 분리 시험값 3001도 표시 문제를 해결했지만, 최종값은 이력으로 확인한 3100을 사용했다.
+- 최종 제품 변경: `Assets/04Prefabs/Player/Materials/Pupil_L_Low22.mat`, `Pupil_R_Low22.mat`의 `m_CustomRenderQueue`만 -1(셰이더 기본 3000)에서 3100로 변경. Unity Material API와 SaveAssetIfDirty로 해당 재질만 저장. 흰자위 3000 다음에 동공을 그린다. ZTest Always나 모델 변형을 사용하지 않고 몸통의 기존 가림을 유지했다.
+- 검증: 수정 전후 14방향(-135/-105/-90/-75/-60/-45/0/45/60/75/90/105/135/180도) 같은 카메라·조명 조건 렌더. 0, ±45, ±60, ±135, 180도는 픽셀 차이0. ±75/90/105도에서 검은자위 소실 복구. 이어 PlaytestScene01의 실제 애니메이션 상태를 가져온 14방향 렌더 확인. Play에서 흰자위 두 개3000·동공 두 개3100, 네 렌더러 활성/메시/셰이더 검사4/4 통과. 셰이더 컴파일 오류 없음. Play 종료, 씬 dirty=False.
+- 범위: 모델 FBX·리깅·애니메이션·팔레트·프리팹·씬·C#·프로젝트 설정·Rat 관련 에셋·기존 GUID/메타 보존. 설명서와 본 로그만 추가 기록. 파일 삭제·이름 변경·패키지 설치·스테이징·커밋·푸시 없음.
+- 공식 근거: Unity 6.5 [RenderQueue](https://docs.unity.com/en-us/engine/6000.5/script-reference/unityengine/rendering/renderqueue), [깊이 쓰기](https://docs.unity3d.com/6000.0/Documentation/Manual/SL-ZWrite.html), [URP 카메라 렌더 요청](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/User-Render-Requests.html). 현재 설치된 URP의 SingleCameraRequest 구현도 확인했다.
+- 증거 폴더: `C:/Users/307/Documents/Codex/PlayerEyeFix20261007`; baseline/restored3100/play3100 이미지, image_comparison.json, play_check.txt, final_scope.json. 수동 이동/전투 전체 회귀·다른 씬·전체 게임 빌드·팀원 PC 실행 검증은 이번 재질 수정의 검사 범위가 아니다.
+- 최종 재검증: 과거 설정 3100으로 복구한 렌더 14장은 시험값 3001의 정상 결과와 픽셀 단위로 동일했다. 3100에서 다시 Play 렌더 14방향 및 재질 상태4/4 통과. 재임포트 뒤 shaderError=False, MissingScripts=0, 임시 미리보기 오브젝트0, 시험 속성0, Play=False, dirty=False, compilationFailed=False. 시작 전 1,990파일과 비교해 두 Pupil 재질과 기존 설명서/로그만 변경, 추가/누락0, 전체 메타1,046개 및 모델·셰이더 원본 바이트 동일.
