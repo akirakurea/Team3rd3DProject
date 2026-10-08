@@ -19,6 +19,11 @@ public class TreasureManager : MonoBehaviour
     private readonly List<int> shuffleOrder = new List<int>();   // 라운드마다 새로 만들지 않고 재사용
     private GameManager gm;
 
+    /// <summary>
+    /// 씬의 보물 전체(읽기 전용). 쥐 AI가 목표를 고를 때 순회해서 쓴다.
+    /// 털렸거나 비활성인 보물도 들어 있으므로 반드시 거른다: t != null && t.IsAvailable && t.gameObject.activeInHierarchy
+    /// 가장 가까운 것만 필요하면 GetNearestAvailable(위치)를 쓴다.
+    /// </summary>
     public IReadOnlyList<Treasure> Treasures => treasures;
 
     /// <summary>지금 제자리에 있고 집을 수 있는 보물 수</summary>
