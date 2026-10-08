@@ -1,16 +1,19 @@
 ﻿using UnityEngine;
 
 /// <summary>
-/// 쥐 오브젝트에 붙이는 "보물 운반" 컴포넌트. 쥐 스크립트를 만드는 팀원은 아래 메서드만 호출하면 된다.
+/// 쥐(도둑) 프리펩에 붙이는 "보물 운반" 컴포넌트. 쥐 AI(BT)는 아래 메서드만 호출하면 된다.
+/// HUD, 점수, 라운드 승패는 GameManager가 처리하므로 쥐 쪽에서는 신경 쓰지 않는다.
 ///
-///   - TryPickUpNearest()  : 주변(pickupRange)의 보물을 집는다. 성공하면 true
-///                           (내부에서 보물 전체를 순회하므로, 매 프레임보다는 목표 근처일 때만 호출하는 것을 권장)
-///   - CompleteEscape()    : 탈출 지점에 도달했을 때 호출 -> 보물이 털린 것으로 확정 (GameManager에 자동 통보)
-///   - DropOnCaught()      : 고양이에게 잡혔을 때 호출 -> 보물이 제자리로 복귀
-///                           (쥐가 잡힌 것 자체는 GameManager.Instance.OnRatCaught()를 따로 호출)
+///   TryPickUp(Treasure)  : 훔치기 동작이 끝난 시점에 호출. 먼저 집은 쥐만 true, 이미 집혔으면 false
+///                          -> false면 목표를 비우고 다른 보물을 찾는다 (BT_StealItem에서 Failure 반환)
+///   TryPickUpNearest()   : pickupRange 안의 가장 가까운 보물을 집는다. 내부 순회가 있으니 목표 근처에서만 호출
+///   CompleteEscape()     : 탈출 지점 도달 시 호출 -> 보물이 털린 것으로 확정 (BT_DispositItem)
+///   DropOnCaught()       : 잡혔거나 도망 중 보물을 놓을 때 호출 -> 보물이 원래 자리로 복귀
+///                          (잡힌 것 자체는 GameManager.Instance.OnRatCaught()를 따로 호출)
+///   IsCarrying           : 보물을 들고 있는지. 블랙보드의 IsCarryingItem 대신 이 값을 읽는다
 ///
-/// 목표 보물을 고를 때는 TreasureManager.Instance.GetNearestAvailable(위치)를 쓰면 된다.
-/// 여러 쥐가 같은 보물을 노려도 먼저 집은 쥐만 성공하고 나머지는 false를 받는다.
+/// 목표 보물 고르기: TreasureManager.Instance.Treasures 순회 또는 GetNearestAvailable(위치)
+/// 주의: 예약(IsReserved) 개념은 없다. 이동/훔치는 동안 target.IsAvailable을 확인해 가로채이면 목표를 비운다.
 /// </summary>
 public class TreasureCarrier : MonoBehaviour
 {

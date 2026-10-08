@@ -5,7 +5,9 @@ using UnityEngine;
 /// <summary>
 /// 보물 한 개. 상태: Available(제자리) -> Carried(쥐가 듦) -> Stolen(탈출 성공, 사라짐)
 /// 쥐가 탈출 전에 잡히면 Carried -> Available(제자리로 복귀).
-/// 쥐 쪽 코드는 이 클래스를 직접 만지지 말고 TreasureCarrier를 통해서 사용한다.
+/// 쥐 AI(BT)는 이 클래스를 "읽기"만 한다 (목표 보물 탐색용: IsAvailable, State, transform.position).
+/// 보물의 상태를 바꾸는 호출(PickUp / ReturnHome / Steal)은 직접 하지 말고 반드시 TreasureCarrier를 통해서 한다.
+/// 보물 종류는 "모양"만 다르다 (visuals 중 하나를 라운드마다 무작위로 켠다). 가치(점수) 차이는 확장 요소로 보류.
 ///
 /// 미니맵 연동:
 /// - 활성화된 보물은 static Active 리스트에 등록된다 (MinimapController가 Start 시점에 일괄 등록할 때 사용)
@@ -33,6 +35,10 @@ public class Treasure : MonoBehaviour
     private Quaternion homeRotation;
     private Transform homeParent;
     private Collider[] colliders;
+
+    // 모양 후보: 프리펩 자식으로 모양 오브젝트를 여러 개 넣어두고, Init 때마다 하나만 켠다.
+    // 비워두면 아무것도 바꾸지 않는다 (모양이 하나뿐인 기존 프리펩도 그대로 동작).
+    [SerializeField] private GameObject[] visuals;
 
     // Enter Play Mode Options에서 Domain Reload를 꺼둔 경우 static이 남아있는 것을 방지
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -76,6 +82,7 @@ public class Treasure : MonoBehaviour
         transform.SetParent(parent, false);
         transform.SetPositionAndRotation(position, rotation);
         SetColliders(true);
+        ApplyRandomVisual();   // 라운드마다 모양을 새로 고른다
         gameObject.SetActive(true);
 
         // 재사용 보물은 이미 활성 상태라 OnEnable이 다시 불리지 않는다.
@@ -141,6 +148,15 @@ public class Treasure : MonoBehaviour
         if (minimap == null) return;
         if (removeFirst) minimap.Remove(this);   // Register는 이미 등록된 키면 무시하므로 먼저 제거
         minimap.Register(this);
+    }
+
+    // using System 때문에 Random이 겹치므로 UnityEngine.Random으로 명시
+    private void ApplyRandomVisual()
+    {
+        if (visuals == null || visuals.Length == 0) return;
+        int pick = UnityEngine.Random.Range(0, visuals.Length);
+        for (int i = 0; i < visuals.Length; i++)
+            if (visuals[i] != null) visuals[i].SetActive(i == pick);
     }
 
     private void SetColliders(bool enabled)

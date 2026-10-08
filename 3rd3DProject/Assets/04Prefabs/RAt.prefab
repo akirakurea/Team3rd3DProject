@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 3709453786987738978}
   - component: {fileID: 6432519240719482303}
   - component: {fileID: 992108030372614095}
+  - component: {fileID: -456694092097527670}
   m_Layer: 0
   m_Name: RAt
   m_TagString: Thief
@@ -189,6 +190,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ThiefShotReceiver
   thief: {fileID: 4032784274224977715}
   stunDuration: 1.5
+--- !u!114 &-456694092097527670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7281354718278035978}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40cd754595fd67a459f70f9fc2b2864c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TreasureCarrier
+  carryPoint: {fileID: 0}
+  pickupRange: 1.2
 --- !u!1001 &225095562114334093
 PrefabInstance:
   m_ObjectHideFlags: 0
