@@ -14,7 +14,7 @@ public sealed class PlayerMovement
         this.steps = steps;
     }
 
-    public void Apply(MovementIntent intent, Transform view, MovementSettings settings, float deltaTime, bool faceView = false)
+    public void Apply(MovementIntent intent, Transform view, MovementSettings settings, float deltaTime, bool faceView = false, JumpFrame jump = default, float launchSpeed = 0)
     {
         Vector3 direction = GetDirection(new Vector2(intent.Horizontal, intent.Forward), view);
         Vector3 target = direction * MovementPolicy.SelectSpeed(intent, settings);
@@ -23,7 +23,13 @@ public sealed class PlayerMovement
             new Vector3(velocity.x, 0, velocity.z), target, settings.Acceleration * deltaTime);
 
         float vertical = velocity.y;
-        if (steps.TryGetVerticalSpeed(horizontal, direction, deltaTime, out float stepSpeed))
+        if (jump.Active)
+        {
+            // 점프 중 턱 상승 목표를 없애고 Unity 중력이 만든 속도는 그대로 둡니다.
+            steps.Reset();
+            if (jump.TakeOff) vertical = launchSpeed;
+        }
+        else if (steps.TryGetVerticalSpeed(horizontal, direction, deltaTime, out float stepSpeed))
             vertical = stepSpeed;
         body.linearVelocity = new Vector3(horizontal.x, vertical, horizontal.z);
 
