@@ -2,6 +2,70 @@
 
 이 문서는 현재 플레이어 기능을 직접 수정할 사람을 위한 안내입니다. 작업 전에는 `PLAYER_WORK_RULES.md`를 먼저 읽습니다. 작업별 검증·오류·삭제 기록은 `PLAYER_WORK_LOG.md`에 추가합니다.
 
+## F키로 물건 보관하기, 쥐 포획하기
+
+이 부분은 현재 코드의 사용 방법입니다. 실제 실행 검증 결과는 작업 로그에서 따로 확인합니다.
+
+화면 가운데 포인터를 **등록된 대상**에 맞춘 뒤 F를 한 번 누릅니다. 기본 상호작용 거리는 2.2입니다. 벽에 가린 대상이나 너무 멀리 있는 대상은 선택하지 않습니다. F는 누른 채 유지하는 방식이 아니라 한 번 누를 때 한 번 작동합니다.
+
+| 현재 상황 | F를 누르면 |
+| --- | --- |
+| 손이 비어 있고 일반 물건을 보고 있음 | 왼쪽부터 비어 있는 인벤토리 칸에 보관합니다. 손은 계속 비어 있습니다. |
+| 총을 들고 일반 물건을 보고 있음 | 새 물건만 빈 칸에 보관하고 총 장착은 유지합니다. |
+| 좌클릭으로 물건을 들고 다른 일반 물건을 보고 있음 | 기존 물건은 계속 들고 새 물건만 빈 칸에 보관합니다. |
+| 등록된 대상을 보고 있지 않음 | 아무 동작도 하지 않습니다. 손에 든 물건을 놓거나 보관품을 꺼내지 않습니다. |
+| 일반 물건을 보고 있지만 5칸이 모두 찼음 | 획득하지 않습니다. 대상 물건·기존 인벤토리·손 상태를 유지합니다. |
+| 등록된 쥐를 보고 있음 | 포획합니다. 일반 물건용 인벤토리 빈칸과는 관계없습니다. |
+
+저장이 성공하면 새 물건의 월드 원본만 비활성화합니다. 저장에 실패하면 원본은 남습니다. F는 손 상태를 바꾸지 않으며, 같은 물건이 월드와 인벤토리에 동시에 남지 않도록 이미 획득한 대상을 다시 획득하지 못하게 합니다.
+
+인벤토리 UI와 보관품을 꺼내는 입력은 아직 정하지 않아 추가하지 않았습니다. 숫자 1은 기존 샷건 장착·해제에만 사용합니다.
+
+### 기존 조작과 함께 쓰기
+
+- 기존 **좌클릭 유지로 들기 → 좌클릭을 떼면 놓기**는 유지합니다. 놓는 순간의 위치·회전은 바꾸지 않고 기존 Rigidbody의 중력으로 떨어뜨립니다.
+- 샷건의 **좌클릭 발사·우클릭 조준·숫자 1 장착/해제**도 유지합니다.
+- 좌클릭으로 들던 물건이 있을 때 숫자 1을 누르면 현재 위치에서 놓고 샷건을 장착합니다. F로 저장한 물건은 손에 들지 않았으므로 인벤토리에 그대로 남습니다.
+- 같은 순간에 F와 기존 손 조작 키를 누르면 F를 먼저 처리해 한 입력으로 두 동작이 겹치지 않게 합니다.
+- `HotbarManager > Read Selection Input`은 **꺼 둡니다**. 켜면 핫바의 숫자 1 선택과 샷건의 숫자 1 입력이 함께 읽힙니다. 나중에 UI 버튼이나 `Select(칸 번호)`로 칸을 선택하는 것은 이 설정이 꺼져 있어도 가능합니다.
+
+### 대상 등록과 설정 위치
+
+`PlaytestScene01`에서 플레이어 **본체**의 `InteractionController`, `ItemInteractor`, `HotbarManager`를 확인합니다. 플레이어 아래 빈 자식 오브젝트로 모델과 스크립트를 분리하는 방식은 사용하지 않습니다. 기존 `Assets/02Scripts/04Systems/ItemInteractor.cs`와 `HotbarManager.cs`를 재사용하며, 운반과 판단 규칙은 `Assets/02Scripts/01Player`의 기존 파일에 있습니다.
+
+1. `ItemInteractor > Interaction`에는 같은 플레이어의 `InteractionController`를 연결합니다. `Inventory`에는 사용할 `HotbarManager`를 연결합니다.
+2. `InteractionController > Registered Interaction`에는 위 `ItemInteractor`를 연결합니다.
+3. `ItemInteractor > Targets`에 항목을 추가하고 `Target`에 월드 물건 또는 쥐의 루트를 넣습니다. 루트란 함께 보관하거나 포획할 물체의 가장 위쪽 오브젝트입니다. 플레이어 본체나 플레이어가 포함된 부모는 대상이 될 수 없습니다.
+4. `Kind`는 물건이면 `Item`, 쥐면 `Enemy`로 선택합니다. `Item`에는 기존 `HotbarItemData`가 있으면 연결하고, 없으면 `Display Name`을 적습니다. 데이터가 비어 있을 때 만드는 이름 데이터는 현재 실행 중에만 사용합니다.
+5. 포인터가 맞을 수 있도록 대상 또는 그 자식에 **활성화된 Collider**가 있어야 합니다. 등록한 물체의 Trigger도 선택하지만, 관련 없는 Trigger는 선택이나 벽 판정에 사용하지 않습니다. 기존 콜라이더 모양을 바꾸거나 등록만을 위해 새 물리 컴포넌트를 자동 추가하지 않습니다.
+
+기존 `ItemPickup`에 아이템 데이터가 연결된 물체는 `Use Item Pickup Registration`이 켜져 있으면 자동으로 등록 대상으로 인식합니다. 실행 중 생성한 물건은 `Register(new InteractionRegistration { ... })`로 등록하고 `Unregister(대상)`으로 해제할 수 있습니다. 이미 획득하여 예약된 대상의 등록 해제는 거부합니다. 인스펙터의 `Targets`를 실행 중 바꿨다면 `RebuildRegistrations()`를 호출해야 목록이 다시 반영됩니다.
+
+`Pickup Range`는 F 상호작용 거리입니다. `InteractionController > Hold Distance`는 좌클릭으로 드는 거리이며 F 보관에는 영향을 주지 않습니다. 좌클릭 운반은 외형 전체를 감싼 경계로 검사하므로 큰 물건이 벽·선반에 보수적으로 막힐 수 있습니다.
+
+현재 씬에는 원통 4개·큐브 2개·덫 1개와 쥐 2마리를 등록했습니다.
+
+### UI 담당자와 연결하기
+
+새 F 기능의 5칸 데이터 저장은 **UI가 없어도** 동작합니다. 기존 좌클릭 큐브의 '등록된 UI로 날아가는 연출'과는 별도입니다. 그 기존 연출은 UI 목적지가 등록되어야 실행되며, F 기능이 임의의 UI 목적지를 만들지는 않습니다.
+
+아래는 UI 담당자가 나중에 사용할 수 있는 기존 연결 지점입니다. 이번 작업에는 인벤토리 UI나 새 꺼내기 입력을 추가하지 않았습니다. `HotbarUI`는 `HotbarManager.Instance`와 아래 이벤트를 사용하며, 아이템 데이터에 `Icon`이 없어도 저장 칸은 사용됩니다.
+
+| 연결 지점 | 담당자가 할 일 |
+| --- | --- |
+| `GetSlot(0~4)` | 각 칸의 현재 아이템을 읽습니다. 화면의 1번 칸은 코드에서 0번입니다. |
+| `OnSlotChanged` | 알려 준 칸의 아이콘·이름을 다시 그립니다. |
+| `OnSelectedChanged` | 선택 테두리를 갱신합니다. |
+| `Select(0~4)` | UI 버튼으로 선택 칸을 바꿉니다. 현재 구현에서 선택만으로 물건을 다시 꺼내 들지는 않습니다. |
+| `TrySetInventory(IItemInventory)` | 다른 담당자의 저장 시스템으로 바꿉니다. 획득 처리 중에는 교체를 거부합니다. `null`이면 연결된 기본 HotbarManager로 돌아갑니다. |
+
+다른 저장 시스템을 연결하려면 `IItemInventory`의 `HasSpace`, `GetSlot`, `TryAdd`, `TryRemove`를 구현합니다. `TryAdd`가 실패하면 칸을 바꾸지 않아야 하며, 성공했을 때만 월드 원본을 숨깁니다. 기존 계약인 `TryRemove(칸 번호, 예상 아이템)`는 그 칸에 예상한 아이템이 있을 때만 제거해야 합니다. 현재 F 획득은 저장만 수행하며, 이 제거 함수를 새 꺼내기 입력에 연결하지 않습니다.
+
+쥐 포획은 기존 `ThiefController.GetCaptured()`를 사용합니다. 기존 쥐가 들고 있던 보물을 내려놓는 처리를 거친 뒤 쥐가 제거되고, 등록된 대상은 비활성화됩니다. 현재 포획 경로는 기절 여부로 제한하지 않으며 **포획 수·점수·라운드 판정은 추가하지 않았습니다**. 다른 담당자는 `EnemyCaptured` 이벤트를 받아 나중에 필요한 표시를 연결할 수 있습니다.
+
+현재 인벤토리는 실행 중의 상태만 보관합니다. Play 종료·게임 종료 후의 영구 저장, 인벤토리 UI, 보관된 물건을 선택해 다시 꺼내기, 사용 효과, 최대 보유량을 넘는 추가 보관은 구현하지 않았습니다. 기능을 바꾼 뒤에는 빈손·총 장착·좌클릭 보유 각각에서 F 저장 후 손 상태가 같은지, 5칸 가득 참과 빈 공간 F에서 상태가 유지되는지 확인합니다. 좌클릭 해제의 자연 낙하, 쥐 포획, 숫자 1 장착도 따로 확인합니다.
+
+
 ## 현재 열어야 할 프로젝트와 파일
 
 현재 Unity 프로젝트는 `C:/Users/307/Desktop/unity/Team3rd3DProject/3rd3DProject`입니다. 작업 씬은 `Assets/01Scenes/PlaytestScene01.unity` 하나입니다. 아래에 남긴 날짜별 검증·이전 기록은 당시 기록이며, 현재 경로는 이 안내를 우선합니다.
@@ -9,6 +73,7 @@
 | 대상 | 현재 위치 |
 | --- | --- |
 | Player C# 코드 | `Assets/02Scripts/01Player/` |
+| F 진입점·5칸 저장소 | `Assets/02Scripts/04Systems/ItemInteractor.cs`, `HotbarManager.cs` |
 | 캐릭터 모델 | `Assets/04Prefabs/Player/Models/Cat_Player00.fbx` |
 | 플레이어 프리팹 | `Assets/04Prefabs/Player/Prefabs/Cat_Player (1).prefab` |
 | 기존 Idle·Walk·Run 클립 | `Assets/04Prefabs/Player/Animations/` |
@@ -18,7 +83,7 @@
 | 발사 클립 | `Assets/03Sprites/Player/Animations/Shotgun_Fire.anim` |
 | 산탄 원 재질 | `Assets/03Sprites/Player/Weapons/Shotgun/Shotgun_SpreadRing.mat` |
 
-이번 작업은 기존 Player C#의 좌클릭 집기·가독성·책임 분리를 다듬고 작업 문서를 갱신하는 범위입니다. 사용자가 요청한 C# 40개의 이름을 간단하게 바꾸되 폴더 구조를 유지합니다. 짝이 되는 `.meta`는 경로만 함께 바꾸고 내용과 GUID는 그대로 보존합니다. 다른 파일의 정리·이동·삭제·이름 변경은 포함하지 않습니다. Rat·Enemy·Mouse 코드, 다른 씬과 프로젝트 설정도 수정하지 않습니다. 과거 삭제 승인이나 다른 프로젝트 사본을 자동 복원 근거로 사용하지 않습니다.
+현재 작업은 기존 ItemInteractor에 F 획득을 확장하고 승인된 5칸 저장소를 연결하는 범위입니다. 아래 이름 변경 설명은 앞선 작업 기록입니다. 사용자가 요청한 C# 40개의 이름을 간단하게 바꾸되 폴더 구조를 유지합니다. 짝이 되는 `.meta`는 경로만 함께 바꾸고 내용과 GUID는 그대로 보존합니다. 다른 파일의 정리·이동·삭제·이름 변경은 포함하지 않습니다. Rat·Enemy·Mouse 코드, 다른 씬과 프로젝트 설정도 수정하지 않습니다. 과거 삭제 승인이나 다른 프로젝트 사본을 자동 복원 근거로 사용하지 않습니다.
 
 ## 조작 방법
 
@@ -30,6 +95,7 @@
 | 마우스 이동 | 정지: 멈춘 방향에서 좌우60도 / 이동: 수평360도. 상하 범위는 기존과 같음 |
 | 빈손에서 마우스 좌클릭을 누르고 유지 | 중앙 커서가 가리키는 물건을 화면 중앙에 들기 |
 | 빈손 집기에 사용한 좌클릭에서 손을 뗌 | 즉시 보유 종료·내려놓기 |
+| 등록 물건에 포인터를 맞추고 F | 새 물건만 인벤토리에 보관. 기존 손 상태 유지 |
 | 숫자 1 | 기존 빨강·파랑 샷건을 즉시 양손으로 잡기 / 다시 누르면 해제 |
 | 샷건 장착 중 우클릭 유지 | 줌·조준, 이동은 걷기로 고정. 떼면 기본 시야로 복귀 |
 | 샷건 장착 중 좌클릭 | 한 번 누를 때 4발 산탄 발사. 누르고 있어도 연속 발사하지 않음 |
@@ -37,13 +103,15 @@
 
 빈손 우클릭은 물건을 집지 않습니다. Esc로 마우스를 푼 뒤 화면을 다시 잠그는 좌클릭도 집기에 쓰지 않습니다. 다시 잠근 다음 새로 클릭해야 집습니다.
 
-실린더는 좌클릭을 새로 누를 때 집고 버튼을 누르는 동안만 듭니다. 떼면 내려놓습니다. 기존 F 보유 토글은 제거했습니다. 장애물이 없으면 물건의 중심이 중앙 포인터와 겹칩니다. 벽에 걸리거나 선반에서 빠져나오는 동안에는 충돌을 피하는 위치가 우선합니다. 바닥을 못 찾으면 빈 공간에서 중력으로 놓습니다. 새 장애물과 완전히 겹쳐 안전한 위치가 없다면 손은 즉시 비우고 물건은 그 자리에 잠시 멈춥니다. 공간이 생긴 뒤 충돌과 중력을 켜므로 플레이어나 벽을 강제로 밀지 않습니다. 큐브는 기존처럼 등록된 인벤토리 UI로 이동하는 획득 연출이며, UI가 없으면 그대로 남습니다.
+실린더는 좌클릭을 새로 누를 때 집고 버튼을 누르는 동안만 듭니다. 장애물이 없으면 물건의 중심이 중앙 포인터와 겹칩니다. 벽에 걸리거나 선반에서 빠져나오는 동안에는 충돌을 피하는 위치가 우선합니다. 버튼을 떼면 그 순간의 위치·회전을 유지한 채 손을 비우고 중력으로 놓습니다. 바닥으로 순간 이동시키거나 공중에 멈춘 채 공간이 생기기를 기다리지 않습니다. 기존 좌클릭 큐브는 등록된 UI로 날아가는 연출이므로 UI가 없으면 남습니다. 별도의 F 입력은 UI 없이 해당 물건을 5칸 저장소에 보관합니다.
 
-물건을 든 상태에서 1을 누르면 안전하게 내려놓을 수 있을 때만 내려놓고 샷건을 잡습니다. 바닥이나 공간이 부족하면 기존 물건을 계속 듭니다. 총을 이미 들었을 때 1을 또 누르면 총을 숨기고 원래 손 동작으로 돌아갑니다. 총 장착 중에는 다른 물건 집기를 막습니다. 소환 효과·소환 애니메이션은 사용하지 않습니다. 발사는 아래 조준·발사 기능에서 처리합니다. 외부 입력·버튼에서는 `InteractionController.TryToggleEquipment()`를 사용합니다. `ShotgunEquipment`는 장비와 손 자세만 맡으므로 그 안에 입력 검사나 아이템 내려놓기 규칙을 넣지 않습니다.
+Collider는 물건의 **충돌 모양**이고, Rigidbody는 **중력과 물리 움직임을 계산하는 몸체**입니다. Collider만으로 중력이 생기지는 않습니다. 내려놓을 때 기존 Rigidbody의 `Is Kinematic`을 끄고 `Use Gravity`를 켜며, 속도를 0으로 만든 뒤 Unity의 물리 계산에 맡깁니다. Collider의 기존 활성 상태는 복원하고 새 Rigidbody나 자체 중력 스크립트를 추가하지 않습니다.
+
+좌클릭으로 물건을 든 상태에서 1을 누르면 현재 위치에서 놓고 샷건을 잡습니다. 바닥 탐색이나 착지 완료를 기다리지 않습니다. 총을 이미 들었을 때 1을 또 누르면 총을 숨기고 원래 손 동작으로 돌아갑니다. 총 장착 중에는 좌클릭 물건 집기를 막지만 F 인벤토리 저장은 가능합니다. 소환 효과·소환 애니메이션은 사용하지 않습니다. 발사는 아래 조준·발사 기능에서 처리합니다. 외부 입력·버튼에서는 `InteractionController.TryToggleEquipment()`를 사용합니다. `ShotgunEquipment`는 장비와 손 자세만 맡으므로 그 안에 입력 검사나 아이템 내려놓기 규칙을 넣지 않습니다.
 
 ## 어디에 무엇이 있나요?
 
-씬은 `Assets/01Scenes/PlaytestScene01.unity`만 사용합니다. 코드는 모두 `Assets/02Scripts/01Player` 아래에 있습니다. 폴더는 기능을 나누어 담는 서랍이라고 생각하면 됩니다.
+씬은 `Assets/01Scenes/PlaytestScene01.unity`만 사용합니다. 플레이어 코드는 `Assets/02Scripts/01Player` 아래에 있으며 F 획득과 저장소는 앞서 적은 기존 `04Systems/ItemInteractor.cs`, `HotbarManager.cs`를 재사용합니다. 폴더는 기능을 나누어 담는 서랍이라고 생각하면 됩니다.
 
 | 폴더·파일 | 맡은 일 |
 | --- | --- |
@@ -53,7 +121,7 @@
 | `Animation/PlayerAnimation.cs` | 대기·걷기·달리기 선택 |
 | `Camera/` | Cinemachine 마우스 입력과 커서 잠금 |
 | `Interaction/InteractionController.cs` | 중앙 조준 검사, 순수 손 규칙 결과를 들기·장착 기능에 연결 |
-| `Interaction/ItemCarrier.cs` | 선반에서 꺼내기, 들고 이동하기, 안전하게 내려놓기 |
+| `Interaction/ItemCarrier.cs` | 선반에서 꺼내기, 벽을 검사하며 들고 이동하기, 현재 위치에서 중력으로 놓기 |
 | `Interaction/CatInteractionItem.cs` | 물건 종류와 교체 가능한 외형 지정 |
 | `Interaction/Presentation/` | 중앙 커서, 노란 강조, 인벤토리로 날아가는 표시 |
 | `Equipment/ShotgunEquipment.cs` | 총 표시·숨김과 양손 위치 맞추기. 입력을 직접 읽지 않음 |
@@ -71,7 +139,7 @@ Editor의 Setup 도구는 현재 연결을 재사용하고, 연결이 비었을 
 
 1. 카메라 정중앙에서 눈에 보이지 않는 검사 선을 쏩니다. 가까운 물건인지, 벽 뒤에 있지는 않은지 확인합니다.
 2. 빈손이고 좌클릭을 새로 눌렀으면 기존 집기 기능을 호출합니다. `HandPolicy`가 집기·놓기·장착·해제 중 어떤 일을 할지 결정합니다. 입력 장치 자체는 `InteractionInput`만 읽습니다.
-3. 숫자 1은 장착 담당 코드로 들어갑니다. 연결이 올바른지 먼저 확인하고, 들고 있던 물건을 안전하게 내려놓습니다. 실패하면 장착하지 않습니다.
+3. 숫자 1은 장착 담당 코드로 들어갑니다. 연결이 올바른지 먼저 확인하고, 좌클릭으로 들고 있던 물건을 현재 위치에서 놓은 뒤 장착합니다. F 저장품은 손에 없으므로 그대로 보관합니다.
 4. 총은 미리 연결한 하나의 모델을 켜서 표시합니다. 매번 새 총을 만들지 않습니다. 예전 소환 동작의 마지막 잡는 자세를 참고했지만 소환 애니메이션 자체는 가져오지 않았습니다.
 5. Animator가 몸·꼬리·발의 기존 동작을 계산한 뒤, `LateUpdate`에서 양손 뼈만 `LeftGrip`·`RightGrip` 위치에 맞춥니다. Grip은 손이 놓일 기준점입니다. 다음 프레임에는 이전 손 보정을 풀고 다시 계산하여 위치가 계속 틀어지지 않게 합니다.
 
@@ -102,7 +170,7 @@ Editor의 Setup 도구는 현재 연결을 재사용하고, 연결이 비었을 
 
 ### 인벤토리 담당자 연결
 
-`InventoryPickupEffect > Inventory Target`에 실제 UI의 RectTransform을 등록합니다. 코드에서는 `RegisterTarget(...)`을 사용할 수 있습니다. 도착 시 `Collected` 이벤트로 물건 식별자가 한 번 전달됩니다. 실제 인벤토리 데이터 저장은 별도 담당 코드에서 처리합니다. 등록된 UI가 없거나 도중에 사라지면 물건은 사라지지 않습니다.
+기존 좌클릭 큐브 연출은 `InventoryPickupEffect > Inventory Target`에 실제 UI의 RectTransform을 등록합니다. 코드에서는 `RegisterTarget(...)`을 사용할 수 있습니다. 도착 시 `Collected` 이벤트로 물건 식별자가 한 번 전달되고 저장은 별도 담당 코드가 처리합니다. 등록된 UI가 없거나 도중에 사라지면 연출이 물건을 없애지 않습니다. F 획득은 이 UI 연출과 별도로 기존 5칸 저장소를 사용합니다.
 
 ## 수정 뒤 확인하기
 
@@ -134,11 +202,13 @@ Editor의 Setup 도구는 현재 연결을 재사용하고, 연결이 비었을 
 - 손 사용 규칙: `Domain/HandPolicy.cs`. 장비 종류를 바꾸려면 입력 코드를 복제하는 대신 `IEquipmentPort` 구현을 연결합니다.
 - 이동 속도: PlayerController의 Walk Speed/Run Speed. 어떤 상황에 어떤 속도를 선택하는지는 `Domain/MovementPolicy.cs`입니다.
 - 독립 규칙 검사: `Tools > Cat Player > 순수 규칙 검증`. 결과와 실제 Play 검사를 둘 다 확인합니다.
-- 해제 후 물리 복구 대기: `CatInteractionItem.IsReleasePending`으로 읽습니다. 이때는 보유 중이 아니며 새 집기도 막습니다. 공간 검사·물리 복구는 해당 물건이 맡습니다.
+- 해제 후 자연 낙하: `ItemCarrier`가 현재 위치에서 Collider와 기존 Rigidbody를 해제합니다. 공중 복구 대기는 사용하지 않습니다. `CatInteractionItem.IsReleasePending`과 예전 저장 형식은 연결 보존을 위해 남겼으며, 예전 잔여 상태가 있으면 즉시 물리를 복구합니다.
 
 ### 구현 전에 확인한 공식 자료
 
 [물리 재질](https://docs.unity3d.com/6000.0/Documentation/Manual/class-PhysicsMaterial.html), [마찰 결합 순서](https://docs.unity3d.com/6000.0/Documentation/Manual/collider-surfaces-combine.html), [버튼 유지 입력](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.14/api/UnityEngine.InputSystem.Controls.ButtonControl.html), [중앙 조준선](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Camera.ViewportPointToRay.html), [Cinemachine 회전 범위](https://docs.unity3d.com/Packages/com.unity.cinemachine@3.1/manual/CinemachineOrbitalFollow.html)를 확인했습니다. 다른 엔진의 구현 가능성까지 검증한 것은 아닙니다.
+
+자연 낙하는 Unity의 [Rigidbody 물리 제어](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Rigidbody-isKinematic.html), [Use Gravity](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Rigidbody-useGravity.html), [WakeUp](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Rigidbody.WakeUp.html)을 사용합니다. 놓는 순간 기존 몸체를 물리 시뮬레이션에 다시 참여시키며, 별도 낙하 위치나 중력 계산을 만들지 않습니다.
 
 ## 현재 검증 결과 (2026-09-30)
 
@@ -266,7 +336,7 @@ OneDrive 밖에서 작업하는 것과 .gitattributes의 잘못된 매크로 선
 
 GUID는 Unity가 파일을 구분하는 이름표입니다. C# 파일명을 바꾸면서 이 이름표를 새로 만들면 기존 연결이 끊길 수 있습니다. 이번 40개 스크립트는 기존 `.meta`를 짝으로 유지하고 파일명만 함께 바꾸는 대상입니다. 모델·프리팹·클립·재질·입력 액션·셰이더의 이름은 바꾸지 않습니다.
 
-`Interaction/CatInteractionItem.cs`는 예외입니다. 물건을 놓은 뒤 충돌을 안전하게 복구하는 내부 상태를 저장하므로, 저장 형식의 이름까지 달라지지 않도록 파일명과 클래스명을 유지합니다. 저장되는 필드 이름, 컴포넌트 연결과 발사 애니메이션의 세 필드도 유지합니다.
+`Interaction/CatInteractionItem.cs`는 예외입니다. 예전 물리 복구 상태를 읽는 저장 형식의 이름이 달라지지 않도록 파일명과 클래스명을 유지합니다. 현재는 남은 복구 상태를 즉시 해제하며 공중 대기를 시작하지 않습니다. 저장되는 필드 이름, 컴포넌트 연결과 발사 애니메이션의 세 필드도 유지합니다.
 
 변경 전후 `.meta` 내용과 GUID가 같은지, 새 파일명으로 스크립트가 로드되는지, 모델·프리팹·애니메이션 연결에 Missing이 없는지를 함께 확인합니다. 다른 씬을 수정하거나 기존 에셋을 새로 만드는 방식으로 연결을 고치지 않습니다. Unity의 [에셋 이동 API](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AssetDatabase.MoveAsset.html)와 [에셋 메타데이터 안내](https://docs.unity3d.com/6000.0/Documentation/Manual/AssetMetadata.html)를 기준으로 확인합니다.
 
@@ -334,3 +404,18 @@ GUID는 Unity가 파일을 구분하는 이름표입니다. C# 파일명을 바�
 전체 메타 1,046개의 내용은 동일합니다. Play를 종료한 편집기에서 Missing Script·누락 메시·재질 오류는 0이었습니다. 기존 사용자 씬/폰트 변경, RAt 파일과 프로젝트 설정은 보존했습니다. 다른 씬 실행·팀원 PC·전체 게임 빌드를 검사한 결과는 아닙니다.
 
 검사 방법과 오류 처리 기록은 `PLAYER_WORK_LOG.md`, 원본 대비 결과와 백업은 `C:/Users/307/Documents/Codex/PlayerRefactor20261007`에 있습니다. Git으로 공유할 때에는 이름이 바뀐 `.cs`와 같은 이름의 `.meta`를 함께 포함해야 기존 식별 번호와 연결이 유지됩니다.
+
+
+### 검은자위가 측면에서 사라질 때 확인할 설정 (2026-10-07)
+
+이번 수정은 모델링을 바꾸지 않고 Unity 재질의 그리는 순서만 고친 것입니다. Git 이력상 10월 2일 커밋 `5d7d582`에서는 양쪽 검은자위가 3100이었으나, 10월 6일 `ba840e8`에서 자동값 -1로 바뀌었습니다. 확인된 기존값 3100으로 복구했습니다. 흰자위와 검은자위가 모두 같은 순서 3000을 사용하면 카메라 각도에 따라 흰자위가 나중에 그려져 검은자위를 덮었습니다.
+
+- `Assets/04Prefabs/Player/Materials/Eye_L_Low22.mat`, `Eye_R_Low22.mat`: 기존 기본 순서 3000 유지.
+- 같은 폴더의 `Pupil_L_Low22.mat`, `Pupil_R_Low22.mat`: Render Queue를 3100로 지정. 파일의 `m_CustomRenderQueue`는 자동값 -1에서 3100로 바뀝니다. 검은자위를 흰자위 다음에 그리라는 뜻입니다.
+- 색·팔레트·텍스처·셰이더·메시·본·애니메이션·프리팹·씬·메타·GUID는 작업 전 상태를 유지합니다. 각도에 따라 눈을 끄거나 모델을 부풀리는 설정은 사용하지 않습니다.
+
+나중에 수정할 때에는 위 두 Pupil 재질을 선택해 Render Queue를 확인하세요. 흰자위 재질까지 같은 값으로 바꾸지 않습니다. `PlaytestScene01`에서 정면, 좌우 사선, 양 측면으로 돌려 검은자위를 확인하고 뒤통수에서 머리를 뚫고 보이지 않는지도 확인합니다.
+
+이번에는 수정 전후 같은 조건의 14방향 렌더와 Play 상태의 14방향 렌더를 확인했습니다. 정면·좌우45/60도·좌우135도·후면의 수정 전후 이미지는 픽셀 단위로 같았고, 좌우75/90/105도에서 가려지던 검은자위가 복구됐습니다. Play에서도 눈 재질 네 개의 순서·표시·셰이더 상태 검사 4/4가 통과했습니다. 전체 게임 빌드나 팀원 PC 검증까지 수행한 것은 아닙니다.
+
+비교 이미지와 지문 검사 결과: `C:/Users/307/Documents/Codex/PlayerEyeFix20261007`.

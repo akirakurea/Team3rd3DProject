@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using UnityEngine;
 
 public enum ItemKind
@@ -22,7 +21,7 @@ public sealed class CatInteractionItem : MonoBehaviour, IHighlightSource
     Rigidbody body;
     Renderer[] visualRenderers = Array.Empty<Renderer>();
 
-    // 이 상태만 저장해 비활성화·Play 중 재컴파일 뒤에도 충돌 복구를 이어갑니다.
+    // 이전 저장 상태를 읽기 위해 형식과 필드명을 유지합니다.
     [Serializable]
     sealed class ReleaseRecovery
     {
@@ -33,8 +32,6 @@ public sealed class CatInteractionItem : MonoBehaviour, IHighlightSource
         public bool available;
     }
     [SerializeReference, HideInInspector] ReleaseRecovery releaseRecovery;
-    Coroutine releaseRoutine;
-    Collider[] releaseOverlaps;
 
     public BoxCollider Shape => shape ? shape : shape = GetComponent<BoxCollider>();
     public Rigidbody Body => body ? body : body = GetComponent<Rigidbody>();
@@ -66,15 +63,7 @@ public sealed class CatInteractionItem : MonoBehaviour, IHighlightSource
     {
         // 재컴파일 후 Awake가 생략되더라도 표시 목록을 복구합니다.
         if (visualRenderers == null || visualRenderers.Length == 0) RefreshVisual();
-        if (releaseRecovery == null) return;
-        IsAvailable = false;
-        if (!TryCompleteRelease()) StartReleaseRecovery();
-    }
-
-    void OnDisable()
-    {
-        if (releaseRoutine != null) StopCoroutine(releaseRoutine);
-        releaseRoutine = null;
+        if (releaseRecovery != null) TryCompleteRelease();
     }
 
     internal void BeginReleaseRecovery(Collider[] colliders, bool[] enabled, bool available)
@@ -84,102 +73,26 @@ public sealed class CatInteractionItem : MonoBehaviour, IHighlightSource
             origin = Body.position, rotation = Body.rotation,
             colliders = colliders, enabled = enabled, available = available
         };
-        Body.isKinematic = true;
-        Body.useGravity = false;
-        IsAvailable = false;
-        if (!TryCompleteRelease()) StartReleaseRecovery();
-    }
-
-    void StartReleaseRecovery()
-    {
-        if (releaseRoutine == null && isActiveAndEnabled)
-            releaseRoutine = StartCoroutine(RetryRelease());
-    }
-
-    IEnumerator RetryRelease()
-    {
-        var interval = new WaitForSeconds(0.1f);
-        // 대기 중인 물건만 검사합니다. 실패 횟수로 충돌을 강제로 켜지 않습니다.
-        while (releaseRecovery != null)
-        {
-            yield return interval;
-            if (TryCompleteRelease()) break;
-        }
-        releaseRoutine = null;
+        TryCompleteRelease();
     }
 
     bool TryCompleteRelease()
     {
-        if (releaseRecovery == null || !Body || !Shape) return false;
-        if (!TryResolveReleasePosition(out Vector3 position)) return false;
+        if (releaseRecovery == null || !Body) return false;
         ReleaseRecovery saved = releaseRecovery;
         releaseRecovery = null;
-        Body.position = position;
-        Body.rotation = saved.rotation;
+        if (saved.colliders != null && saved.enabled != null)
+            for (int i = 0; i < Mathf.Min(saved.colliders.Length, saved.enabled.Length); i++)
+                if (saved.colliders[i]) saved.colliders[i].enabled = saved.enabled[i];
+        // 예전 대기 상태도 위치를 바꾸지 않고 즉시 물리 시뮬레이션으로 넘깁니다.
         Body.isKinematic = false;
         Body.useGravity = true;
         Body.linearVelocity = Vector3.zero;
         Body.angularVelocity = Vector3.zero;
         Body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-        for (int i = 0; i < saved.colliders.Length; i++)
-            if (saved.colliders[i]) saved.colliders[i].enabled = saved.enabled[i];
+        Body.WakeUp();
         IsAvailable = saved.available;
         return true;
-    }
-
-    bool TryResolveReleasePosition(out Vector3 position)
-    {
-        // 이 Unity 버전은 비활성 BoxCollider의 분리 계산이 false를 반환할 수 있습니다.
-        // 같은 동기 호출 안에서만 활성화해 조회하고 물리 프레임 전에 원래 상태로 돌립니다.
-        bool enabled = Shape.enabled;
-        try
-        {
-            Shape.enabled = true;
-            return TryResolveActiveShape(out position);
-        }
-        finally { Shape.enabled = enabled; }
-    }
-
-    bool TryResolveActiveShape(out Vector3 position)
-    {
-        const float skin = 0.015f;
-        const float maxTravel = 0.35f;
-        position = releaseRecovery.origin;
-        Quaternion rotation = releaseRecovery.rotation;
-        Vector3 scale = transform.lossyScale;
-        Vector3 half = Vector3.Scale(Shape.size * 0.5f,
-            new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
-        Vector3 center = rotation * Vector3.Scale(Shape.center, scale);
-        releaseOverlaps ??= new Collider[64];
-        float travel = 0f;
-        // 16回まで候補だけを修正し、最後の全件確認を通った位置だけ実際に適用します。
-        for (int iteration = 0; iteration <= 16; iteration++)
-        {
-            int count = Physics.OverlapBoxNonAlloc(position + center, half, releaseOverlaps,
-                rotation, ~0, QueryTriggerInteraction.Ignore);
-            if (count == releaseOverlaps.Length) return false;
-            bool penetrated = false;
-            Vector3 correction = default;
-            for (int i = 0; i < count; i++)
-            {
-                Collider other = releaseOverlaps[i];
-                if (!other || other.isTrigger || other.transform == transform || other.transform.IsChildOf(transform)
-                    || Physics.GetIgnoreLayerCollision(gameObject.layer, other.gameObject.layer)
-                    || Physics.GetIgnoreCollision(Shape, other)) continue;
-                if (!Physics.ComputePenetration(Shape, position, rotation,
-                    other, other.transform.position, other.transform.rotation,
-                    out Vector3 direction, out float depth) || depth <= 0f) continue;
-                penetrated = true;
-                correction = direction * (depth + skin);
-                break;
-            }
-            if (!penetrated) return true;
-            if (iteration == 16) return false;
-            travel += correction.magnitude;
-            if (travel > maxTravel) return false;
-            position += correction;
-        }
-        return false;
     }
 
     void Reset()

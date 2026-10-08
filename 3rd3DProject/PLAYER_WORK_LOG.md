@@ -247,3 +247,65 @@
 - 최종 독립 감사: 메타 1,046개 모두 경로 대응 후 원본 바이트 유지, GUID 중복·누락 메타·충돌 표식 0. Player 226파일의 GUID 참조 289개를 Assets 및 설치 패키지 GUID 22,987개와 대조해 누락 0. 40쌍 이름 변경을 고려한 범위 밖 수정·예상 밖 추가/누락 0. 시작 전 사용자 변경 씬·폰트 내용과 Git 인덱스도 그대로다. 일반 C# 타입 묶음인 PlayerInput.cs에 MonoBehaviour 파일명 규칙을 적용한 외부 감사기의 오탐은 백업 구조와 대조하여 수정했다.
 - 최종 Unity 상태: Play 종료, dirty=False, compiling=False, compileFailed=False, 임포트 보류 없음. 씬 Missing Script 0, Player 누락 메시 0, 누락 재질/셰이더 오류 0, 협업 에셋 연결 검사 failures=0, RAt 루트 2개와 Player 태그 유지. RAt 전체 AI 동작, 다른 씬 실행, 팀원 PC와 전체 게임 빌드는 이번 검증 범위가 아니다.
 - 증거: `C:/Users/307/Documents/Codex/PlayerRefactor20261007`의 `final_guid_audit.json`, `current_guard.json`, `asset_load_result.txt`, `final_health.txt`, 각 검사 결과. Play 통합 로그는 `%TEMP%/PlayerValidation`에 있다. 기존 하위 .gitattributes 10~12행 매크로 경고는 요청 범위 밖이므로 수정하지 않았다.
+
+
+## 2026-10-07 — 모델 보존, 측면 검은자위 렌더 순서 수정
+
+- 요청: 측면·특정 각도에서 검은자위가 사라지는 문제 수정. 도중 사용자가 모델링은 그대로 두고 Unity 설정값만 확인·교정하도록 범위를 명확히 했다.
+- 작업 전 보존 기준: 현재 프로젝트 Assets/Packages/ProjectSettings와 기존 작업 문서 1,990파일 SHA-256, 메타 1,046개를 기록했다. PlaytestScene01, 편집 상태·dirty=False 확인. 처음에는 Git 추적 변경이 없었다. 모델링 원본은 한 번도 수정하지 않았다.
+- 연결 확인: Eye_L/R와 Pupil_L/R 모두 활성·메시/재질 연결 정상. CatEye.shader를 공용 사용하고 실제 Render Queue는 네 재질 모두 3000이었다. 현재 셰이더는 Transparent, Cull Back, ZWrite Off, ZTest LEqual이며 각도별 눈 비활성화 코드는 확인되지 않았다.
+- 재현: 실제 눈 메시를 Unity에서 복제 렌더한 14개 방향 중 좌우75/90/105도에서 흰자위가 검은자위를 덮었다. 정면은 정상. 원본 모델의 안쪽 검은자위를 마지막에 덧그리는 현재 표현 구조에서 같은 투명 렌더 순서의 거리 정렬이 문제였다.
+- 조사 중 실패/제외: 셰이더를 불투명·깊이 쓰기로 시험하니 안쪽 동공이 더 가려졌고, 임시 표면 보정 시험은 경계가 거칠어 채택하지 않았다. 사용자의 모델 보존 지시 후 해당 셰이더 실험을 모두 제거해 작업 전 바이트와 동일하게 했다. 시험에서 Unity가 재질에 기억한 미사용 `_SurfaceOffset`도 삭제했다. 흰자위 두 재질 재저장 때 생긴 줄바꿈 차이만 교정해 작업 전 SHA-256과 동일하게 했다. 외부 첫 렌더의 BakeMesh 배율은 수정한 뒤 baseline을 다시 만들었으며 초기 배율 오류 이미지는 검증 결과에 쓰지 않았다. 첫 shader import의 혼합 줄바꿈 경고도 정규화 후 해소했다.
+- Git 이력 확인: `5d7d582`(2026-10-02)에서 양쪽 검은자위 Render Queue 3100. `ba840e8`(2026-10-06)에서 3100 → -1로 바뀌었고 재질의 셰이더 연결도 현재 CatEye.shader로 변경됐다. 셰이더 파일의 Transparent/ZWrite Off 설정 자체는 유지됐다. 누가 바꿨는지 또는 Unity가 자동 초기화했는지는 Git만으로 단정하지 않는다. 첫 순서 분리 시험값 3001도 표시 문제를 해결했지만, 최종값은 이력으로 확인한 3100을 사용했다.
+- 최종 제품 변경: `Assets/04Prefabs/Player/Materials/Pupil_L_Low22.mat`, `Pupil_R_Low22.mat`의 `m_CustomRenderQueue`만 -1(셰이더 기본 3000)에서 3100로 변경. Unity Material API와 SaveAssetIfDirty로 해당 재질만 저장. 흰자위 3000 다음에 동공을 그린다. ZTest Always나 모델 변형을 사용하지 않고 몸통의 기존 가림을 유지했다.
+- 검증: 수정 전후 14방향(-135/-105/-90/-75/-60/-45/0/45/60/75/90/105/135/180도) 같은 카메라·조명 조건 렌더. 0, ±45, ±60, ±135, 180도는 픽셀 차이0. ±75/90/105도에서 검은자위 소실 복구. 이어 PlaytestScene01의 실제 애니메이션 상태를 가져온 14방향 렌더 확인. Play에서 흰자위 두 개3000·동공 두 개3100, 네 렌더러 활성/메시/셰이더 검사4/4 통과. 셰이더 컴파일 오류 없음. Play 종료, 씬 dirty=False.
+- 범위: 모델 FBX·리깅·애니메이션·팔레트·프리팹·씬·C#·프로젝트 설정·Rat 관련 에셋·기존 GUID/메타 보존. 설명서와 본 로그만 추가 기록. 파일 삭제·이름 변경·패키지 설치·스테이징·커밋·푸시 없음.
+- 공식 근거: Unity 6.5 [RenderQueue](https://docs.unity.com/en-us/engine/6000.5/script-reference/unityengine/rendering/renderqueue), [깊이 쓰기](https://docs.unity3d.com/6000.0/Documentation/Manual/SL-ZWrite.html), [URP 카메라 렌더 요청](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/User-Render-Requests.html). 현재 설치된 URP의 SingleCameraRequest 구현도 확인했다.
+- 증거 폴더: `C:/Users/307/Documents/Codex/PlayerEyeFix20261007`; baseline/restored3100/play3100 이미지, image_comparison.json, play_check.txt, final_scope.json. 수동 이동/전투 전체 회귀·다른 씬·전체 게임 빌드·팀원 PC 실행 검증은 이번 재질 수정의 검사 범위가 아니다.
+- 최종 재검증: 과거 설정 3100으로 복구한 렌더 14장은 시험값 3001의 정상 결과와 픽셀 단위로 동일했다. 3100에서 다시 Play 렌더 14방향 및 재질 상태4/4 통과. 재임포트 뒤 shaderError=False, MissingScripts=0, 임시 미리보기 오브젝트0, 시험 속성0, Play=False, dirty=False, compilationFailed=False. 시작 전 1,990파일과 비교해 두 Pupil 재질과 기존 설명서/로그만 변경, 추가/누락0, 전체 메타1,046개 및 모델·셰이더 원본 바이트 동일.
+
+
+## 2026-10-07 — 기존 ItemInteractor의 F 획득·5칸 보관 확장
+
+- 인터뷰 확정: 중앙 포인터와 기존 2.2 거리 검사, 등록 물체/Enemy, 빈 오브젝트 분리 취소. 물건 보유 중에는 새 물건을 저장하고 기존 손 물건을 유지. 총을 든 채 물건 획득은 성공 후 총을 내림. Enemy는 모든 손 상태에서 포획하되 손 상태 유지. 쥐 카운트·점수는 추후 구현. 마지막 A 답변으로 기존 HotbarManager 5칸 저장소 재사용, UI는 후속 연결로 확정했다.
+- 시작 기준: Assets/Packages/ProjectSettings와 기존 문서 1,990파일 SHA-256, 메타 1,046개 기록. 실제 프로젝트 Desktop/unity/Team3rd3DProject/3rd3DProject 및 PlaytestScene01, 편집 상태 확인. 해당 씬에 기존 ItemInteractor/HotbarManager가 없어 같은 Player 본체에 각 1개 연결했다. 별도 빈 자식·에셋·스크립트 파일을 만들지 않았다.
+- 변경 코드: `04Systems/ItemInteractor.cs`는 등록과 F 명령의 기존 진입점으로 확장, `HotbarManager.cs`는 빈칸 조회·획득칸 반환·예상 아이템 일치 시 제거·숫자키 선택 비활성 옵션을 추가했다. 기존 TryAdd/Select/ConsumeSelected 호출은 유지했다. `01Player/Domain/HandPolicy.cs`에 엔진 없는 획득 판단, `Interaction/ItemCarrier.cs` 안에 일반 C# 등록 물건 운반 서비스를 추가했다. 기존 좌클릭 운반 서비스는 보존했다. `InteractionController.cs`에 손 점유 공유·F 우선·등록 포인터·장비 보관 연결, `Editor/Validation/InteractionValidation.cs`는 F 미연결 때만 과거 F 미동작 검사를 수행하도록 갱신했다.
+- 저장 안정성: 물건과 슬롯은 같은 원본을 가리키며 보유 중 새 물건은 비활성 보관한다. 저장 취소와 내려놓기는 예상 슬롯 아이템 일치 여부를 확인한다. 공간 차단/저장 거부 시 원래 손 상태 유지. 들기 실패 뒤 저장 취소까지 거부한 대체 저장소는 원본을 비활성 보관하여 월드 중복을 막는다. 이벤트 재진입·비활성화·숫자1 장착도 소유권을 유지한다.
+- 씬: `Assets/01Scenes/PlaytestScene01.unity`의 기존 Player에만 두 컴포넌트와 연결을 추가했다. 원통4·큐브2·itsatrap1을 Item, 기존 RAt2를 Enemy로 등록했다. Hotbar 직접 숫자키 입력은 이 Player에서만 꺼서 샷건1키와 충돌을 방지했다. 트랩·쥐 자체 컴포넌트와 파일은 변경하지 않았다.
+- 적 처리: 기존 ThiefController.GetCaptured 경로로 보물 정리와 쥐 제거를 요청한다. EnemyCaptured 연결 이벤트만 제공하고 점수·RatsLeft·기절 조건·승패 판단을 추가하지 않았다. Enemy AI 코드는 읽기만 했다.
+- 검증 중 발견/수정: 초기 실제 입력 검사가 Unity 포커스 상실로 중단되어 통과로 집계하지 않았다. 포커스 복구 후 원통 F 획득/키 해제 보유는 통과했으나 실제 덫 선택이 실패했다. itsatrap의 기존 CapsuleCollider가 Trigger임을 확인했고, 콜라이더를 바꾸지 않고 등록 대상 Trigger만 선택 검사에 포함했다. 미등록 Trigger는 무시하며 기존 벽 검사와 좌클릭 검사는 유지한다.
+- 도구 문제: Unity 재컴파일·Play 진입 중 MCP discovery 만료/응답 시간 초과가 있었다. 별도 상태 조회로 실제 실행 여부를 확인한 뒤 재시도했으며 시간 초과 호출을 성공으로 간주하지 않았다. UI 캡처 FrameArrived 시간 초과와 GameView 클릭 geometry unavailable도 기록하며 이를 화면 확인 성공으로 보고하지 않는다.
+- 현재 확인된 검증: Unity 설치 Roslyn으로 Runtime77/Editor24 소스 컴파일 성공. 기존 엔진 독립 정책35/35, 신규 정책18상황+Unity무참조검사1=19/19 통과. Play 직접 명령 22/22 통과 후 Trigger 수정에 대한 추가 검사와 실제 입력·회귀 검사를 진행했다. 아래 최종 결과를 우선한다.
+- 문서: PLAYER_WORK_RULES에 최신 인터뷰 합의와 04Systems 두 기존 파일의 승인 범위 추가. PLAYER_IMPLEMENTATION_GUIDE에 F 동작표, Targets 등록, UI OnSlotChanged/GetSlot 연결, 기존 좌클릭 구분, 숫자1 처리와 범위를 설명했다. 현재 실행 내 저장만 구현하며 영구 저장·보관 물건 재꺼내기·인벤토리 UI·포획 카운트는 구현하지 않는다.
+- 공식 API 근거: [Physics.RaycastNonAlloc](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Physics.RaycastNonAlloc.html), [GameObject.SetActive](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/GameObject.SetActive.html). 선택·벽 검사는 재사용 물리 버퍼, 보관은 원본 비활성화와 기존 Hotbar 이벤트를 사용하며 별도 물리엔진·인벤토리 프레임워크를 만들지 않았다.
+- 삭제·이름 변경·메타/GUID 발급·설치·Git 스테이징/커밋/푸시 없음. 검증 코드·백업·결과는 프로젝트 밖 `C:/Users/307/Documents/Codex/PlayerFInteraction20261007`에 보관했다. 다른 씬, 전체게임 빌드, 팀원 PC, RAt의 전체 AI 플레이는 검증 범위가 아니다.
+
+- 최종 실행 검증: Trigger 보완 후 Play 명령25/25, 실제 F 입력8/8 통과. 실제 등록 원통·덫으로 획득/버튼해제 보유/새 덫 저장/누름유지 중 중복없음/현재위치 내려놓기/재획득, 실제 RAt의 F 포획·손 물건/슬롯/장비 및 라운드 카운트 유지까지 확인했다. 합성 키보드 이벤트를 Input System에 주입해 Update/LateUpdate의 실제 입력 경로를 실행했다.
+- 기존 기능 회귀: 상호작용40/40 통과(좌클릭 유지·해제 첫 렌더 프레임·중앙 오차0.074px·1번 장착/해제·안전한 내려놓기·기존 UI 연출·벽 차단·정지/이동 카메라). 기본 장치 전투 입력15/15 통과(1번·비줌/줌 단발4산탄·유지발사 방지·줌 걷기 고정·Esc/재잠금 방지). 이 기록은 이번 변경 이후 새로 실행한 결과다. center_hold 실제 렌더에서 포인터 중앙 물건 표시도 직접 확인했다.
+- 최종 Unity 연결 검사: Play=False, dirty=False, compiling=False, compileFailed=False, 임포트 보류=False. Missing Script0, Player 누락메시0, 누락재질/셰이더오류0, RAt 루트2, Player 태그 유지. F 등록7 Item+2 Enemy, 같은 Player의 ItemInteractor/Hotbar/Interaction 연결 및 Hotbar 숫자선택꺼짐 검사 통과.
+- 범위 감사: 독립 검사에서 기존1,990파일/메타1,046개 유지, 메타변경·누락·중복GUID·충돌표식·범위밖변경·추가·삭제0, Player/대상씬 GUID참조290개 모두 해결을 확인했다. 모델34/Enemy코드42/다른씬9/패키지·설정33개 불변. 첫 감사 중 본 로그 작성이 겹쳐 동시변경 경고가 있었으므로 문서 작성 완료 후 scope_audit.py를 재실행하여 final_scope.json에 최종 판정을 남긴다. Git 미해결 stage는0이고 감사 실행 전후 index는 동일했으나, 이번 작업 시작 시점 index 스냅샷은 없어 그 이전 불변을 독립적으로 증명했다고 주장하지 않는다.
+- 최종 증거: 외부 폴더의 runtime_result3.txt, real_f_input_20261007_162631_990.txt, CatInteractionValidation_20261007_162738_607.txt, 전투 실제입력 검증 결과, RegisteredPolicyCases_result.txt, final_health.txt, final_scope.json. UI·쥐카운트는 계획대로 미구현이며 보관품 다시꺼내기·영구저장·다른씬/팀원PC/전체빌드는 검사하지 않았다.
+- 최종 독립 감사 재실행: PASS_WITH_INDEX_BASELINE_LIMITATION. 추가/삭제/범위밖변경/메타변경/충돌/미해결GUID 모두0, GUID참조290개 정상. 이어 git diff --check는 Unity가 자동 저장한 씬의 빈 m_Name/value 필드4곳에 후행 공백을 보고했다. C# 공백 오류는 없으며 엔진 직렬화 형식을 임의 편집하지 않았다. 기존 .gitattributes 10~12행 매크로 및 줄바꿈 경고는 이번 범위 밖으로 보존했다. Git 스테이징된 파일은 없다.
+
+
+## 2026-10-07 — F 저장 시 손 상태 유지, 해제 위치에서 기본 중력 낙하
+
+- 요청: F로 새 물건을 획득할 때 빈손·총·기존 물건 보유를 그대로 유지하고 인벤토리에만 저장한다. 내려놓기의 바닥 순간 이동·공중 대기 처리를 없애 Unity 기본 중력으로 낙하하게 한다.
+- 범위 확인: 보관품을 다시 꺼내 버리는 새 입력/UI까지 원하는지 질문했다. 답변이 없는 상태에서는 새 입력을 만들지 않는다고 알리고 F 저장과 기존 좌클릭 해제만 수정했다. F는 더 이상 손에 새 물건을 들지 않으며, 무대상 F로 보관품을 꺼내거나 놓지 않는다.
+- 작업 전 현재 PlaytestScene01/dirty=False와 원통4·큐브2의 Rigidbody를 확인했다. 이 물체들은 원래 Is Kinematic=True/Use Gravity=False여서, 집기 전 상태만 복원하면 공중에 남는 원인이 있었다. Assets/Packages/ProjectSettings와 작업 문서 1,990파일의 지문 및 Git 인덱스를 외부에 기록했다.
+- 실제 코드 변경5개: `Assets/02Scripts/04Systems/ItemInteractor.cs`는 F 저장 전용으로 바꾸고 기존 손 표시·해제·총 내리기 경로를 제거했다. `Assets/02Scripts/01Player/Domain/HandPolicy.cs`의 등록 상호작용 정책은 손 상태와 무관하게 저장/포획만 선택한다. 같은 Player 폴더 `Interaction/ItemCarrier.cs`는 해제 시 위치·회전 변경 없이 기존 Collider를 복구하고 Rigidbody를 dynamic/Use Gravity=True로 돌린다. `Interaction/CatInteractionItem.cs`는 공중 복구 대기와 별도 밀어내기 계산을 제거하되 이전 직렬화 타입·필드는 보존했다. `Editor/Validation/InteractionValidation.cs`는 새 즉시 해제 동작을 검사하도록 기대값을 고쳤다.
+- 손을 놓을 때 이전 속도를 되살리지 않고 0으로 시작시킨 뒤 Unity 물리에 맡긴다. 보유 중 선반 추출·벽 검사는 유지한다. 자체 중력 계산, 바닥 착지점 탐색, 강제 바닥 스냅, 공중 대기는 사용하지 않는다. 기존 Collider 모양이나 Rigidbody 제약은 바꾸지 않으며 없던 물리 컴포넌트를 대상에 자동 추가하지 않는다.
+- 공식 근거: [Rigidbody.useGravity](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Rigidbody-useGravity.html), [Rigidbody.isKinematic](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Rigidbody-isKinematic.html). Collider는 충돌 모양이고, 실제 낙하에는 동적 Rigidbody와 Use Gravity가 필요하다.
+- 컴파일: 설치 Unity 참조로 Runtime77/Editor24 소스 컴파일 성공, 오류0. 기존 직렬화 호환용 `placeDistance`의 미사용 경고CS0414는 남는다. 엔진 독립 정책35/35 통과.
+- 새 Play 검증21/21: 빈손·좌클릭 보유·총 각각의 저장/Full/무대상/Enemy 손 상태 보존, 빈 슬롯 재사용, 획득 연출 중 거부, 등록 Trigger/벽 차단, 기존 동적·무중력·키네마틱 물체의 해제 즉시 위치 보존과 중력 활성 확인.
+- 실제 입력26/26: 기존 Player의 Input System에 키보드·마우스 이벤트를 주입해 F 저장과 손 보존, 1번 장비, 누름 중 중복 방지, LMB 해제 첫 렌더 프레임의 위치 유지와 Collider/동적/중력 복구를 확인했다. 세 가지 초기 물리 상태 모두 후속 물리 프레임에 낙하하고 바닥에 멈췄다. 바닥 경계 오차는 각0.0000으로 기록됐다. 임시 검사 대상·바닥은 Play에만 생성했고 저장하지 않았다.
+- 기존 상호작용 회귀40/40: 중앙 보유, 실제 좌클릭 유지/해제, 숫자1, 기존 UI 연출/취소, 벽, 정지/이동 카메라 등을 새로 실행했다. 심한 겹침 상태에서 해제 위치 보존·동적 복구를 동기로 검사한 뒤 임시 장애물을 물리 프레임 전에 치워 낙하와 겹침 해소 충격을 혼동하지 않았다.
+- 최종 Unity 검사: Play=False, dirty=False, compiling=False, compileFailed=False, 임포트 보류False. Missing Script0, Player 누락 메시0, 누락 재질/셰이더 오류0. 기존 등록7 Item+2 Enemy, 같은 Player 연결과 Hotbar 숫자입력꺼짐 유지. RAt 루트2와 Player 태그 유지.
+- 검토 결과 보존한 기존 동작/한계: F와 다른 손 입력이 같은 프레임이면 F를 우선하는 기존 규칙은 유지했다. 런타임 Register로만 추가한 대상은 ItemInteractor 재활성화 시 targets 배열에서 다시 구성되어 빠질 수 있는 기존 한계가 있다. 이번 씬은 직렬화 targets 등록을 사용하며 이 별도 생명주기 변경은 하지 않았다. 새 Enemy 검사는 임시 등록 대상으로 수행했으며 RAt 전체 AI나 라운드 카운트 기능을 새로 구현·검증한 것으로 보고하지 않는다.
+- 도구 오류: 재컴파일·Play 전환 중 MCP discovery가 잠시 만료됐다. 지연 Play 시작 응답 뒤 실제 play=False를 확인해 직접 시작했고, 첫 동기 검사는 Play 전제 미충족으로 실행 전 중단됐다. 상태를 다시 확인한 후 위 성공 결과를 얻었다. 외부 컴파일 정책 결과의 한글 표시 인코딩은 출력상 깨졌으나 결과35/0과 원본 파일을 함께 보관했다.
+- 문서: 기존 `PLAYER_WORK_RULES.md`, `PLAYER_IMPLEMENTATION_GUIDE.md`의 현재 F 규칙과 기본 물리 해제를 갱신하고 이 로그를 추가했다. 과거 기록은 보존했다. 파일 삭제·이름 변경·패키지 설치·Git 스테이징/커밋/푸시 없음. 씬·프리팹·메타·GUID·모델·Rat/Enemy·프로젝트 설정 변경을 하지 않았다.
+- 검증 증거는 `C:/Users/307/Documents/Codex/PlayerFStoreDrop20261007`의 `store_drop_sync_result.txt`, `store_drop_real_input_20261007_171748_047.txt`, `CatInteractionValidation_20261007_171638_746.txt`, `final_health.txt`, `policies_result.txt`이다. 문서 작성 종료 후 전체 지문·GUID·Git 인덱스 검사를 실행해 `final_scope.json`에 최종 판정을 보관한다. 보관품 꺼내기/UI, 영구 저장, 다른 씬, 팀원PC, 전체 게임 빌드는 이번 범위가 아니다.
+
+- 최종 범위 검사 결과: 메타1,046개·모델34·Enemy코드42·Rat/Enemy자산16·다른씬9·Player자산121과 Git 인덱스는 작업 전과 동일하다. GUID참조290개 해결, 중복/누락GUID·충돌표식·파일추가/삭제0이다. 허용한 코드5개/문서3개 외에 `ProjectSettings/TagManager.asset` 변경1개가 검출되어 전체 범위 판정은 FAIL이다.
+- 해당 설정은 레이어3·6의 빈 이름을 Enemy·Item으로 바꾼 내용이며 파일 수정시각은17:11:57이다. Git HEAD의 CRLF 내용 해시가 작업 시작 기준과 일치하여 두 레이어 차이를 확인했다. 이번 변경 코드/외부 검증 코드와 Assets/02Scripts에서 TagManager/레이어추가 처리는 발견하지 못했으므로 변경 원인을 확정하지 않는다. 사용자가 직접 변경했는지와 유지/두 레이어 복원 여부를 질문했으며, 답변 전에는 이 설정을 임의로 되돌리지 않고 보존했다. 요청 기능 검증 성공과 범위 밖 설정 변경 발견을 구분하여 보고한다.
+- 변경한 C#/문서의 `git diff --check`에 공백 오류는 없었다. 저장소에 기존 .gitattributes 매크로 경고와 LF/CRLF 변환 경고는 남아 있고 이번 요청에서 해당 설정은 수정하지 않았다.

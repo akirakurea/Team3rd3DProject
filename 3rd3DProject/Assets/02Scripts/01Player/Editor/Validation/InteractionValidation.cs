@@ -198,9 +198,15 @@ public static class InteractionValidation
         AimShelf(cylinders[0]); yield return new Pause();
         Check(control.Target == cylinders[0], "기존 매대 실린더를 화면 중심으로 선택");
         Capture("hover");
-        keys = new KeyboardState(Key.F); yield return new Pause();
-        Check(control.Held == null, "이전 F 입력으로는 물건을 집지 않음");
-        keys = default;
+        // 등록 F 기능이 연결된 씬에서는 이 과거 미할당 키 검사를 실행하지 않습니다.
+        // F는 손 상태를 바꾸지 않고 저장만 하며 무대상 입력은 무반응입니다.
+        // 빈손·총·좌클릭 운반 중의 F 저장·포획은 별도 등록 상호작용 검증에서 검사합니다.
+        if (!control.registeredInteraction)
+        {
+            keys = new KeyboardState(Key.F); yield return new Pause();
+            Check(control.Held == null, "F 미연결 씬에서는 F로 운반하지 않음");
+            keys = default;
+        }
         rightButton = true; yield return new Pause();
         Check(control.Held == null && control.Target == cylinders[0], "빈손 우클릭은 조준 중인 물건을 집지 않음");
         rightButton = false; yield return new Pause();
@@ -222,8 +228,9 @@ public static class InteractionValidation
             "좌클릭 유지 중 매대에서 추출하고 보유 유지");
         BeginReleaseMeasurement(); yield return new Pause();
         Check(releaseObserved && firstReleaseFrameEmpty && control.Held == null &&
-            cylinders[0].Shape.enabled && cylinders[0].IsAvailable,
-            "좌클릭 해제 입력의 첫 렌더 프레임에 보유 종료·충돌·선택 가능 상태 복구");
+            cylinders[0].Shape.enabled && cylinders[0].IsAvailable && !cylinders[0].IsReleasePending &&
+            !cylinders[0].Body.isKinematic && cylinders[0].Body.useGravity,
+            "좌클릭 해제 입력의 첫 렌더 프레임에 보유 종료·충돌·동적 물리·중력 즉시 복구");
         observeRelease = false;
         cylinders[0].gameObject.SetActive(false);
 
@@ -244,7 +251,7 @@ public static class InteractionValidation
         keys = new KeyboardState(Key.Digit1); yield return new Pause(.9f, 8);
         Check(control.Held == null && cylinders[1].Shape.enabled && cylinders[1].IsAvailable &&
             equipment.IsEquipped && equipment.weaponRoot.gameObject.activeSelf,
-            "보유 중 숫자 1: 안전하게 내려놓은 뒤 기존 샷건 장착");
+            "보유 중 숫자 1: 현재 위치에서 즉시 놓고 기존 샷건 장착");
         Check(combat.ShotsFired == shotsBeforeEquip,
             "집던 좌클릭을 계속 누른 채 샷건을 장착해도 발사하지 않음");
         // 장착 이전의 누름을 재사용하지 않습니다. 발사에는 장착 후 새 좌클릭이 필요합니다.
@@ -262,31 +269,45 @@ public static class InteractionValidation
 
         PlaceInOpenArea(cylinders[2]); yield return new Pause();
         leftButton = true; yield return new Pause(1.2f, 12);
-        Check(control.Held == cylinders[2], "막힌 내려놓기 검증 전제: 실린더 보유");
-        obstruction = new GameObject("Runtime_DropObstruction") { hideFlags = HideFlags.DontSave };
-        obstruction.transform.position = control.transform.position + Vector3.up;
-        obstruction.AddComponent<BoxCollider>().size = Vector3.one * 6;
-        Physics.SyncTransforms();
-        keys = new KeyboardState(Key.Digit1); yield return new Pause();
-        Check(!equipment.IsEquipped && control.Held == cylinders[2],
-            "내려놓기 후보가 모두 막히면 장착 거부·좌클릭 유지 중 보유 유지");
+        Check(control.Held == cylinders[2], "현재 위치 해제 검증 전제: 실린더 보유");
         var releaseItem = cylinders[2];
-        var releaseBlock = obstruction.GetComponent<Collider>();
-        bool penetrationBefore = Physics.ComputePenetration(releaseItem.Shape, releaseItem.Body.position,
-            releaseItem.Body.rotation, releaseBlock, obstruction.transform.position, obstruction.transform.rotation,
-            out var releaseDirection, out float releaseDepth);
-        report.AppendLine($"  release before: item={releaseItem.Body.position}, block={releaseBlock.bounds}, overlap={penetrationBefore}, depth={releaseDepth}, ignore={Physics.GetIgnoreCollision(releaseItem.Shape, releaseBlock)}");
-        keys = default; BeginReleaseMeasurement(); yield return new Pause();
-        report.AppendLine($"  release after: pending={releaseItem.IsReleasePending}, collider={releaseItem.Shape.enabled}, available={releaseItem.IsAvailable}, position={releaseItem.Body.position}");
-        Check(releaseObserved && firstReleaseFrameEmpty && control.Held == null &&
-            !cylinders[2].Shape.enabled && !cylinders[2].IsAvailable && cylinders[2].IsReleasePending,
-            "공간이 완전히 막혀도 해제 첫 렌더 프레임에 빈손·물건은 충돌 복구 대기");
-        observeRelease = false;
-        UnityEngine.Object.Destroy(obstruction); obstruction = null;
-        yield return new Pause(.35f, 5);
-        Check(!cylinders[2].IsReleasePending && cylinders[2].Shape.enabled && cylinders[2].IsAvailable &&
-            !cylinders[2].Body.isKinematic && cylinders[2].Body.useGravity,
-            "장애물 제거 후 충돌·선택·중력 복구, 보유 재개 없음");
+        Vector3 releasePosition = releaseItem.Body.position;
+        Quaternion releaseRotation = releaseItem.Body.rotation;
+        try
+        {
+            obstruction = new GameObject("Runtime_DropObstruction") { hideFlags = HideFlags.DontSave };
+            obstruction.transform.position = releaseItem.WorldBounds.center;
+            obstruction.AddComponent<BoxCollider>().size = Vector3.one * 6;
+            Physics.SyncTransforms();
+            // 숫자 1과 같은 진입점을 동기 호출합니다. 심한 겹침을 물리 프레임까지 남기지 않습니다.
+            bool equippedAfterRelease = control.TryToggleEquipment();
+            Check(equippedAfterRelease && equipment.IsEquipped && control.Held == null &&
+                releaseItem.Shape.enabled && releaseItem.IsAvailable && !releaseItem.IsReleasePending &&
+                !releaseItem.Body.isKinematic && releaseItem.Body.useGravity,
+                "막힌 위치도 번호 1 진입점에서 즉시 놓고 장착: 충돌·동적 물리·중력 복구, 대기 없음");
+            Check(Vector3.Distance(releaseItem.Body.position, releasePosition) < .001f &&
+                Quaternion.Angle(releaseItem.Body.rotation, releaseRotation) < .01f,
+                "해제 호출 직후 원래 보유 위치·회전 유지: 바닥 스냅·다른 착지 위치 탐색 없음");
+        }
+        finally
+        {
+            if (obstruction) UnityEngine.Object.DestroyImmediate(obstruction);
+            obstruction = null;
+            Physics.SyncTransforms();
+        }
+        keys = default; leftButton = false; equipment.Unequip();
+        // 즉시 복구 검사와 낙하 검사를 분리하여 겹침 해소 충격을 낙하로 오인하지 않습니다.
+        Vector3 fallStart = new Vector3(0, 3, 0);
+        releaseItem.Body.position = fallStart;
+        releaseItem.transform.position = fallStart;
+        releaseItem.Body.linearVelocity = Vector3.zero;
+        releaseItem.Body.angularVelocity = Vector3.zero;
+        Physics.SyncTransforms();
+        yield return new Pause(.25f, 5);
+        Check(control.Held == null && !releaseItem.IsReleasePending && releaseItem.Shape.enabled &&
+            releaseItem.IsAvailable && !releaseItem.Body.isKinematic && releaseItem.Body.useGravity &&
+            releaseItem.Body.position.y < fallStart.y - .02f,
+            "장애물 없는 안전 높이에서 중력으로 낙하하며 보유·공중 대기로 돌아가지 않음");
         cylinders[2].gameObject.SetActive(false);
 
         AimShelf(cubes[0]); yield return new Pause();
