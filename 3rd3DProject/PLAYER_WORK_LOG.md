@@ -309,3 +309,121 @@
 - 최종 범위 검사 결과: 메타1,046개·모델34·Enemy코드42·Rat/Enemy자산16·다른씬9·Player자산121과 Git 인덱스는 작업 전과 동일하다. GUID참조290개 해결, 중복/누락GUID·충돌표식·파일추가/삭제0이다. 허용한 코드5개/문서3개 외에 `ProjectSettings/TagManager.asset` 변경1개가 검출되어 전체 범위 판정은 FAIL이다.
 - 해당 설정은 레이어3·6의 빈 이름을 Enemy·Item으로 바꾼 내용이며 파일 수정시각은17:11:57이다. Git HEAD의 CRLF 내용 해시가 작업 시작 기준과 일치하여 두 레이어 차이를 확인했다. 이번 변경 코드/외부 검증 코드와 Assets/02Scripts에서 TagManager/레이어추가 처리는 발견하지 못했으므로 변경 원인을 확정하지 않는다. 사용자가 직접 변경했는지와 유지/두 레이어 복원 여부를 질문했으며, 답변 전에는 이 설정을 임의로 되돌리지 않고 보존했다. 요청 기능 검증 성공과 범위 밖 설정 변경 발견을 구분하여 보고한다.
 - 변경한 C#/문서의 `git diff --check`에 공백 오류는 없었다. 저장소에 기존 .gitattributes 매크로 경고와 LF/CRLF 변환 경고는 남아 있고 이번 요청에서 해당 설정은 수정하지 않았다.
+
+
+## 2026-10-08 — 손·발 외곽선 저장, 점프 승인용 초안
+
+- 요청 범위: 손·발 외곽선 적용, 점프 모션을 먼저 제작하여 확인받기. Space 연결은 승인 후. 모델링 및 기존 GUID 보존.
+- 실제 프로젝트 C:/Users/307/Desktop/unity/Team3rd3DProject/3rd3DProject와 PlaytestScene01을 확인했다. 시작 전 씬은 dirty=True였다. 외부 before_live_scene.unity에 미저장 상태를 복사 보관하고, “네, 지금 상태 그대로 저장” 승인을 받은 뒤 손·발 외곽선과 기존 미저장 내용을 함께 저장했다.
+- 기존 Cat_Outline 재질을 손/발 4개 SkinnedMeshRenderer의 두 번째 슬롯에 추가하고 씬 인스턴스 override로만 저장했다. 모델·재질·프리팹 원본·코드·기존 애니메이션은 수정하지 않았다.
+- 외부 제작 폴더 C:/Users/307/Documents/Codex/PlayerJumpPreview20261008. JumpPoseDraft.cs.txt로 기존 32개 본의 준비/도약/공중/착지/복귀 자세를 제작하고, Unity AnimationUtility로 제자리 및 검토용 상승 포함 클립 2개를 저장했다. 2초/60fps, 320곡선. 고정값은 첫/끝 키만 남겼다. 게임 Assets에는 추가하지 않았다.
+- 시안: 몸통 Y 준비/착지 0.6666667, 도약 최대1.22. 손 하방 지연, 귀 도약60도/착지50도 후방 접힘, 꼬리5본 35ms 간격 지연과 본 길이/축 길이 보정. 비균일 본 계층에서 꼬리 전체 부피의 완전 보존까지 주장하지 않는다.
+- 실패/교정 기록: 최초 미리보기는 GPU 스키닝이 같은 편집기 프레임에서 갱신되지 않아 압축이 표시되지 않았다. 미리보기 전용 BakeMesh로 고쳤고, 기본 BakeMesh와 .5 배율이 중복되어 작게 보이는 문제는 useScale=true와 원래 변환으로 수정했다. 외부 코드의 중첩 클래스/UnityEngine.Mesh 이름 충돌 컴파일 오류도 교정했다. 프로젝트 런타임 스크립트는 추가/수정하지 않았다. jump_keyposes_v1.png는 이 수정 전 비최종 자료이며 최종 확인에는 사용하지 않는다.
+- 검증: 저장 후 재로드한 클립 각각 121개 시점/32본 비교. 자세용 위치 오차5.96e-08, 검토용2.12e-22, 크기/각도 오차0. 재로드 클립에서 주요24샷 및 움직임153프레임을 렌더했다. jump_preview.gif 51프레임/3방향, jump_keyposes_final.png 확인. Idle/Walk/Run 기존 클립의 외곽선 샷도 확인했다. 귀를 강하게 접는 과정의 작은 접합선은 67/59도에서60/50도로 줄여 보완했다.
+- 현재 상태 확인: Play=False, dirty=False, compiling=False, compileFailed=False. Missing Script0, 누락 메시0, 누락 재질0, 셰이더오류0, 외곽선 적용 손/발4. Animator 연결은 기존 Idle/Walk/Run만 유지, Jump 연결 없음.
+- 문서 작성 전 범위 감사: 기준1990파일 중 대상씬만 변경, 추가/삭제0, meta1046개 동일, 중복GUID0, Player 관련텍스트212개 충돌표식0, Git index 동일. before_live_scene와 저장씬의 차이는4렌더러 override32줄 추가뿐이라 사용자 기존 미저장 내용도 보존됨을 확인했다. 문서 갱신 후 최종 해시 검사를 별도 기록한다.
+- 참고한 공식 API: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AnimationClip.SampleAnimation.html , https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AnimationUtility.SetEditorCurve.html , https://docs.unity3d.com/6000.0/Documentation/ScriptReference/SkinnedMeshRenderer.BakeMesh.html . 프로젝트 밖 클립 저장/재로드는 UnityCsReference의 InternalEditorUtility API를 확인 후 사용했다.
+- 미완료/승인 경계: 점프의 게임 이동·충돌·접지·Space 입력은 아직 적용하지 않았다. 전체빌드, 팀원PC 및 게임 점프 회귀검사는 이번 시안 검증에 포함하지 않는다. 사용자 동작 승인 후 진행한다.
+
+
+## 2026-10-08 — 점프 미리보기 색상 오류 교정
+
+- 사용자 지적 후 원본 팔레트와 렌더 픽셀을 비교했다. 원본 주황 RGB(255,144,40)이 PNG에서(255,71,5)로 저장되어 붉고 진하게 보였다. GIF 이전 PNG부터 있던 오류다.
+- Unity 실제 진단: activeColorSpace=Linear, 미리보기 RenderTexture=R8G8B8A8_UNorm/sRGB=False. Body 재질은 URP/Unlit, BaseColor=흰색, MaterialPropertyBlock없음. 원본 모델/재질/팔레트68파일의 해시가 작업 전과 모두 같다. 프로젝트의 색 변경이 아니라 외부 제작 미리보기의 Linear→sRGB 변환 누락이었다.
+- 외부 PreviewCore.cs.txt의 임시 렌더 대상을 R8G8B8A8_SRGB로 지정했다. 첫 시험에서 active인 렌더 타깃을 해제한다는 경고가 발생하여 active를 잠시 해제하고 생성 후 다시 연결하도록 고쳤다. 이어 재렌더는 경고/오류 없이 완료됐다. 프로젝트 셰이더·조명·색공간·재질은 변경하지 않았다.
+- 저장된 기존 초안 클립을 다시 사용하여 미리보기24샷/153프레임을 재렌더했다. 최종 PNG의 주황(255,144,40), 크림(250,240,230)이 원본값과 일치함을 확인했다. GIF는 같은 프레임이 합쳐질 수 있어 고정51프레임 검사 대신 총재생시간3260ms(동작2초+앞뒤정지)를 검증했다. 갱신된 영상은 외부 jump_preview_color_corrected.gif이며 기존 jump_preview.gif와 최종샷도 재생성했다.
+- final_health 재실행: dirty/playing/compiling/compileFailed=False, 누락스크립트/메시/재질/셰이더오류0, 기존3클립만 연결. 점프는 여전히 승인 전이며 게임에 적용하지 않았다. 이번 프로젝트 수정은 작업로그와 설명서 추가뿐, 삭제 없음.
+- 근거: color_diagnostic.txt, color_verification.json. 공식 색변환 설명 https://docs.unity3d.com/6000.0/Documentation/ScriptReference/RenderTexture-sRGB.html .
+
+## 2026-10-08 — 승인된 점프를 Space와 실제 물리에 적용
+
+- 승인: 사용자가 색상 교정 후 “적용 진행해줘”라고 요청하여 검토한 점프 동작을 연결했다. 대상은 기존 `PlaytestScene01` Player이며 모델링·재질·팔레트 수정은 포함하지 않는다. 작업 전 씬 dirty=False였고 1,990파일·기존 메타1,046개·Git 인덱스를 외부 `C:/Users/307/Documents/Codex/PlayerJumpApply20261008`에 기록했다.
+- 경로 조사: 기본 KeyboardInput→PlayerController→PlayerMovement/StepSolver→PlayerAnimation, 기존 CameraCursorLock/InteractionController/ShotgunEquipment/ShotgunCombat, 기존 Generic 본 구조와 Collider를 확인했다. 준비/공중/착지 규칙은 엔진 없는 일반 C#로, 접지는 Unity 연결부로 분리했다. 실제 Rigidbody 속도는 기존 PlayerMovement 한 곳에서만 쓴다.
+- 기존 코드 수정4개: `Assets/02Scripts/01Player/Core/PlayerController.cs`, `Input/PlayerInput.cs`, `Movement/PlayerMovement.cs`, `Animation/PlayerAnimation.cs`. 새 일반 C#2개: `Domain/JumpPolicy.cs`, `Movement/PlayerJump.cs`. 기존 컴포넌트의 설정과 호출을 확장했으며 새 MonoBehaviour·빈 오브젝트를 추가하지 않았다.
+- 새 에셋2개: `Assets/04Prefabs/Player/Animations/Jump.anim`, `PlayerJump.controller`. 승인된 제자리 클립을 사용하고 원본 Idle.controller를 별도 사본으로 만들어 기존 Idle/Walk/Run과 새 Jump만 연결했다. JumpTime 매개변수로 공중 속도와 착지 상태에 맞춰 클립 자세를 선택한다. 검사 전용 상승 포함 클립은 게임에 넣지 않았다. 기존 본·메시·프리팹·클립·GUID를 교체하지 않았다.
+- 씬 저장 범위: 기존 Player의 `jumpSettings.enabled=1`과 Animator의 새 Controller 연결 두 override만 추가했다. 저장 후 Unity가 자동 정규화한 MCH_Thigh.R의 미세 회전 override(원본과 차이7.884953e-08)를 외부 사본에서 확인했다. 이 작업에서 생긴 반올림 override만 정리하여 기존 사용자 회전을 보존한 최종 두 override 상태로 저장했다.
+- 입력/물리: Space 새 누름을 다음 FixedUpdate까지 한 번 전달, 접지 때 준비0.40초 후 상승속도 한 번 적용. 목표높이0.45, 기본 Unity 중력 사용. 현재 고정시간 물리의 실제 상승은 약0.4205였다. 공중·착지 중 재입력/키유지는 재점프를 만들지 않는다. Esc/포커스 해제와 컴포넌트 비활성화 때 이전 입력을 지운다. 평소 턱 넘기는 유지하고 승인된 점프가 실행되는 동안만 턱 보정과 겹치지 않게 한다.
+- 모션: 준비·착지 세로2/3, 도약최대1.22, 손·귀·꼬리 지연은 승인된 자세 클립 그대로다. 실제 Play 샘플에서 CTRL_Squash 세로0.6690~1.2186을 관찰했다(고정 갱신 시점이 극값을 정확히 지나지는 않음). 샷건 장착 중에는 기존 LateUpdate 손잡이 고정을 우선하며 실제 양손 연결오차0을 확인했다.
+- 순수 점프 정책 검사61개 통과. 실제 기본 장치 입력 검사16/16 통과: 유지 중 한 번 실행, 공중 재입력 거부, 달리며 점프, 착지 후 Idle, Esc/재잠금, 총 상태와 손잡이 유지, 준비 중 비활성화/복귀와 새 입력. 증거 `jump_play_20261008_134230.txt`, `jump_trace_20261008_134230.csv`.
+- 기존 전투 입력 회귀15/15 통과: 기본 숫자1·4산탄·유지 반복 방지·Run/조준 중 Walk·줌 해제·Esc/재잠금 발사 방지. 원본 기록은 `%TEMP%/PlayerValidation/CatCombatInputValidation_20261008_134714_*.txt`이며 최종 증거 폴더에도 복사 보관한다.
+- 이전 이동 검사19개는 맵 전제 불일치로 모두 실행 불가였다. 통과로 집계하지 않았다. 실제 ray 확인 결과 Concrete_Forecourt.002 높이는0.07, Asphalt_Lot.002는-0.03이었다. 기존 검사기는 공통 바닥0.12±0.03을 요구했으므로 현재0.07을 거부했다. 맵이나 기존 검사 파일을 수정하지 않고 외부 검사를 현재 측정 지형에 맞췄다.
+- 환경 검사23/23 통과, 별도 천장 검사1개 미실행: 실제 W/Shift/해제, 좌클릭 기존 물건을 든 점프/해제 후 중력 낙하, 높이0.10인 기존 턱의 걷기·달리기 통과와 하강, 높은/낮은 지면의 점프 착지, 높은 장애물 차단, 공중 비활성화/재활성화. 평지비행 약0.581초, 높은면 약0.540초, 낮은면 약0.621초로 실제 접지에 따라 착지 자세가 달라졌다. 기존 선반 사이0.42는 현재 캡슐높이0.5보다 좁아 안전한 천장 검사 조건을 만들 수 없었다. 임의 지면/천장을 생성하지 않았으며 천장 충돌은 검증 완료로 주장하지 않는다. 증거 `jump_environment_20261008_134932.txt`와 CSV.
+- 도구 오류: 컴파일·Play 전환 직후 MCP discovery가 일시 만료되어 대기 후 재시도했다. 외부 동적 검증 코드의 Editor 네임스페이스 충돌은 `UnityEditor.Editor`로 고쳤다. 이 실패는 외부 검사 도구 문제였으며 프로젝트 컴파일 오류로 처리하지 않는다.
+- 공식 근거: [Rigidbody.linearVelocity](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Rigidbody-linearVelocity.html), [Rigidbody.AddForce](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Rigidbody.AddForce.html), [AnimatorState.timeParameterActive](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Animations.AnimatorState-timeParameterActive.html), [Animator.Play](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Animator.Play.html). 기존 속도 기록 책임을 보존하기 위해 이륙 시 한 번 수직 속도를 정하고 나머지 이동은 엔진 물리에 맡겼다.
+- 설명서에는 Space 사용법·점프 높이/접지 설정·클립 수정 위치·6개 코드 책임을 추가하고 과거 시안의 적용 대기 문장을 현재 승인 상태와 구분했다. 삭제·이름 변경·기존 GUID 재발급·패키지 설치·Git 스테이징/커밋/푸시 없음. 다른 씬·Rat/Enemy·프로젝트 설정·전체 빌드·팀원 PC 검증은 이번 작업에 포함하지 않았다. 최종 상태·범위 검사는 아래에 이어 기록한다.
+- 실제 Main Camera와 Game 화면을 그대로 사용해 기본 Space 입력의 Idle/준비/도약/정점/착지5컷을 촬영했다. 외부 `GameCapture_20261008_135141`에 저장했으며 준비·도약 이미지를 직접 확인했다. 교체 카메라/재질/메시를 만들지 않고 Unity ScreenCapture의 최종 화면을 사용해 이전 미리보기 색변환 오류를 피했다. 캡처 완료5/5, 실제 CTRL_Squash 및 접지 기록은 capture_report.txt에 있다.
+- 최종 Unity 상태: Play=False, dirty=False, compiling=False, compileFailed=False, Missing Script/Material/Skinned Mesh/Shader Error 각각0. Controller는 Idle/Walk/Run/Jump4개이며 손·발4개 Cat_Outline 슬롯 유지, Rigidbody 중력 유지. `final_health.txt`에 기록했다.
+- 최종 범위 감사 PASS: 작업 전 기존 메타1,046개 모두 바이트 동일, 기존 Idle/Walk/Run·모델·재질·팔레트 보존, Player 직렬화파일171개 GUID참조 누락0/전체 에셋 GUID중복0. 씬 차이는 두 점프 override뿐, 기존코드4개와 문서3개 외 변경없음. 새코드2개+새에셋2개 및 각각의 새 메타만 추가하여 총8파일 증가, 삭제0, Git 인덱스 동일. `scope_audit.json`과 `scene_scope.diff`에 기록했다.
+- 마지막 독립 실행에서도 현재 프로젝트 JumpPolicy.cs의61개 검사가 통과했다(`pure_policy_result.txt`). 변경한 기존 C#/문서의 git diff --check는 종료코드0이었다. 저장소의 기존 .gitattributes10~12행 매크로 경고와 LF→CRLF 알림은 남아 있으며 이번 범위 밖 설정을 수정하지 않았다.
+
+## 2026-10-08 — Animator/Animation 기본 기능으로 재생 연결 정리
+
+- 요청: 애니메이션 연결을 Unity Animator/Animation 기능에서 편집하고 연결 스크립트를 정리한다. 기존 기본 작업 규칙과 현재 프로젝트/씬을 읽고 실제 연결을 조사했다. Animation은 클립 편집 창으로 사용하며 동일 본에 Legacy Animation 컴포넌트를 추가하지 않는다.
+- 작업 전 기준: 외부 `C:/Users/307/Documents/Codex/PlayerAnimatorNative20261008`에1,998파일/기존meta1,050개/Git인덱스 및 관련 소스/씬/컨트롤러 사본을 기록했다. 대상씬 dirty=False, 컴파일·누락스크립트·메시·재질·셰이더오류0을 확인했다.
+- 실제 재생 경로 조사: PlayerAnimation의 Play/CrossFade 직접 전환과 ShotgunPose의 SampleAnimation 직접 평가가 있었다. 같은 코드가 이전 PlayerTestScene00 1과 Player 프리팹에서도 쓰이며 그쪽 Idle.controller에는 매개변수가 없어 무조건 삭제하면 재생이 멈춘다. 다른 씬/프리팹/원본 컨트롤러를 건드리지 않고 구 컨트롤러에만 최소 호환 경로를 남겼다. 다른 씬은 열거나 실행하지 않았다.
+- 변경4개: `Assets/02Scripts/01Player/Animation/PlayerAnimation.cs`, `Animation/ShotgunPose.cs`, `Core/PlayerController.cs`, `Assets/04Prefabs/Player/Animations/PlayerJump.controller`. 문서는 기존3개만 갱신. 기존파일삭제·이름변경·새프로젝트파일/메타생성·GUID재발급 없음.
+- Controller를 Unity Editor API로 수정: Base Layer의 기존 Idle/Walk/Run/Jump를 유지하고 이동6개·Jump진입1개·복귀3개 전환을 추가했다. Movement(int 0/1/2), JumpActive(bool), 기존 JumpTime(float)를 사용한다. 이동/복귀 전환0.12초, Jump진입0.06초. Has Exit Time은 꺼 실제 접지에 따라 복귀한다.
+- Shotgun 레이어 추가: Ready/Fire 두 상태, 가중치1, 기존 Shotgun_Fire.anim 재사용, ShotActive(bool)/ShotTime(float)로 전환 및 Motion Time 제어. Write Defaults=false와 전환0초로 사격용 세 필드만 재생한다. 총을 올리는 준비 시각에서 실제 발사승인까지 기다린 후 반동을 진행한다. Animator 평가 후 LateUpdate에서 현재 곡선값을 읽도록 CurrentRaise를 계산형 속성으로 변경하고 종료/취소 반동을 차단한다. 실제 조준/손잡이 계산과 히트스캔 코드는 바꾸지 않았다.
+- PlayerAnimation은 현재 그래프에서 파라미터 전달만 하고 직접 재생하지 않는다. 더 이상 쓰이지 않는 옛 Jump CrossFade/Play 분기를 제거했다. 구 Idle/Walk/Run용 CrossFade와 구 샷건의 SampleAnimation은 다른 씬 보존용으로 격리했다. PlayerController의 과거 전환시간/상태명 설정은 직렬화 호환을 위해 보존하되 인스펙터에서 숨겨 새 Animator 설정과 혼동되지 않게 했다. JumpPolicy/PlayerJump/중력/입력/상호작용은 그대로다.
+- 최초 실제 Space 검사16개 중1개 실패: 이동은 정상이지만 눌림/늘어남이 Idle 크기로 남았다. 별도 Play 진단에서 JumpActive=true/다음상태Jump인데 currentIdle/전환진행률0이 반복됐다. 샷건 레이어 가중치1/0 모두 동일하여 레이어 덮기와 구분했다. Any State→Jump의 Ordered Interruption을 켜 자기 전환 반복 중단을 막았다. 실패자료는 보존하고 수정 후 검사를 다시 수행한다.
+- 공식 근거: [Animator 매개변수](https://docs.unity3d.com/6000.0/Documentation/Manual/AnimationParameters.html), [상태 전환과 중단 우선순위](https://docs.unity3d.com/6000.0/Documentation/Manual/class-Transition.html), [애니메이션 레이어](https://docs.unity3d.com/6000.0/Documentation/Manual/AnimationLayers.html), [Animation 창](https://docs.unity3d.com/6000.0/Documentation/Manual/animeditor-UsingAnimationEditor.html). 새 라이브러리·패키지·별도 재생 프레임워크는 사용하지 않았다.
+- 추가 native 검사29개 중8개가 이동 상태 전환/복귀에서 실패하여 모든12개 전환에 Ordered Interruption을 적용했다. 이어 한 검사는 Game 포커스 전제부터 실패하여 실제 입력이 들어오지 않았다(29개중22실패). 그 결과를 제품 동작 통과로 집계하지 않고 Unity 창을 활성화해 새 Play에서 재실행했다. 컴퓨터 제어의 최초 이미지 캡처는 FrameArrived timeout이었고 창을 다시 검색한 뒤 접근성 정보로 GameView 포커스를 확인했다. 원인별 실패 로그는 삭제하지 않았다.
+- 수정 후 native 검사29/29 통과(`native_animation_20261008_141041.txt`). 빠른 Idle/Walk/Run 전환 중 점프, 착지 후 Run 직접 복귀, 걷기/공중 사격과 연속 사격, 실제4산탄, 준비자세 도달 후 발사, 반동종료와 손잡이 고정을 검사했다. 렌더 완료 뒤 Animator가 기록한 세 곡선과 원본 AnimationCurve를 비교한 오차는 각0, 손잡이 위치 오차0, 발사 순간 CurrentRaise/raiseWeight=1이었다. 파라미터 플래그만 확인한 결과가 아니라 실제 클립 평가값까지 대조했다.
+- 교정 후 기본 점프 재검사16/16 통과(`jump_play_20261008_141155.txt`). 눌림0.6690/늘어남1.2186, 실제 상승·착지, 유지/공중 재입력 차단, Esc/재잠금, 총 보유, 비활성화·복귀를 확인했다. 앞서 실패했던 크기 변화가 실제 본에서 복구된 것을 확인했다.
+- 현재 지형 환경 회귀23/23 통과(`jump_environment_20261008_141303.txt`): 걷기/달리기/정지, 기존물건 좌클릭운반 중 점프와 해제낙하, 턱통과·높은/낮은착지·높은벽차단·공중재활성화. 기존 안전한 낮은 천장이 없어 별도 천장항목1개는 여전히 미검증이며 임의 지형을 추가하지 않았다.
+- 기존 전투 입력 회귀15/15 통과(`CatCombatInputValidation_20261008_141420_981.txt`): 총장착/해제·한클릭4산탄·유지중반복차단·줌과걷기제한·Esc/재잠금. 구 컨트롤러 호환 검사8/8 통과(`legacy_compat.txt`): 대상씬의 Play 인스턴스에서만 임시로 기존 Idle.controller로 바꾸어 Idle/Walk/Run/Idle 및 사격준비·반동·취소를 확인했다. 다른 씬은 열지 않았고 임시 교체는 Play 종료로 폐기했다. 성공한 실제 Play 검사 합계91개이며 실패한 초기 실행은 통과 합계에 넣지 않았다.
+- 최종 Unity 상태 `final_health.txt`: 대상씬1개, edit mode/dirty=False/compileFailed=False, Missing Script/Material/Skinned Mesh/Shader Error 각각0. 기존 손·발 외곽선과 중력 설정 유지. 현재 Controller에 Idle/Walk/Run/Jump/Shotgun_Fire 다섯 클립 연결. 전체 빌드·팀원PC·다른 씬 실행은 하지 않았다.
+- 작업 범위 감사: 변경은 승인 C#3개/기존Controller1개/문서3개. 새 프로젝트파일·삭제·이름변경0, 기존 메타1,050개와 GUID/원본5클립/옛Idle.controller/전체씬10개/프리팹95개/모델·재질·텍스처550개/설정·패키지33개/Enemy·Rat·Mouse파일63개/Git인덱스 바이트보존. 수정Controller 내부fileID/외부GUID 참조누락0. 전체 정적검사에서 기존 다른파일의 미해결GUID36개가 발견되었으나 이번 변경 전과 같고 대상씬/Player에는 없어 범위밖 파일을 변경하지 않았다. 프로젝트 전체에 과거참조문제가 없다고 주장하지 않는다.
+- C#/문서 git diff --check 종료코드0. 기존 .gitattributes10~12행 매크로경고와 LF/CRLF알림은 보존. 컴파일/Play전환 중 MCP discovery일시실패는 재시도로 회복했으며 임의 설치/설정변경으로 우회하지 않았다. 검증용 C#·CSV·로그는 프로젝트 밖 증거폴더에 보관하고 게임Assets에 추가하지 않았다.
+
+## 2026-10-08 — 샷건 후 본 정지 교정, 점프 연결 진단, 점프 버퍼링
+
+- 요청: 샷건 발사 후 애니메이션 연결 끊김 수정, 이동→점프→이동의 원인과 해결안, 제시 영상의 점프 버퍼링 구현. 현재 지침을 읽고 Player 범위만 조사했다. 시작 시 `PlaytestScene01`은 Play 중이었으며 씬 저장 없이 진단 후 편집 모드로 돌아왔다. 일반 점프 전환 개선도 적용할지는 별도 질문으로 확인 중이다.
+- 외부 작업 폴더 `C:/Users/307/Documents/Codex/PlayerAnimationFix20261008`에 작업 전1,998파일/메타1,050개/Git인덱스 지문과 관련 파일 사본을 보관했다. 이 시점에 이미 변경돼 있던 TMP·씬·사용자 코드 등은 기준 상태로 보존한다.
+- 영상 `https://www.youtube.com/shorts/0gkwRtolL4Y`는 웹 fetch가 throttled되어 브라우저에서 직접 열었다. 제목과 실제 화면, 한국어 자동 자막을 확인했다. 23~34초는 착지 전에 조금 일찍 누른 입력을 다음 점프에 사용하는 점프 버퍼링 설명이다. 영상에 정확한 보관 시간 수치는 없으므로0.15초는 이번 초기 설정값이며 영상의 숫자라고 주장하지 않는다. 영상의 코요테타임은 요청된 버퍼링과 별개이므로 추가하지 않았다.
+- 사격 재현: 이전 성공 보고의 CSV에도 ShotActive가 꺼진 뒤 실제 squashY가 고정된 기록이 있었다. 이전 검사는 상태 이름·사격3곡선·손잡이만 판정하고 본 변화는 로그만 남겨 놓쳐 잘못 통과로 처리했다. 이번에는 실제 몸통·발회전·꼬리 회전을 필수 판정에 추가했다.
+- 격리 A/B: 원본 에셋을 참조하는 임시 메모리 컨트롤러로 Current/ReadyClipAtZero/AllWriteDefaultsOn/AllWriteDefaultsOff/LayerZeroAfterShot을 비교했다. Current는 사격 후 Walk/Run/Idle 모두 squashRange=0, tailTravel=0으로 정지했다. 빈 Ready 대신 원래Fire클립의0초를 연결하면 Walk squashRange=.0657664, Run=.093, Idle=.0056384로 회복됐다. 결과 `probe_shot_layer.txt/.csv`. 테스트 임시 오브젝트는 Play 안에서만 생성·정리하고 에셋·씬에 저장하지 않았다.
+- 최소 수정: Unity Editor API로 기존 PlayerJump.controller의 Shotgun.Ready에 기존Shotgun_Fire를 연결, Speed0/MotionTime꺼짐/CycleOffset0으로 고정했다. Write Defaults와 레이어가중치를 런타임에 추가 제어하거나 새클립·마스크·스크립트를 만들지 않았다. 기존원본클립/메타/GUID 보존.
+- 일반 점프 진단: 작업 시작 파일에는 AnyState→Jump 및 Jump→Idle/Walk/Run 전환4개가 모두0초였다(이전 기록0.06/0.12와 다름). 또한 일반 준비.40초/착지회복.69초 내내 점프자세를 유지하지만 수평속도는 계속 적용한다. 갑작스러운 자세교체와 발걸음 없는 수평이동이 부자연스러운 원인이다. 제안: 진입.06~.10/복귀.12~.18초혼합, 이동중 착지충격 후 조기이동복귀, 복귀혼합중 마지막JumpTime유지. 사용자가 2번에서 해결안 제시를 요청했으므로 적용 답변 전에는 현재 일반전환을 임의로 되돌리지 않았다.
+- 입력 보관: 기존 JumpPolicy에 새누름만 .15초 보관→접지시1회소비→만료삭제를 추가했다. PlayerJump.Settings.jumpBufferSeconds에서 조절한다. 기존Input/Controller는 InputBlocked값으로 정지와입력차단을 구분하고 Esc/포커스상실/입력교체/비활성화시 예약을 지운다. 새컴포넌트·프로젝트파일 없이 기존4개C#만 변경했다. 실제상승·낙하는 기존Rigidbody/Unity중력을 그대로 사용한다.
+- 첫 버퍼 버전의 실제입력24검사는 통과했지만, 추가 본곡선 비교에서 착지1.44→준비.32가 귀35.40435도/손로컬위치.1034359만큼 건너뛰는 문제를 발견했다(`buffer_pose_boundary.txt`). 통과한입력판정만으로 시각적완료를 선언하지 않고 재도약연결을 추가교정했다.
+- 최종 재도약은 착지충격.13초 뒤 동일착지구간1.44→1.31을 .08초역재생하고, 같은1.31자세로이륙하여 정점.855까지거꾸로따라간다. 이후기존하강곡선에합류한다. 취소시현재자세에서착지회복한다. 원래요청된눌림을 보존하므로 접지직후순간이륙이아니라 약.21~.22초뒤이륙이다. 일반점프클립과준비/회복시간불변.
+- 독립검사: 기존순수C#61개+버퍼/연속성36개통과(`jump_buffer_rebound_policy_result.txt`). 사격확장실제Play76개통과(`native_animation_20261008_144905.txt`): 사격후Walk/Run/Idle실제본, 연속사격, 장착해제/런타임취소, 점프중사격,4산탄,원본곡선일치,양손연결. 최초버퍼실제Play24개통과(`buffer_play_20261008_145035.txt`) 후 귀접속교정재검사는 아래기록한다.
+- 공식근거: [Animator 상태](https://docs.unity.com/en-us/engine/6000.5/manual/animation-section/animation-mecanim/animation-animator-controller/animation-state-machines/class-state), [Animation Layers](https://docs.unity3d.com/6000.0/Documentation/Manual/AnimationLayers.html), [전환시간과혼합](https://docs.unity3d.com/6000.0/Documentation/Manual/class-Transition.html), [ButtonControl 누름판정](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.14/api/UnityEngine.InputSystem.Controls.ButtonControl.html). 기본Animator/InputSystem으로재생·누름판정을처리하고,버퍼판단만Unity와독립된정책으로유지했다.
+- 도구: Unity CLI에는 Pipeline패키지가 없어 기존승인된Unity MCP relay로연결했다. 컴파일뒤 discovery가일시실패하여 창활성화/재접속으로회복했고 별도패키지설치나프로젝트설정변경은하지않았다. 초기편집상태용진단을 Play중실행하여 Wrong target/edit state로거부됐으며 수정없이상태조회로전환했다. 최종범위·실행검사결과는아래에추가기록한다.
+- 최종 버퍼 실제 입력 검사 28/28 통과 (`buffer_play_20261008_145738.txt`). 기존 씬의 설정이 저장 파일 변경 없이 0.15초로 로드됨을 확인했다. 제자리·걷기·달리기·총 보유 중 착지 전 누름, 만료, 키 유지, Esc·입력 교체·비활성화 취소를 검사했다. 입력부터 다음 이륙까지 약 0.299~0.304초였으며 착지까지 남은 시간과 압축 동작이 포함된 값이다.
+- 재도약 경계의 실제 렌더 본 검사: 각 사례에서 착지→준비, 준비→이륙 두 경계를 관찰했다. 최대 귀 변화 9.743도, 손 로컬 위치 차이 0.0218, 몸통 크기 차이 0.0745로 검사 기준 안에 들었다. 이는 물리 프레임마다 곡선을 따라 움직인 차이이며 모든 프레임 변화가 0이라는 뜻은 아니다. 최초 방식의 서로 다른 자세로 건너뛰는 경로는 제거했다.
+- 최종 성공 집계: 실제 Play 104개(사격 76 + 버퍼 28), 순수 C# 97개(기존 61 + 버퍼·연속성 36). 앞서 버퍼 입력만 검사한 24개는 최종 합계에 중복 집계하지 않았다. 전체 빌드, 팀원 PC 및 다른 씬 실행은 수행하지 않았다.
+- 최종 Unity 상태 (`final_health.txt`, `final_graph.txt`): 대상 씬 하나, 편집 모드, 미저장 변경 없음, 컴파일 오류 없음. Missing Script/Material/Skinned Mesh 및 Shader Error 각각 0. Ready는 원래 사격 클립의 0초 자세, 버퍼 설정은 0.15초이며 손·발 외곽선과 기존 중력도 유지한다. 일반 점프의 네 전환은 0초로 보존했고, 2번 일반 연결 개선안은 적용 답변 전까지 제안으로 남겼다.
+- 범위 감사 PASS: 변경은 C# 4개, 기존 Controller 1개, 문서 3개뿐이다. 프로젝트 파일 추가·삭제·이름 변경 0, 기존 메타 1,050개 모두 동일, GUID 중복과 변경 파일의 참조 누락 0. 씬 10개, 프리팹 95개, 원본 모션 5개, 모델·재질·팔레트 등 550개, 설정·패키지 33개, Enemy/Rat/Mouse 63개 및 Git 인덱스를 보존했다. 기존 범위 밖 미해결 참조는 이번 작업에서 변경하지 않았다. 문서의 마지막 결과 기록 뒤 동일 감사를 한 번 더 실행한다.
+
+
+## 2026-10-08 점프 진입·복귀 연결 개선
+
+- 요청: 점프 연결의 어색함을 실제로 교정하고, 대기·걷기·달리기에서 점프로 들어가는 화살표가 따로 없는 이유 설명. 이 후속 요청을 앞서 제안한 일반 연결 개선의 적용 승인으로 해석했다.
+- 작업 전 PLAYER_WORK_RULES를 읽고 현재 프로젝트와 PlaytestScene01을 확인했다. 외부 PlayerJumpTransitions20261008에 1,998파일/메타1,050개/Git인덱스의 새 기준 지문과 관련 파일 사본을 보관했다. 이전 턴 결과를 이번 결과로 재사용하지 않는다.
+- 실제 그래프: Any State → Jump가 공통 진입이며 개별 화살표 누락이 아니다. 진입과 세 복귀 전환은 모두0초였다. 나가는 Jump도 혼합 중 평가되는데 PlayerAnimation은 Ready의0초를 써서 준비 자세로 되감았다. 이동 속도는 유지되는 동안 착지회복0.69초를 재생하므로 발걸음 없이 움직이는 구간도 있었다.
+- 기존 Controller의 전환4개만 Unity Editor API로 진입0.08초/복귀0.15초로 변경했다. 공유 진입, 전환 우선순위, 상태·클립 연결과 사격 Ready 교정은 유지했다. 프로젝트 YAML을 직접 편집하거나 새 상태·클립·스크립트를 추가하지 않았다.
+- PlayerAnimation은 비활성 점프의0초를 덮어쓰지 않아 마지막 자세를 유지한다. JumpPolicy는 이동 중 착지0.18초 이후 복귀, 제자리0.69초 회복을 구분한다. PlayerJump와 PlayerController는 이동 여부를 전달한다. 이동 회복 중 유효한 늦은 Space는 현재 착지 자세에서 역재생으로 이어서 재도약한다. 기존0.15초 버퍼, .13초 충격 및 .08초 재도약 준비는 유지한다.
+- 독립검사 129개 통과: 기존61+버퍼36+이동착지32. 실제 Play 사격·이동 검사76개 통과(native_animation_20261008_151521.txt). 빠른 이동 전환 도중 점프 진입, 착지 후 Run 복귀, 사격 이후 실제 몸통·발·꼬리 변화와4산탄/손잡이를 확인했다. 추가 재진입 검사와 최종 범위 검사는 아래 기록한다.
+- 공식 근거: https://docs.unity3d.com/6000.0/Documentation/Manual/class-Transition.html (전환 시간·혼합·중단), https://docs.unity3d.com/6000.0/Documentation/Manual/AnimationStateMachines.html (상태 머신). 재생은 기존 Animator가, 판단은 엔진과 독립된 JumpPolicy가 맡는다.
+- 컴파일 뒤 Unity MCP discovery가 일시 실패했다. 기존 Computer Use 도구로 Unity 창을 활성화한 뒤 재접속 성공했고 패키지·설정 변경은 없었다. 읽기 전용 git diff에서 기존 .gitattributes의 중첩 매크로 경고가 나왔지만 요청 범위 밖 파일은 변경하지 않았다. 삭제·이름 변경·Git 쓰기 없음.
+
+- 실제 버퍼28개 통과(buffer_play_20261008_151651.txt): 제자리·걷기·달리기·총 보유의 재도약, 키 유지, 만료·취소와 실제 본 경계를 재검사했다.
+- 실제 전환44개 통과(transition_play_20261008_151852.txt): 대기·걷기·달리기의 점프 왕복, Jump→Run 복귀혼합 시작0.02초 뒤 Space, 착지0.15초의 Space, 착지중 이동시작·중지를 검사했다. 이동 착지 실제복귀 약0.175~0.179초, 제자리 약0.70초. 비활성 복귀 중 JumpTime=0으로 되감긴 관측0회. 재진입은 실제 Animator가 중단된 자세를 유지해 혼합하는 것도 본 변화로 확인했다.
+- 경계프레임 실제 본 검증: 최대 귀14.043도/손로컬0.03099/몸통스케일 벡터차0.11717/발로컬0.01667이며,40ms이내 관측 경계의 기준(귀·꼬리15도, 손·발0.045, 스케일0.20)을 넘는 불연속0회. 프레임 간 물리 곡선 진행이 있으므로 변화량이0이라는 주장은 하지 않는다. 재생 클립 원본은 수정하지 않았다.
+- 후속 코드검토에서 제자리 착지0.30초 이후 이동+Space를 함께 누르면 펴진 자세까지0.08초에 빠르게 역재생할 수 있음을 발견했다. 짧은 재도약은 착지0.18초 이내 자세에만 허용하고, 그 이후 유효 입력은 원래의 일반 회복을 기다리도록 조건을 한정했다. 새 상태·필드 추가 없이 수정했다.
+- 마지막 수정 독립검사132개 통과(기존61+버퍼36+이동착지35, pure_transition_checks.txt). 추가 실제22개 통과(late_recovery_play_20261008_152135.txt): 착지0.30초에서 이동+Space를 누르면 만료 후 걷기로복귀하고,0.60초 유효입력은 일반0.69초 회복뒤0.40초 준비로 재점프하며, 두 경우 모두 본 경계·원복이 정상이다. 이번 Play 검사 합계170=76+28+44+22이며 공통 연결 검사가 일부 반복 포함된다. 최종 좁은 조건 변경 뒤에는 해당 경계와 순수 전체검사를 재실행했다.
+- 최종 상태(final_health.txt): PlaytestScene01 하나만 열려 있고 편집모드/dirty=False/compiling=False/compileFailed=False. Missing Script/Material/SkinnedMesh와 ShaderError 각각0. 기존 손·발 외곽선과 Unity 중력 유지. 전체 빌드·팀원PC·다른 씬 실행은 검증 범위에 포함하지 않았다.
+- 최종 범위 감사 PASS(scope_audit.json): 변경8파일(C#4,PlayerJump.controller1,문서3); 추가·삭제·이름 변경0; 기존meta1,050개/GUID 전체동일; 원본클립5개/씬10개/프리팹95개/모델·재질등550개/설정·패키지33개/Enemy·Rat·Mouse63개와Git인덱스보존. 변경파일의GUID 참조 누락·컨트롤러 내부파일ID누락0. 프로젝트의 기존 범위밖미해결GUID36개는 별도보고에 남겼으며 이번에 고쳤다고 주장하지 않는다.
+
+
+## 2026-10-08 저장·커밋과 카메라 병합 충돌 정리
+
+- 사용자가 지금까지 작업의 저장·커밋을 명시적으로 요청했다. 현재 Player 브랜치 HEAD197532a에는 최종 Player 코드·클립·메타·문서가 이미 커밋되어 있었다. 받아온 a0aa13a 변경을 합치는 중 PlaytestScene01의 두 카메라 Transform만 충돌한 상태였다.
+- 사용자 선택: Main Camera와 Cat_CinemachineCamera의 현재 Player 위치·회전을 유지(높이1.3789881). 정확히 두 충돌 구간에서 HEAD 값만 선택했으며 그 외 자동 병합 내용은 그대로 유지했다. 팀에서 받아온 Enemy·맵·덫·메타 변경은 이번 작업에서 편집하지 않았다.
+- 변경 전 씬의 base/current/incoming3버전과 충돌파일, 병합대기51경로의 존재 파일 사본, 전체2,003파일 지문 및Git인덱스를 프로젝트밖 C:/Users/307/Documents/Codex/PlayerCommit20261008에 백업했다.
+- 읽기검증: 최종Player 관련232파일의HEAD/추적목록일치, 핵심27파일내용일치, 5개모션·GUID보존. 충돌제거뒤 씬의기타바이트와GUID참조목록그대로, 충돌마커0, 새로운내부fileID누락0, 중복fileID0, 프로젝트중복GUID0, 기존메타추가수정0. git diff --check에서해당씬문제없음.
+- Unity에는 해당씬의 'modified externally / Reload' 대화상자가열려있다. 이대화상자동안기존MCP툴목록이비고, ComputerUse의클릭은geometry unavailable,화면확인은FrameArrived timeout으로실패했다. 키보드초점도변경확인되지않아추가UI조작은멈췄다. 현재디스크씬은해결되어저장됐으나 이번병합결과의Unity재불러오기·컴파일·Play검증은미완료다. 이전Player모션검증통과를병합후전체동작통과로재사용하지않는다.
+- 현재프로젝트파일의수동변경은대상씬과이번기록/설명서뿐이다. 기존.gitattributes의중첩매크로경고는변경하지않았다. 충돌해결씬·문서만추가로스테이지하고,기존자동병합결과를포함한로컬병합커밋을요청범위로진행한다. 패키지설치·파일삭제·GUID재발급·브랜치생성·푸시는하지않는다. 커밋결과와작업트리최종상태는외부결과파일및사용자최종답변에기록한다.
+- 추가커밋검사: 전체스테이지의 diff --check는 받아온 Enemy코드·Unity메타/프리팹의기존줄끝공백을보고했다. 충돌표시나이번수정씬의공백오류가아니므로팀원파일과메타를정리하지않았다. 기존스테이지의다른파일내용동일과원본Player파일추적을확인했다.
