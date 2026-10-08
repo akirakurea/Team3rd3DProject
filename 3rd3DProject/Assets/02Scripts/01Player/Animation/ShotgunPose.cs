@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>발사 클립의 준비·반동 곡선을 총과 양손 잡는 자세로 표현합니다. 이동 클립은 바꾸지 않습니다.</summary>
+/// <summary>발사 상태를 Animator에 전달하고, 조준점에 맞춰 총과 양손 자세를 보정합니다.</summary>
 [DisallowMultipleComponent]
 [UnityEngine.Scripting.APIUpdating.MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "CatShotgunPose")]
 public sealed class ShotgunPose : MonoBehaviour
@@ -21,11 +21,19 @@ public sealed class ShotgunPose : MonoBehaviour
 
     public bool IsShotPlaying { get; private set; }
     public bool ReadyToFire => IsShotPlaying && !shotAcknowledged && elapsed >= fireMoment;
-    public float CurrentRaise { get; private set; }
+    // Animator는 Update 뒤에 곡선을 평가합니다. 장비가 자세를 적용할 때 최신 값을 읽습니다.
+    public float CurrentRaise => Mathf.Clamp01(Mathf.Max(aimWeight, IsShotPlaying ? raiseWeight : 0f));
     public float Elapsed => elapsed;
     float elapsed, aimWeight;
     bool shotAcknowledged, hasTarget;
     Vector3 aimPoint, cameraForward;
+    Animator animator;
+    RuntimeAnimatorController boundController;
+    bool usesAnimator;
+    static readonly int ShotActive = Animator.StringToHash("ShotActive");
+    static readonly int ShotTime = Animator.StringToHash("ShotTime");
+
+    void OnEnable() => RefreshAnimationBinding();
 
     public void SetTarget(Vector3 target, bool valid, Vector3 forward) { aimPoint = target; hasTarget = valid; cameraForward = forward; }
     public void BeginShot() { elapsed = 0; shotAcknowledged = false; IsShotPlaying = true; }
@@ -33,25 +41,60 @@ public sealed class ShotgunPose : MonoBehaviour
 
     public void Tick(float deltaTime, bool aiming)
     {
+        RefreshAnimationBinding();
         aimWeight = Mathf.MoveTowards(aimWeight, aiming ? 1 : 0, deltaTime / Mathf.Max(.01f, raiseSeconds));
         if (IsShotPlaying)
         {
             elapsed += deltaTime;
             if (shotAcknowledged && (fireMotion == null || elapsed >= fireMotion.length)) IsShotPlaying = false;
         }
-        raiseWeight = recoilDistance = recoilPitch = 0;
-        if (IsShotPlaying && fireMotion)
+        if (usesAnimator)
         {
-            // 판정 직전에는 정확히 발사 시각의 자세를 사용합니다. 낮은 FPS에서도 반동이 조준을 먼저 틀지 않습니다.
-            float sample = shotAcknowledged ? elapsed : Mathf.Min(elapsed, fireMoment);
-            fireMotion.SampleAnimation(gameObject, sample);
+            // Shotgun 레이어의 전환과 클립 평가는 Animator가 담당합니다.
+            animator.SetBool(ShotActive, IsShotPlaying && fireMotion);
+            animator.SetFloat(ShotTime, IsShotPlaying && fireMotion
+                ? Mathf.Clamp01(SampleTime / Mathf.Max(.0001f, fireMotion.length)) : 0f);
         }
-        CurrentRaise = Mathf.Clamp01(Mathf.Max(aimWeight, raiseWeight));
+        else
+        {
+            // 다른 씬의 기존 Idle.controller에는 Shotgun 레이어가 없습니다.
+            // 그 연결을 바꾸지 않기 위한 호환 경로이며 새 컨트롤러에서는 실행하지 않습니다.
+            raiseWeight = recoilDistance = recoilPitch = 0;
+            if (IsShotPlaying && fireMotion)
+                fireMotion.SampleAnimation(gameObject, SampleTime);
+        }
+    }
+
+    // 발사 판정 전에는 준비 자세에서 기다립니다. 실제 판정 뒤에만 반동이 진행됩니다.
+    float SampleTime => shotAcknowledged ? elapsed : Mathf.Min(elapsed, fireMoment);
+
+    void RefreshAnimationBinding()
+    {
+        if (!animator) animator = GetComponent<Animator>();
+        var controller = animator ? animator.runtimeAnimatorController : null;
+        if (!controller)
+        {
+            boundController = null;
+            usesAnimator = false;
+            return;
+        }
+        if (controller == boundController) return;
+        boundController = controller;
+        usesAnimator = false;
+        if (animator.GetLayerIndex("Shotgun") < 0) return;
+        bool hasActive = false, hasTime = false;
+        foreach (var parameter in animator.parameters)
+        {
+            hasActive |= parameter.nameHash == ShotActive && parameter.type == AnimatorControllerParameterType.Bool;
+            hasTime |= parameter.nameHash == ShotTime && parameter.type == AnimatorControllerParameterType.Float;
+        }
+        usesAnimator = hasActive && hasTime;
     }
 
     public void Apply(Transform weapon, Transform motionRoot)
     {
-        if (CurrentRaise <= 0 || !hasTarget) return;
+        float currentRaise = CurrentRaise;
+        if (currentRaise <= 0 || !hasTarget) return;
         Vector3 readyPosition = motionRoot.TransformPoint(aimedLocalPosition);
         Vector3 offset = muzzle ? Vector3.Scale(weapon.InverseTransformPoint(muzzle.position), weapon.lossyScale) : Vector3.zero;
         Vector3 target = aimPoint;
@@ -76,16 +119,25 @@ public sealed class ShotgunPose : MonoBehaviour
         }
         Vector3 up = Vector3.up;
         Vector3 right = Vector3.Cross(up, direction).normalized;
-        aimedRotation = Quaternion.AngleAxis(-recoilPitch, right) * aimedRotation;
-        readyPosition -= direction * (recoilDistance * Mathf.Abs(motionRoot.lossyScale.x));
-        weapon.SetPositionAndRotation(Vector3.Lerp(weapon.position, readyPosition, CurrentRaise),
-            Quaternion.Slerp(weapon.rotation, aimedRotation, CurrentRaise));
+        // 취소 직후 Animator가 아직 이전 프레임의 값을 가지고 있어도 반동을 적용하지 않습니다.
+        float pitch = IsShotPlaying ? recoilPitch : 0f;
+        float distance = IsShotPlaying ? recoilDistance : 0f;
+        aimedRotation = Quaternion.AngleAxis(-pitch, right) * aimedRotation;
+        readyPosition -= direction * (distance * Mathf.Abs(motionRoot.lossyScale.x));
+        weapon.SetPositionAndRotation(Vector3.Lerp(weapon.position, readyPosition, currentRaise),
+            Quaternion.Slerp(weapon.rotation, aimedRotation, currentRaise));
     }
 
     public void ResetPose()
     {
-        IsShotPlaying = false; shotAcknowledged = false; elapsed = aimWeight = CurrentRaise = 0;
+        IsShotPlaying = false; shotAcknowledged = false; elapsed = aimWeight = 0;
         raiseWeight = recoilDistance = recoilPitch = 0; hasTarget = false;
+        RefreshAnimationBinding();
+        if (usesAnimator)
+        {
+            animator.SetBool(ShotActive, false);
+            animator.SetFloat(ShotTime, 0f);
+        }
     }
     void OnDisable() => ResetPose();
 }
