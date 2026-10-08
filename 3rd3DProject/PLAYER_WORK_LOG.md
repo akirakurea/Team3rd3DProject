@@ -416,3 +416,14 @@
 - 마지막 수정 독립검사132개 통과(기존61+버퍼36+이동착지35, pure_transition_checks.txt). 추가 실제22개 통과(late_recovery_play_20261008_152135.txt): 착지0.30초에서 이동+Space를 누르면 만료 후 걷기로복귀하고,0.60초 유효입력은 일반0.69초 회복뒤0.40초 준비로 재점프하며, 두 경우 모두 본 경계·원복이 정상이다. 이번 Play 검사 합계170=76+28+44+22이며 공통 연결 검사가 일부 반복 포함된다. 최종 좁은 조건 변경 뒤에는 해당 경계와 순수 전체검사를 재실행했다.
 - 최종 상태(final_health.txt): PlaytestScene01 하나만 열려 있고 편집모드/dirty=False/compiling=False/compileFailed=False. Missing Script/Material/SkinnedMesh와 ShaderError 각각0. 기존 손·발 외곽선과 Unity 중력 유지. 전체 빌드·팀원PC·다른 씬 실행은 검증 범위에 포함하지 않았다.
 - 최종 범위 감사 PASS(scope_audit.json): 변경8파일(C#4,PlayerJump.controller1,문서3); 추가·삭제·이름 변경0; 기존meta1,050개/GUID 전체동일; 원본클립5개/씬10개/프리팹95개/모델·재질등550개/설정·패키지33개/Enemy·Rat·Mouse63개와Git인덱스보존. 변경파일의GUID 참조 누락·컨트롤러 내부파일ID누락0. 프로젝트의 기존 범위밖미해결GUID36개는 별도보고에 남겼으며 이번에 고쳤다고 주장하지 않는다.
+
+
+## 2026-10-08 저장·커밋과 카메라 병합 충돌 정리
+
+- 사용자가 지금까지 작업의 저장·커밋을 명시적으로 요청했다. 현재 Player 브랜치 HEAD197532a에는 최종 Player 코드·클립·메타·문서가 이미 커밋되어 있었다. 받아온 a0aa13a 변경을 합치는 중 PlaytestScene01의 두 카메라 Transform만 충돌한 상태였다.
+- 사용자 선택: Main Camera와 Cat_CinemachineCamera의 현재 Player 위치·회전을 유지(높이1.3789881). 정확히 두 충돌 구간에서 HEAD 값만 선택했으며 그 외 자동 병합 내용은 그대로 유지했다. 팀에서 받아온 Enemy·맵·덫·메타 변경은 이번 작업에서 편집하지 않았다.
+- 변경 전 씬의 base/current/incoming3버전과 충돌파일, 병합대기51경로의 존재 파일 사본, 전체2,003파일 지문 및Git인덱스를 프로젝트밖 C:/Users/307/Documents/Codex/PlayerCommit20261008에 백업했다.
+- 읽기검증: 최종Player 관련232파일의HEAD/추적목록일치, 핵심27파일내용일치, 5개모션·GUID보존. 충돌제거뒤 씬의기타바이트와GUID참조목록그대로, 충돌마커0, 새로운내부fileID누락0, 중복fileID0, 프로젝트중복GUID0, 기존메타추가수정0. git diff --check에서해당씬문제없음.
+- Unity에는 해당씬의 'modified externally / Reload' 대화상자가열려있다. 이대화상자동안기존MCP툴목록이비고, ComputerUse의클릭은geometry unavailable,화면확인은FrameArrived timeout으로실패했다. 키보드초점도변경확인되지않아추가UI조작은멈췄다. 현재디스크씬은해결되어저장됐으나 이번병합결과의Unity재불러오기·컴파일·Play검증은미완료다. 이전Player모션검증통과를병합후전체동작통과로재사용하지않는다.
+- 현재프로젝트파일의수동변경은대상씬과이번기록/설명서뿐이다. 기존.gitattributes의중첩매크로경고는변경하지않았다. 충돌해결씬·문서만추가로스테이지하고,기존자동병합결과를포함한로컬병합커밋을요청범위로진행한다. 패키지설치·파일삭제·GUID재발급·브랜치생성·푸시는하지않는다. 커밋결과와작업트리최종상태는외부결과파일및사용자최종답변에기록한다.
+- 추가커밋검사: 전체스테이지의 diff --check는 받아온 Enemy코드·Unity메타/프리팹의기존줄끝공백을보고했다. 충돌표시나이번수정씬의공백오류가아니므로팀원파일과메타를정리하지않았다. 기존스테이지의다른파일내용동일과원본Player파일추적을확인했다.

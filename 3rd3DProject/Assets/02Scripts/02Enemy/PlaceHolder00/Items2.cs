@@ -2,6 +2,8 @@
 
 public class Items2 : MonoBehaviour
 {
+    public bool IsReserved {  get; set; } = false;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
