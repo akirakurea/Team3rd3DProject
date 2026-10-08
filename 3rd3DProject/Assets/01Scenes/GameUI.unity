@@ -4585,7 +4585,6 @@ GameObject:
   m_Component:
   - component: {fileID: 24045642}
   - component: {fileID: 24045641}
-  - component: {fileID: 24045640}
   m_Layer: 0
   m_Name: TreasureCarrier
   m_TagString: Untagged
@@ -4593,18 +4592,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &24045640
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 24045639}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b17e4dc2bbff0cc4195b5f4187b96c5f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TreasureDebugTester
 --- !u!114 &24045641
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -322154,7 +322141,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 477fe86fe9f640d4ba532b4d55625bc8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TreasureManager
-  treasurePrefab: {fileID: 3800783690929105825, guid: d4a4427bc83641b4892f52d0a5764d11, type: 3}
+  treasurePrefab: {fileID: 6825637308324414056, guid: e9e8000e12d08754a9ac921e6624a753, type: 3}
 --- !u!4 &1832572699
 Transform:
   m_ObjectHideFlags: 0
@@ -334993,6 +334980,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  readSelectionInput: 1
 --- !u!114 &1913441068
 MonoBehaviour:
   m_ObjectHideFlags: 0
