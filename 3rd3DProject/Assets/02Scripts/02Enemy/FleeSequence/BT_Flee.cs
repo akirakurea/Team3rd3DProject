@@ -39,10 +39,10 @@ public class BT_Flee : BT_Leaf
 
         bb.ClearTarget();//도망칠때는 노리던 아이템 초기화 및 예약해제 장치
 
-        if(bb.IsCarryingItem && (bb.DistanceToPlayer < 5.0f))
-        {
-            bb.DropCarriedItem();
-        }
+        //if(bb.IsCarryingItem && (bb.DistanceToPlayer < 5.0f))
+        //{
+           
+        //}
         //Vector3 runDir = (bb.ThiefTransform.position - bb.PlayerTransform.position).normalized;
         //Vector3 targetPos = bb.ThiefTransform.position + runDir * fleeDistance;
         //NavMeshHit hit;
