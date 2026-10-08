@@ -22,10 +22,10 @@ public class BT_StunCheck : BT_Leaf
                 blackboard.Agent.isStopped = true;//이동중이었으면 멈추기
                 blackboard.Agent.ResetPath();
             }
-            if(blackboard.IsCarryingItem)
-            {
-                blackboard.DropCarriedItem();
-            }
+            //if(blackboard.IsCarryingItem)
+            //{
+            //    blackboard.DropCarriedItem();
+            //}
         }
         blackboard.CurrentStunTimer += Time.deltaTime;//스턴 상태 처리
 
