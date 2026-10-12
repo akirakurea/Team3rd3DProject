@@ -54,9 +54,14 @@ public class TreasureCarrier : MonoBehaviour
     /// <summary>탈출 성공. 보물을 들고 있었으면 털린 것으로 확정하고 true.</summary>
     public bool CompleteEscape()
     {
-        if (!IsCarrying) return false;
+        if (!IsCarrying)
+        {
+            Debug.Log($"[Carrier]CompleteEscape 실패 {IsCarrying}");
+            return false;
+        }
         Treasure t = carried;
         carried = null;
+        Debug.Log($"[Carrier] Steal호출 직전 treasure = {t.name}, state = {t.State}");
         t.Steal();
         return true;
     }

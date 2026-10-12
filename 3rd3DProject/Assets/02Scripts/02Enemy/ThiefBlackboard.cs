@@ -128,7 +128,7 @@ public class ThiefBlackboard
 
     }
 
-    public bool CompletEscape()
+    public bool CompleteEscape()
     {
         if(Carrier == null) return false;
         return Carrier.CompleteEscape();
