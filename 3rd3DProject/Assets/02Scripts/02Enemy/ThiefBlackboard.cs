@@ -15,6 +15,7 @@ public class ThiefBlackboard
     [Header("컴포넌트")]
     public GameObject ThiefGameObject;
     public Transform ThiefTransform;
+    public TreasureCarrier Carrier;
     public NavMeshAgent Agent;
     public Animator ThiefAnim;
     [Header("이동 및 속도")]
@@ -28,9 +29,9 @@ public class ThiefBlackboard
     public bool IsPlayerNearby => DistanceToPlayer <= FleeDistanceThreshold;
 
     [Header("아이템정보")]
-    public Transform TargetItem;
+    public Treasure TargetItem;
     public Vector3 TargetDestination;
-    public bool IsCarryingItem;
+    public bool IsCarryingItem => Carrier != null && Carrier.IsCarrying;
     public GameObject CarriedItem;
 
     [Header("디버그 및 상태")]
@@ -49,8 +50,12 @@ public class ThiefBlackboard
         ThiefTransform = thiefObj.transform;
         Agent = thiefObj.GetComponent<NavMeshAgent>();
         ThiefAnim = thiefObj.GetComponentInChildren<Animator>();
+        Carrier = thiefObj.GetComponent<TreasureCarrier>();
 
-        if(Agent != null )
+        if (Carrier == null)
+            Debug.LogError($"[BT] '{thiefObj.name}'에 TreasureCarrier 컴포넌트가 없습니다. 쥐 프리팹에 붙여주세요.", thiefObj);
+
+        if (Agent != null )
         {
             UpdateAgentSpeed();
         }
@@ -68,63 +73,88 @@ public class ThiefBlackboard
 
     }
 
-    public void SetTarget(Transform item)
+    public void SetTarget(Treasure item)
     {
         TargetItem = item;
-        var itemComp = item != null ? item.GetComponent<Items2>() : null;
-        if(itemComp != null)
-        {
-            itemComp.IsReserved = true;
-        }
+        //var itemComp = item != null ? item.GetComponent<Items2>() : null;
+        //if(itemComp != null)
+        //{
+        //    itemComp.IsReserved = true;
+        //}
     }
 
-    public void PickUpTargetItem()
+    //public void PickUpTargetItem()
+    //{
+    //    if (TargetItem != null)
+    //    {
+    //        CarriedItem = TargetItem.gameObject;
+    //        var itemComp = CarriedItem.GetComponent<Items2>();
+
+    //        if (itemComp != null)
+    //        {
+    //            itemComp.IsReserved = false;
+    //        }
+    //        CarriedItem.SetActive(false);
+
+    //        IsCarryingItem = true;
+
+
+    //        UpdateAgentSpeed();
+    //    }
+    //}
+    public bool TryPickUpTarget()
     {
-        if(TargetItem != null)
+        if (TargetItem == null || Carrier == null)
         {
-            CarriedItem = TargetItem.gameObject;
-            var itemComp = CarriedItem.GetComponent<Items2>();
-
-            if(itemComp != null)
-            {
-                itemComp.IsReserved = false;
-            }
-            CarriedItem.SetActive(false);
-
-            IsCarryingItem = true;
-            TargetItem = null;
-
-            UpdateAgentSpeed();
+            Debug.Log($"[BT] TryPickUpTarget 실패 :TargetItem={TargetItem}, Carrier={Carrier} ");
+            return false;
         }
+
+        bool success = Carrier.TryPickUp(TargetItem);
+        //Debug.Log($"[BT] TryPickUp 결과={success}, 직후 IsCarrying={Carrier.IsCarrying}");
+        TargetItem = null;
+        return success;
     }
 
     public void ClearTarget()
     {
-        if(TargetItem != null)
-        {
-            var item = TargetItem.GetComponent<Items2>();
-            if(item != null) item.IsReserved = false;
-            TargetItem = null;
-        }
+        //if(TargetItem != null)
+        //{
+        //    var item = TargetItem.GetComponent<Items2>();
+        //    if(item != null) item.IsReserved = false;
+        //    TargetItem = null;
+        //}
+        TargetItem = null;
 
     }
-    public void DropCarriedItem()
+
+    public bool CompletEscape()
     {
-        if(IsCarryingItem && CarriedItem != null)
-        {
-            CarriedItem.transform.position = ThiefTransform.position;
-            CarriedItem.SetActive(true);
-            Debug.Log("[BT]들고있던 아이템을 바닥에 떨어뜨립니다.");
-            //아이템매니저로 씬 내 아이템 재등록
-            ItemManager2.Instance?.AddItem(CarriedItem);
-
-            CarriedItem = null;
-            IsCarryingItem = false;
-
-            UpdateAgentSpeed();
-        }
-
+        if(Carrier == null) return false;
+        return Carrier.CompleteEscape();
     }
+
+    public void HandleCaught()
+    {
+        Carrier?.DropOnCaught();
+    }
+    //public void DropCarriedItem()
+    //{
+    //    if(IsCarryingItem && CarriedItem != null)
+    //    {
+    //        CarriedItem.transform.position = ThiefTransform.position;
+    //        CarriedItem.SetActive(true);
+    //        Debug.Log("[BT]들고있던 아이템을 바닥에 떨어뜨립니다.");
+    //        //아이템매니저로 씬 내 아이템 재등록
+    //        ItemManager2.Instance?.AddItem(CarriedItem);
+
+    //        CarriedItem = null;
+    //        IsCarryingItem = false;
+
+    //        UpdateAgentSpeed();
+    //    }
+
+    //}
 
     public void UpdateAgentSpeed()
     {

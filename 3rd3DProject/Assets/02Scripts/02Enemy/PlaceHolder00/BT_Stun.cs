@@ -25,8 +25,8 @@ public class BT_Stun : BT_Leaf
             bb.Agent.isStopped = true;
             bb.Agent.ResetPath();
 
-            if (bb.IsCarryingItem)
-                bb.DropCarriedItem();
+            //if (bb.IsCarryingItem)
+            //    bb.DropCarriedItem();
 
             //bb.Animator.SetTrigger("OnStunned");
         }

@@ -111,6 +111,7 @@ MonoBehaviour:
   blackboard:
     ThiefGameObject: {fileID: 7281354718278035978}
     ThiefTransform: {fileID: 7552456444151313439}
+    Carrier: {fileID: -456694092097527670}
     Agent: {fileID: 3709453786987738978}
     ThiefAnim: {fileID: 4957332864278417907}
     NormalSpeed: 5
@@ -119,9 +120,8 @@ MonoBehaviour:
     PlayerTransform: {fileID: 0}
     DistanceToPlayer: 0
     FleeDistanceThreshold: 8
-    TargetItem: {fileID: 8133423171153687284, guid: 06b2454e8ecb0964385f8ebd52d506d4, type: 3}
+    TargetItem: {fileID: 0}
     TargetDestination: {x: 0, y: 0, z: 0}
-    IsCarryingItem: 0
     CarriedItem: {fileID: 0}
     IsStunned: 0
     IsFleeing: 0

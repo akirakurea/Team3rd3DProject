@@ -16,7 +16,7 @@ public class BT_FindFurtherItem : BT_Leaf
         {
             return BT_NodeStatus.Success;
         }
-        var items = ItemManager2.Instance.GetRemainingItems();
+        var items = TreasureManager.Instance.Treasures;
         if (items == null || items.Count == 0)
         {
             Debug.LogWarning("[BT] 아이템매니저 비어있음");
@@ -31,16 +31,16 @@ public class BT_FindFurtherItem : BT_Leaf
             return BT_NodeStatus.Failure;
         }
 
-        Transform furherItem = null;
+        Treasure furherItem = null;
         float maxDistance = -1f;
        
         foreach(var item in items)
         {
             if(item == null) continue;
-            if (item.activeInHierarchy == false) continue;
-
-            var itemComp = item.GetComponent<Items2>();
-            if (itemComp != null && itemComp.IsReserved) continue;//다른 도둑이 노릴경우
+            if (item.gameObject.activeInHierarchy == false) continue;
+            if(!item.IsAvailable) continue;
+            //var itemComp = item.GetComponent<Items2>();
+            //if (itemComp != null && itemComp.IsReserved) continue;//다른 도둑이 노릴경우
 
             float distanceToPlayer = Vector3.Distance(item.transform.position, player.position);
             float distanceToThiedf = Vector3.Distance(item.transform.position, thief.position);
@@ -52,7 +52,7 @@ public class BT_FindFurtherItem : BT_Leaf
                 if (score > maxDistance)
                 {
                     maxDistance = score;
-                    furherItem = item.transform;
+                    furherItem = item;
                 }
             }
         }

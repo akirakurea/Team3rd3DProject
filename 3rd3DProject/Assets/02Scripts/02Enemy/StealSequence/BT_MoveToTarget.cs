@@ -11,9 +11,16 @@ public class BT_MoveToTarget : BT_Leaf
     {
         if (bb.TargetItem == null) return BT_NodeStatus.Failure;
 
-        bb.Agent.SetDestination(bb.TargetItem.position);
-        float disToTgt = Vector3.Distance(bb.ThiefTransform.position, bb.TargetItem.position);
-        Debug.Log($"[BT] {bb.TargetItem.position}방향 이동");
+        if(!bb.TargetItem.IsAvailable)
+        {
+            bb.ClearTarget();
+            return BT_NodeStatus.Failure;
+        }
+
+        Vector3 targetPos = bb.TargetItem.transform.position;
+        bb.Agent.SetDestination(targetPos);
+        float disToTgt = Vector3.Distance(bb.ThiefTransform.position, targetPos);
+        Debug.Log($"[BT] {targetPos}방향 이동");
         if (disToTgt<= 1.2f || (!bb.Agent.pathPending && bb.Agent.remainingDistance <= bb.Agent.stoppingDistance))
         {
             bb.Agent.ResetPath();

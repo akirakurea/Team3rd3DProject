@@ -81,11 +81,14 @@ public class ThiefController : MonoBehaviour
     }
     public ThiefBlackboard Blackboard => blackboard;
 
-    public bool IsCapurable => blackboard.IsStunned;
+    public bool IsCapturable => blackboard.IsStunned;
     public void GetCaptured()
     {
-        if (blackboard.IsCarryingItem)
-            blackboard.DropCarriedItem();
+        //if (blackboard.IsCarryingItem)
+        //    blackboard.DropCarriedItem();
+
+        blackboard.HandleCaught();
+        GameManager.Instance?.OnRatCaught();
 
         Debug.Log("[BT]도둑이 잡혔습니다");
         Destroy(gameObject);//풀링방식으로 변경할 시 비활성화 하기.
