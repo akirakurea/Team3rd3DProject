@@ -427,3 +427,51 @@
 - Unity에는 해당씬의 'modified externally / Reload' 대화상자가열려있다. 이대화상자동안기존MCP툴목록이비고, ComputerUse의클릭은geometry unavailable,화면확인은FrameArrived timeout으로실패했다. 키보드초점도변경확인되지않아추가UI조작은멈췄다. 현재디스크씬은해결되어저장됐으나 이번병합결과의Unity재불러오기·컴파일·Play검증은미완료다. 이전Player모션검증통과를병합후전체동작통과로재사용하지않는다.
 - 현재프로젝트파일의수동변경은대상씬과이번기록/설명서뿐이다. 기존.gitattributes의중첩매크로경고는변경하지않았다. 충돌해결씬·문서만추가로스테이지하고,기존자동병합결과를포함한로컬병합커밋을요청범위로진행한다. 패키지설치·파일삭제·GUID재발급·브랜치생성·푸시는하지않는다. 커밋결과와작업트리최종상태는외부결과파일및사용자최종답변에기록한다.
 - 추가커밋검사: 전체스테이지의 diff --check는 받아온 Enemy코드·Unity메타/프리팹의기존줄끝공백을보고했다. 충돌표시나이번수정씬의공백오류가아니므로팀원파일과메타를정리하지않았다. 기존스테이지의다른파일내용동일과원본Player파일추적을확인했다.
+
+## 2026-10-12 설정창 커서 충돌 수정과 승인된 SOLID 정리
+
+- 요청: 앞선 검토의 공통 입력 권한·설정 적용 책임 분리·획득용 인터페이스 축소를 적용하고, GameUI 설정창 클릭 시 마우스가 사라지는 버그 수정. 시작 전 작업 규칙과 실제 코드 경로를 읽었다. 프로젝트 밖 `C:/Users/307/Documents/Codex/PlayerCursorFix20261012`에 관련 원본 사본과 1,287개 대상 파일 지문을 보관했다.
+- 원인: CameraCursorLock(-100)의 해제 상태 좌클릭이 메뉴 유무와 관계없이 잠금으로 바뀌었다. ESC는 카메라가 먼저 처리하므로 PauseMenuUI가 이미 해제된 커서를 이전 상태로 저장했고, 재개 때도 해제 상태가 복구됐다. PauseMenuUI·RoundResultUI·CameraCursorLock의 독립 Cursor 쓰기가 충돌했다.
+- 기존 변경 파일: `01Player/Camera/CameraCursorLock.cs`, `01Player/Input/PlayerInput.cs`, `InteractionInput.cs`, `CombatInput.cs`, `04Systems/PauseMenuUI.cs`, `RoundResultUI.cs`, `ItemInteractor.cs`, `HotbarManager.cs` 및 기존 작업 문서3개.
+- 추가 파일: `01Player/Domain/InputPermission.cs`(엔진 독립 메뉴별 차단 규칙), `01Player/Input/GameplayInput.cs`(현재 상태·시간·포커스와 규칙 연결), `04Systems/GameSettingsApplier.cs`(IGameSettingsApplier와 소리·화면 적용). 새 MonoBehaviour나 씬 오브젝트는 없다. Unity가 새 C#3개에 필요한 새 meta3개만 생성했다. 기존 meta는 수정하지 않았다.
+- 실제 Cursor 쓰기는 런타임 CameraCursorLock 한 곳에 한정한다. Pause/Result는 자기 차단 요청만 해제한다. 현재 GameManager.Instance를 읽어 늦은 로드·교체에도 공통 상태 판정이 남은 인스턴스에 묶이지 않으며 UI 이벤트는 재바인딩/비활성화 해제한다. 복귀 프레임 입력과 첫 활성화 클릭을 이동·점프·집기·사격·1·F·핫바 경로에서 차단한다. RoundClear의 기존 조작 허용은 유지한다.
+- 설정 UI의 직접 AudioListener/AudioMixer/Screen 적용을 보조 클래스로 옮겼고 기존 저장 키·직렬화 필드를 보존했다. 획득 IItemInventory에서 사용되지 않는 GetSlot/TryRemove 계약 및 내부 전달 함수만 제거했다. 실제 HotbarManager 저장 API와 Enemy 포획 경로는 변경하지 않았다. 감도의 실제 카메라 적용은 이번 작업에 추가하지 않았다.
+- 검토 중 발견한 결과창 재활성화 회귀를 보완했다. 비활성화 시 코루틴/자기 차단만 정리하고 패널의 자체 활성 상태를 보존하며, 같은 RoundResult로 복귀하면 다음 라운드 버튼을 다시 켠다.
+- 외부 컴파일 PASS: 작업 전83개/현재86개 생산 소스를 설치된 Unity·패키지 DLL391개로 컴파일, 양쪽 오류0/경고45이며 경고 내용 추가0. 기존 Editor·검증 소스24개는 DLL414개를 참조해 오류0/경고0. `build/CompileAudit.ps1` 재실행 가능. 기존 .gitattributes10~12행 매크로 경고는 이번 범위 밖이므로 보존했다.
+- 엔진 대체 코드 회귀검사 PASS: 실제 소스의 16개 시나리오/126개 조건. ESC 순서, 메뉴 클릭, 재개 입력 소비, 여러 창, 모든 GameState, 포커스, 재활성화, 늦은 매니저, 설정 적용 검사. 결과 `tests/Results.txt`, 실행 `tests/Run.ps1`. 이는 실제 Unity 검사가 아닌 격리 검사다.
+- Unity CLI는 Pipeline 인스턴스를 찾지 못했고 기존 MCP도 처음에는 discovery가 없었다. 사용자에게 기존 연결 활성화를 요청한 뒤 MCP 연결 성공. 패키지 설치 없음. 검사용 외부 명령의 첫 시도는 최상위 문장 형식/Editor 이름 충돌로 컴파일 실패, 그 다음은 Reflection 네임스페이스 제한으로 실행 거절됐다. 프로젝트 코드 컴파일 오류가 아니며, 검사를 Unity 공개 SerializedObject·SendMessage·InputSystem API 경로로 고쳐 실행했다. 외부 검사 준비 실패를 성공 검사 수에 포함하지 않는다.
+- 실제 Play PASS: PlaytestScene01 하나만 열려 있고 dirty=False/compileFailed=False임을 확인 후 시작했다. 가상 InputSystem 장치로 실제 ESC·마우스 클릭·W/Space/1/F 입력을 보내고 실제 설정 슬라이더 콜백, 재개 콜백, 여러 메뉴, 비활성화/재활성화를 검사했다. `live_tests.txt`: 21조건 통과/실패0. 설정창에서 Cursor=None/visible=True, Cinemachine 입력off, 게임 입력차단을 관측했고 ESC 복귀 및 같은 프레임 재개 클릭 차단을 확인했다. 슬라이더 기존 값을 그대로 전달해 설정값은 바꾸지 않았다. 이 씬 resumeButton은 미연결이므로 실제 버튼 클릭 성공이라고 보고하지 않고 Resume 콜백을 별도 호출했다. 해상도 변경·마우스 실제 하드웨어 드래그·다른 씬/빌드 테스트는 미실시.
+- 검증 종료 때 가상 장치와 이벤트를 정리하고 Play를 끝냈다. 마지막 Unity 상태 `live_state.txt`: PlaytestScene01만 로드, 편집 모드, dirty=False, compiling=False, compilationFailed=False, timeScale1. 씬/프리팹/에셋 저장은 하지 않았다.
+- 범위 검사 PASS: 기존 meta1,055개 전부 내용 동일, GUID 중복0, 기존 파일 누락0, 승인 범위 밖 지문 변경0. 시작 시 이미 수정돼 있던 PlaytestScene01과 CashBundle/GoldEmmental/PowerBankBox/ReserveWineBottle 프리팹은 그대로 보존했다. Enemy·모델·재질·애니메이션·다른 씬·설정·패키지·Git 인덱스를 편집하지 않았다. 파일 삭제·이름 변경·기존 변경 복구·커밋 없음. 상세 `scope_audit.json`.
+- 공식 확인: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Cursor-lockState.html (잠금 상태는 UI 조작을 막고 커서를 숨김), https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Time-timeScale.html (시간 정지와 입력 차단을 별도로 처리), https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Audio.AudioMixer.SetFloat.html (Start 이후 적용), https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Screen.SetResolution.html (화면 적용). Unity CLI 및 기존 uGUI 유지 절차를 참고했다.
+
+
+## 2026-10-12 ESC 설정창 조작 불가·복귀 잠금 후속 교정
+
+- 사용자 재현 보고: ESC로 설정창을 연 뒤 UI 조작 불가, 다시 ESC로 복귀하면 잠금 유지 필요. 이전 성공 결과를 그대로 재사용하지 않고 현재 코드·저장 씬·실행 씬을 다시 조사했다. 외부 `PlayerMenuInputFix20261012/baseline.json`에 이번 시작 시 전체 Assets·Packages·ProjectSettings·작업 문서의 지문과 대상 원본을 보관했다.
+- 확인 원인1: PlaytestScene01에는 PauseCanvas와 GraphicRaycaster/활성 슬라이더가 있지만 EventSystem/InputSystemUIInputModule이 전혀 없었다. 실제 Unity 조회에서도 EventSystem 0개였다. 원본 GameUI에는 있으나 복사 과정에서 빠진 것으로 추정하며, 실제 복사 경위는 확인하지 않았다. 지난21검사는 슬라이더 함수를 직접 호출해 입력 전달 경로 누락을 놓쳤으므로 UI 포인터 조작 완료 근거로 충분하지 않았다.
+- 확인 원인2: 권한이 false→true가 되는 프레임에 바로 잠그면 Unity Editor의 ESC 커서 해제가 뒤에 적용될 수 있다. wasAllowed는 이미true라서 추가 좌클릭 없이는 잠금 요청이 다시 실행되지 않았다. 공식 Cursor 문서와 코드 경로에 근거하며 이번 검사에서는 에디터 해제와 같은 Cursor 상태를 주입해 이 순서를 재현했다.
+- 변경: 기존 CameraCursorLock.cs에 보류 잠금 요청/프레임을 추가했다. ESC를 놓고 다음 프레임에서 한 번 적용한다. 포커스 상실·메뉴 재개방·비활성화·명시적 SetLocked 시 이전 요청은 취소한다. 게임 입력 차단과 복귀 클릭 소비는 보존한다.
+- 씬 변경: 깨끗한 편집 모드의 PlaytestScene01만 대상으로 Unity API로 EventSystem 오브젝트와 기본 EventSystem/InputSystemUIInputModule을 생성했다. AssignDefaultActions로 기본 UI 액션을 연결해 대상 씬만 저장했다. 신규 커스텀 스크립트·입력 파일·meta는 없다. 씬의 새 입력 액션 참조는 Unity가 씬 내부에 직렬화했다. GameUI를 열거나 저장하지 않았다.
+- 씬 문서 비교: 원래1010개 블록은 보존했고 SceneRoots에 새 루트를 추가한 항목만 변했다. 추가15블록은 EventSystem GameObject/Transform/두 컴포넌트와 기본 UI 액션·참조다. 카메라·Player·Enemy 등 기존 오브젝트 블록은 모두 동일했다.
+- 컴파일: 현재 생산86소스/Unity·패키지DLL391개 오류0(기존경고45), Editor24소스/DLL414개 오류0/경고0. Unity 에디터 실제 컴파일 상태도 오류 없음. 코드 변경 후 MCP discovery가 한 차례 끊겼으나 재시도로 연결됐고, 설치나 설정 변경은 하지 않았다.
+- 실제 Play 검사 `live_tests.txt`: 19조건 통과/실패0. 실제 EventSystem Raycast가 감도 슬라이더에 도달했고, 가상 마우스 press/drag/up 이벤트를 UI 입력 모듈로 보내 실제 Slider 값과 GameSettings 값이 바뀌는 것을 확인했다. 직접 콜백 호출로 대체하지 않았다. 드래그 중 커서표시·카메라/게임입력차단, ESC 키 유지/해제 후 잠금, 추가 클릭 없이 잠금유지, 반복2회 개폐, 포커스 상실의 보류취소를 확인했다. 감도는 검사 시작값으로 복원하고 가상 장치·이벤트를 제거한 뒤 Play를 종료했다.
+- 검사 제한: 하드웨어 키 입력 자체는 자동화하지 않았다. InputSystem 가상 키와 에디터 해제 상태 주입을 사용했다. Restart/Quit 버튼은 재시작·종료를 일으키므로 실행하지 않았다. 다른 씬·전체 빌드는 검사하지 않았다.
+- 공식 근거: https://docs.unity3d.com/Packages/com.unity.inputsystem@1.14/manual/UISupport.html (uGUI 입력 모듈 필요), 설치된 InputSystem1.20 소스의 기본 액션 구성, https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Cursor-lockState.html (Editor ESC 해제). Cinemachine의 OnDisable은 UI 공유 액션 전체를 해제하지 않음을 패키지 코드로 확인했다.
+- 변경 파일은 CameraCursorLock.cs, PlaytestScene01.unity, 기존 작업 문서3개다. 기존 파일 삭제·이름 변경·meta/GUID 수정·Enemy 변경·설치·Git 쓰기 없음. 최종 보존 검사는 `scope_audit.json`, 최종 에디터 상태는 `ui_state.txt`에 기록한다.
+
+- 마지막 git diff --check는 exit1: Unity가 새 UI 기본 액션을 씬에 직렬화하면서 빈 m_Name/m_Processors/m_Interactions 값 뒤에 남긴 공백을 보고했다. 실행·컴파일 오류나 충돌 표시는 아니며, Unity가 저장한 씬 YAML을 공백 정리 목적으로 직접 편집하지 않았다. 기존 .gitattributes 매크로 경고도 유지된다. 이 검사는 통과로 보고하지 않는다.
+
+
+## 2026-10-12 RAt (1) F 상호작용 불가 수정
+
+- 요청: RAt (1)이 F에 반응하지 않는 문제. 시작 전 PLAYER_WORK_RULES를 읽고 기존 전체 Assets·Packages·ProjectSettings·작업 문서 지문을 외부 PlayerRatInteractionFix20261012/baseline.json에 저장했다. 기존 씬과 작업 문서도 프로젝트 밖에 복사했다.
+- 원인: ItemInteractor.targets[8]의 표시 이름은 RAt (1)이지만 실제 target fileID654231910은 이름 없는 비활성 빈 GameObject였다. 실제 RAt (1)은 별도 prefab instance1704467483이다. live 조회에서도 잘못된 대상 inactive, 실제 쥐 active 및 CharacterController 존재를 확인했다. F 판정은 이름 문자열이 아니라 충돌한 오브젝트의 부모와 등록 객체를 비교하므로 실패했다.
+- 수정: Unity SerializedObject의 objectReferenceValue로 Player의 targets[8].target만 실제 RAt (1) 루트에 연결했다. Unity가 기존 프리팹 인스턴스를 참조하는 stripped GameObject 블록697979458 하나를 추가했다. 기존 프리팹 GUID95193d206a86ea247b58a0abc56f27d6은 동일하다. 이는 씬 내부 참조 생성이며 meta/GUID 재발급이 아니다. 빈 원래 오브젝트는 삭제하지 않았다.
+- 저장: 깨끗한 편집 씬에서 대상 참조만 저장했다. MCP undo 처리 후 dirty 표시가 남아 외부 사본을 만들고 디스크 저장본과 완전히 같은지 검사한 뒤 동일 내용으로 저장해 해제했다. 사용자 기존 미저장 내용의 덮어쓰기는 없었다.
+- 실제 Play 검사: live_tests.txt 최종12개/실패0. 실제 RAt (1) 연결, 게임 입력권한, 범위 밖 거부, 중앙 레이·가림 판정, F 대상 선택과 강조 가능 상태, 샷건 장착 상태에서 실제 InputSystem F 이벤트로 포획1회, 쥐 사라짐, 총 유지, 반복 F 중복 포획 없음, Unity 컴파일 정상. 플레이어/카메라의 검사 위치는 Play에서만 변경하고 끝나면 Play를 종료했다. Enemy 컴포넌트는 검사에서도 변경하지 않았다. 하드웨어 키보드 자체 검사는 아니며 가상 Keyboard 이벤트를 실제 게임 입력 경로로 보냈다.
+- 첫 검사: 12개 중10통과/2실패. F 포획은 성공했으나 숫자1 이벤트로 장착 상태를 준비하지 못해 총 관련2개가 실패했다(live_tests_first.txt 보존). 숫자키 장착의 원인은 이번 검사에서 확정하지 않았다. 후속 검사는 공개 TryEquip으로 총 장착 선행 조건을 확인하고 F 입력·장착 유지12조건을 통과했다. 숫자1 자체를 이번 수정으로 교정했다고 주장하지 않는다.
+- 외부 진단 오류 기록: 첫 읽기전용 진단은 Unity6000.5의 GetInstanceID 제거 오류, 다음 진단은 기존 Missing 참조에 ?.name을 사용해 NullReference가 났다. 프로젝트 변경 없이 외부 진단을 GetEntityId 및 Unity 객체 null 검사로 수정했다. Play 시작 보호 검사는 deferred dirty 때문에 한 번 중단되었으며 외부사본 일치 검증 후 진행했다.
+- 관련 관찰: targets의 Cylinder_2는 기존 Missing 상태로 확인했으나 이번 요청 범위가 아니므로 수정하지 않았다. 현재 Enemy.GetCaptured는 기존 GameManager.OnRatCaught를 호출한다. 과거 ItemInteractor의 '카운트 미구현' 주석과 다르지만 Enemy·카운트 규칙을 변경하지 않았다.
+- 공식 API 확인: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/SerializedProperty-objectReferenceValue.html . Unity에서 기존 대상 참조만 갱신하며 YAML 수동 편집이나 프리팹 원본 변경을 하지 않았다.
+- 실제 변경은 PlaytestScene01.unity와 기존 작업 문서3개다. 스크립트 변경·삭제·이름 변경·기존 meta/GUID 변경·Enemy 파일 변경·설치·커밋 없음. 최종 파일 지문은 scope_audit.json, 씬의 정확한 변경은 scene_change.diff, Play 결과는 live_tests.txt에 기록한다.

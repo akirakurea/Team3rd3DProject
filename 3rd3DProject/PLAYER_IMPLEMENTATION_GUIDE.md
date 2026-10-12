@@ -1,6 +1,52 @@
-# 플레이어 구현과 수정 설명서
+﻿# 플레이어 구현과 수정 설명서
 
 이 문서는 현재 플레이어 기능을 직접 수정할 사람을 위한 안내입니다. 작업 전에는 `PLAYER_WORK_RULES.md`를 먼저 읽습니다. 작업별 검증·오류·삭제 기록은 `PLAYER_WORK_LOG.md`에 추가합니다.
+
+## RAt (1)의 F 상호작용 연결 (2026-10-12)
+
+이번에는 F 코드가 아니라 대상 연결이 잘못되어 있었습니다. Player의 `ItemInteractor > Targets`에서 이름 표시는 `RAt (1)`이었지만, 실제 `Target` 칸에는 비활성 빈 오브젝트가 들어 있었습니다. 이 칸만 Hierarchy의 실제 `RAt (1)`로 바꾸었습니다. 쥐 프리팹과 Enemy 스크립트는 수정하지 않았습니다.
+
+같은 문제가 생기면 `PlaytestScene01 > Cat_Player (1) > ItemInteractor > Targets`를 펼쳐 확인하세요. `Element 8`의 `Target`이 Hierarchy의 실제 `RAt (1)`인지 확인하고 `Kind`는 `Enemy`로 둡니다. `Display Name`은 표시용 이름일 뿐, 이름을 쓰는 것만으로 쥐가 연결되지는 않습니다. 연결된 쥐의 콜라이더가 해당 루트 아래에 있어야 합니다. 프로젝트 창의 프리팹 원본을 연결하지 마세요.
+
+Play에서 쥐를 중앙 포인터로 바라보고 2.2 범위 안에서 F를 누르면 포획합니다. 총을 들고 있어도 총 상태는 유지됩니다. 이번 검사에서는 가상 키보드의 F 입력이 실제 입력 코드와 물리 판정을 거쳐 쥐를 포획하는 것을 확인했습니다. 검사 후 Play를 끝냈기 때문에 편집 화면에는 쥐가 그대로 있습니다.
+
+이번 수정은 점수 규칙을 바꾸지 않습니다. 현재 Enemy의 기존 `GetCaptured()`에는 `GameManager.OnRatCaught()` 호출이 있으므로, 과거 문서의 '카운트 미구현' 설명과 현재 팀원 구현은 다릅니다. 이 차이는 기록만 하고 Enemy를 수정하지 않았습니다.
+
+## ESC 설정창의 실제 클릭과 복귀 잠금 (2026-10-12 추가 수정)
+
+설정창이 보이는 것과 마우스로 조작되는 것은 별개입니다. `PlaytestScene01`에는 Canvas와 슬라이더가 있었지만 입력을 배달하는 `EventSystem`이 없었습니다. 이 씬에 Unity 기본 `EventSystem` + `InputSystemUIInputModule`을 추가하고 기본 UI 입력 액션을 연결했습니다. 별도의 직접 클릭 처리 스크립트나 새 입력 파일은 만들지 않았습니다. GameUI 원본 씬은 수정하지 않았습니다.
+
+이제 ESC를 누르면 커서가 보이며 설정창의 슬라이더를 클릭하거나 드래그할 수 있습니다. 다시 ESC를 누르면 창이 닫히고, ESC 키를 놓은 다음 프레임부터 커서가 잠겨 카메라를 조작합니다. Unity Editor 자체가 ESC로 커서를 푸는 동작과 부딪히지 않도록 잠금 요청을 잠시 보관했다가 한 번 적용합니다. 창 포커스를 잃거나 메뉴를 다시 열면 보류 요청은 취소합니다.
+
+관련 설정은 Hierarchy의 `EventSystem`에서 확인합니다. UI가 클릭되지 않으면 오브젝트 활성 여부, `InputSystemUIInputModule`의 Point/Left Click 연결, Canvas의 `GraphicRaycaster`를 확인하세요. EventSystem은 같은 실행 화면에 하나만 둡니다. 기존 입력 액션·메타·GUID를 삭제하거나 재발급할 필요가 없습니다.
+
+수정 뒤에는 ESC → 슬라이더를 실제로 클릭·드래그 → 값 변경 → ESC를 누르고 떼기 → 추가 클릭 없이 시점 조작을 확인합니다. 이전 검증의 직접 슬라이더 콜백 호출로는 EventSystem 누락을 찾지 못했습니다. 이번에는 가상 마우스 이벤트가 실제 InputSystemUIInputModule과 GraphicRaycaster를 통과해 값이 변하는지 확인했고, 반복 개폐와 잠금 유지 등 Play 검사19개를 통과했습니다. 실제 하드웨어 ESC의 에디터 커서 해제는 동일한 Cursor 상태 변화를 주입해 재현했습니다.
+
+## 설정창에서 마우스가 사라지는 문제와 수정 방법 (2026-10-12)
+
+이전에는 설정창에서 슬라이더를 클릭해도 카메라가 그 클릭을 “게임으로 돌아가기”로 받아 커서를 숨겼습니다. ESC를 누를 때 카메라가 먼저 커서를 풀고, 설정창이 그 풀린 상태를 기억하는 문제도 있었습니다. 이제 설정창이 열려 있으면 클릭해도 게임 입력을 다시 켤 수 없습니다.
+
+역할은 다음처럼 나눕니다. 새 보조 클래스는 오브젝트에 추가하지 않습니다. 기존 Inspector 연결은 그대로 씁니다.
+
+| 코드 | 하는 일 |
+| --- | --- |
+| `01Player/Domain/InputPermission.cs` | 여러 창의 차단 요청을 기억하는 순수 C# 규칙 |
+| `01Player/Input/GameplayInput.cs` | GameManager 상태, 시간 정지, 창 요청, 포커스를 모아 입력 허용 결정 |
+| `01Player/Camera/CameraCursorLock.cs` | 실제 마우스 표시·잠금과 Cinemachine 입력 활성화 |
+| `04Systems/PauseMenuUI.cs`, `RoundResultUI.cs` | 버튼·슬라이더·결과 표시와 자기 창의 차단 요청 |
+| `04Systems/GameSettingsApplier.cs` | 소리·해상도를 Unity에 적용; 설정 UI는 필요한 기능만 인터페이스로 호출 |
+| `04Systems/GameSettings.cs` | 저장된 설정값 읽기·저장; 기존 키 보존 |
+| `04Systems/ItemInteractor.cs` | F 획득; 저장소에 빈칸 확인과 추가만 요청 |
+
+새 메뉴를 연결할 때 열기에서 `GameplayInput.SetBlocked(this, true)`, 닫기와 `OnDisable`에서 `GameplayInput.SetBlocked(this, false)`를 호출합니다. `this`는 “어느 창의 요청인지”를 구분합니다. 다른 창이 열려 있으면 내 창을 닫아도 입력은 계속 막힙니다. UI가 `Cursor.lockState`나 `Cursor.visible`을 직접 바꾸지 않습니다. `SetLocked(true)`를 직접 호출해도 열린 메뉴의 차단을 무시할 수 없습니다.
+
+`Playing`과 결과 표시 전 `RoundClear`는 기존처럼 조작할 수 있습니다. `Ready`, `RoundResult`, `Win`, `Lose`에서는 조작을 막습니다. GameManager가 없는 단독 플레이어 시험에서는 기존 조작을 유지합니다. 새 상태를 추가할 때는 `GameplayInput.StateAllowsGameplay` 한 곳을 검토합니다. 새 게임 입력은 `GameplayInput.IsEnabled`를 확인합니다. UI 버튼 자체는 이 입력 조건으로 차단하지 않습니다.
+
+메뉴를 닫은 프레임의 입력과 커서 복귀 클릭은 소비합니다. 그래서 ‘계속하기’를 누른 클릭으로 총이 발사되거나 물건이 잡히지 않습니다. 마우스 감도 값은 이번에도 기존처럼 저장하며, 카메라 감도에 곱하는 새 기능은 추가하지 않았습니다.
+
+확인 순서는 ESC → 설정 슬라이더 클릭·드래그 → 커서 유지/카메라 정지 확인 → ESC로 복귀 → 다시 열고 계속하기 버튼으로 복귀입니다. 설정창에서 WASD·Space·1·F·좌우클릭이 게임 명령을 실행하지 않는지, 복귀 후 새로 누른 입력은 동작하는지도 확인합니다. 결과창과 승패 화면에서는 계속 커서가 보여야 합니다. 결과창을 잠시 껐다 켜도 다음 라운드 버튼을 사용할 수 있어야 합니다.
+
+검증 구분: 외부 컴파일과 Unity API 대체 코드를 사용한 자동 검사는 실제 Play 화면 검사와 다릅니다. 이번 실제 실행 여부와 결과는 `PLAYER_WORK_LOG.md`의 2026-10-12 기록을 확인합니다.
 
 ## 2026-10-08 현재 작업 저장과 병합
 

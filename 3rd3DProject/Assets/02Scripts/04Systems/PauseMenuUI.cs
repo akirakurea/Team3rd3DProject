@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -24,7 +23,7 @@ using UnityEngine.InputSystem;
 ///   Panel - 슬라이더들(+ 값을 보여줄 TMP 텍스트, 선택), RestartButton, QuitButton
 ///
 /// 효과 볼륨: AudioMixer의 노출된 파라미터(기본 "SFXVolume")로 조절한다. 효과음 AudioSource의 Output을 그 믹서 그룹으로 지정해야 적용된다.
-/// 해상도: 슬라이더를 놓는 순간 적용된다. (에디터의 Game 뷰 크기는 바뀌지 않고 빌드에서만 실제로 바뀐다)
+/// 해상도: 슬라이더를 놓는 순간 적용된다. 실제 창·전체 화면 동작은 빌드에서도 확인한다.
 /// </summary>
 public class PauseMenuUI : MonoBehaviour
 {
@@ -54,15 +53,12 @@ public class PauseMenuUI : MonoBehaviour
 
     private GameManager gm;
     private bool isOpen;
-    private CursorLockMode prevLockState;
-    private bool prevCursorVisible;
-    private bool warnedMixer;
-
-    private readonly List<Vector2Int> resolutions = new List<Vector2Int>();
+    private IGameSettingsApplier settings;
 
     private void Start()
     {
-        panel.SetActive(false);
+        if (panel != null) panel.SetActive(false);
+        settings = new GameSettingsApplier(audioMixer, sfxMixerParameter);
 
         SetupMasterVolume();
         SetupSfxVolume();
@@ -73,22 +69,36 @@ public class PauseMenuUI : MonoBehaviour
         if (restartButton != null) restartButton.onClick.AddListener(Restart);
         if (quitButton != null) quitButton.onClick.AddListener(Quit);
 
-        gm = GameManager.Instance;
-        if (gm == null)
-        {
-            Debug.LogWarning("PauseMenuUI: GameManager를 찾을 수 없어 ESC로 열 수 없습니다.");
-            return;
-        }
-        gm.OnStateChanged += HandleStateChanged;
+        BindGameManager();
     }
 
-    private void OnDestroy()
+    private void OnEnable() => BindGameManager();
+
+    private void OnDisable()
     {
+        // 설정창이 제거되어도 자기 차단 요청과 일시정지가 남지 않게 한다.
+        if (isOpen && GameplayInput.StateAllowsGameplay) Time.timeScale = 1f;
+        isOpen = false;
+        if (panel != null && panel != gameObject) panel.SetActive(false);
+        GameplayInput.SetBlocked(this, false);
         if (gm != null) gm.OnStateChanged -= HandleStateChanged;
+        gm = null;
+    }
+
+    private void BindGameManager()
+    {
+        var current = GameManager.Instance;
+        if (gm == current) return;
+        if (gm != null) gm.OnStateChanged -= HandleStateChanged;
+        gm = current;
+        if (gm == null) return;
+        gm.OnStateChanged += HandleStateChanged;
+        HandleStateChanged(gm.State);
     }
 
     private void Update()
     {
+        BindGameManager();
         if (!EscapePressed()) return;
 
         if (isOpen) Resume();
@@ -99,32 +109,27 @@ public class PauseMenuUI : MonoBehaviour
 
     private void Open()
     {
-        if (gm == null) return;
+        if (gm == null || panel == null) return;
         // 게임이 흐르는 중(진행 중 / 마지막 쥐를 잡은 직후)에만 연다
         if (gm.State != GameManager.GameState.Playing && gm.State != GameManager.GameState.RoundClear) return;
 
         isOpen = true;
 
-        // 게임이 커서를 잠그고 있었다면 설정창에서 마우스를 쓸 수 있게 풀어준다
-        prevLockState = Cursor.lockState;
-        prevCursorVisible = Cursor.visible;
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
         Time.timeScale = 0f;
+        GameplayInput.SetBlocked(this, true);
         panel.SetActive(true);
     }
 
     private void Resume()
     {
         if (!isOpen) return;
-        Hide(restoreCursor: true);
         Time.timeScale = 1f;
+        Hide();
     }
 
     private void Restart()
     {
-        Hide(restoreCursor: true);
+        Hide();
         // timeScale은 GameManager가 재시작하면서 1로 되돌린다
         if (gm != null) gm.RestartGame();
     }
@@ -140,17 +145,12 @@ public class PauseMenuUI : MonoBehaviour
 #endif
     }
 
-    private void Hide(bool restoreCursor)
+    private void Hide()
     {
         isOpen = false;
-        panel.SetActive(false);
+        if (panel != null) panel.SetActive(false);
         PlayerPrefs.Save();
-
-        if (restoreCursor)
-        {
-            Cursor.lockState = prevLockState;
-            Cursor.visible = prevCursorVisible;
-        }
+        GameplayInput.SetBlocked(this, false);
     }
 
     private void HandleStateChanged(GameManager.GameState state)
@@ -163,7 +163,7 @@ public class PauseMenuUI : MonoBehaviour
             state == GameManager.GameState.Win ||
             state == GameManager.GameState.Lose)
         {
-            Hide(restoreCursor: false);
+            Hide();
         }
     }
 
@@ -172,7 +172,7 @@ public class PauseMenuUI : MonoBehaviour
     private void SetupMasterVolume()
     {
         float v = GameSettings.MasterVolume;
-        AudioListener.volume = v;   // 슬라이더가 없어도 저장된 값은 적용한다
+        settings.ApplyMasterVolume(v);   // 슬라이더가 없어도 저장된 값은 적용한다
 
         if (masterSlider == null) return;
         SetupZeroToOne(masterSlider, v);
@@ -183,7 +183,7 @@ public class PauseMenuUI : MonoBehaviour
     private void OnMasterChanged(float value)
     {
         GameSettings.MasterVolume = value;
-        AudioListener.volume = value;
+        settings.ApplyMasterVolume(value);
         SetPercentText(masterText, value);
     }
 
@@ -192,7 +192,7 @@ public class PauseMenuUI : MonoBehaviour
     private void SetupSfxVolume()
     {
         float v = GameSettings.SfxVolume;
-        ApplySfx(v);   // 슬라이더가 없어도 저장된 값은 적용한다
+        settings.ApplySfxVolume(v);   // 슬라이더가 없어도 저장된 값은 적용한다
 
         if (sfxSlider == null) return;
         SetupZeroToOne(sfxSlider, v);
@@ -203,18 +203,8 @@ public class PauseMenuUI : MonoBehaviour
     private void OnSfxChanged(float value)
     {
         GameSettings.SfxVolume = value;
-        ApplySfx(value);
+        settings.ApplySfxVolume(value);
         SetPercentText(sfxText, value);
-    }
-
-    private void ApplySfx(float value)
-    {
-        if (audioMixer == null) return;
-        if (!audioMixer.SetFloat(sfxMixerParameter, GameSettings.VolumeToDecibel(value)) && !warnedMixer)
-        {
-            warnedMixer = true;
-            Debug.LogWarning($"PauseMenuUI: 믹서에 '{sfxMixerParameter}' 파라미터가 노출(Expose)돼 있지 않습니다.");
-        }
     }
 
     // ───────────── 마우스 감도 ─────────────
@@ -246,52 +236,19 @@ public class PauseMenuUI : MonoBehaviour
 
     private void SetupResolution()
     {
-        // 모니터가 지원하는 해상도 중 가로x세로가 같은 것은 하나만 남긴다 (주사율만 다른 중복 제거)
-        resolutions.Clear();
-        foreach (var r in Screen.resolutions)
-        {
-            var size = new Vector2Int(r.width, r.height);
-            if (!resolutions.Contains(size)) resolutions.Add(size);
-        }
-        if (resolutions.Count == 0) resolutions.Add(new Vector2Int(Screen.width, Screen.height));
-
-        // 저장된 해상도가 있으면 시작할 때 적용 (에디터에서는 Game 뷰 크기를 바꿀 수 없어 건너뜀)
-        bool hasSaved = GameSettings.TryGetSavedResolution(out int savedW, out int savedH);
-        if (hasSaved && !Application.isEditor && (savedW != Screen.width || savedH != Screen.height))
-            Screen.SetResolution(savedW, savedH, Screen.fullScreenMode);
-
+        int index = settings.InitializeResolutions();
         if (resolutionSlider == null) return;
 
-        int targetW = hasSaved ? savedW : Screen.width;
-        int targetH = hasSaved ? savedH : Screen.height;
-        int index = FindClosestResolution(targetW, targetH);
-
         resolutionSlider.minValue = 0;
-        resolutionSlider.maxValue = resolutions.Count - 1;
+        resolutionSlider.maxValue = settings.Resolutions.Count - 1;
         resolutionSlider.wholeNumbers = true;
-        resolutionSlider.interactable = resolutions.Count > 1;
+        resolutionSlider.interactable = settings.Resolutions.Count > 1;
         resolutionSlider.SetValueWithoutNotify(index);
         SetResolutionText(index);
 
         // 드래그하는 동안에는 글자만 바꾸고, 슬라이더를 놓는 순간 실제로 적용한다 (화면이 계속 깜빡이는 것 방지)
         resolutionSlider.onValueChanged.AddListener(OnResolutionSliderChanged);
         AddPointerUpListener(resolutionSlider.gameObject, ApplyResolution);
-    }
-
-    private int FindClosestResolution(int width, int height)
-    {
-        int best = 0;
-        int bestDiff = int.MaxValue;
-        for (int i = 0; i < resolutions.Count; i++)
-        {
-            int diff = Mathf.Abs(resolutions[i].x - width) + Mathf.Abs(resolutions[i].y - height);
-            if (diff < bestDiff)
-            {
-                bestDiff = diff;
-                best = i;
-            }
-        }
-        return best;
     }
 
     private void OnResolutionSliderChanged(float value)
@@ -301,20 +258,13 @@ public class PauseMenuUI : MonoBehaviour
 
     private void ApplyResolution()
     {
-        int index = Mathf.Clamp(Mathf.RoundToInt(resolutionSlider.value), 0, resolutions.Count - 1);
-        Vector2Int size = resolutions[index];
-
-        Screen.SetResolution(size.x, size.y, Screen.fullScreenMode);
-        GameSettings.SaveResolution(size.x, size.y);
-
-        if (Application.isEditor)
-            Debug.Log($"PauseMenuUI: 해상도 {size.x} x {size.y} 저장됨. 에디터에서는 Game 뷰 크기가 바뀌지 않고 빌드에서만 적용됩니다.");
+        settings.ApplyResolution(Mathf.RoundToInt(resolutionSlider.value));
     }
 
     private void SetResolutionText(int index)
     {
-        if (resolutionText == null || index < 0 || index >= resolutions.Count) return;
-        resolutionText.text = $"{resolutions[index].x} x {resolutions[index].y}";
+        if (resolutionText == null || index < 0 || index >= settings.Resolutions.Count) return;
+        resolutionText.text = $"{settings.Resolutions[index].Width} x {settings.Resolutions[index].Height}";
     }
 
     // ───────────── 공용 도우미 ─────────────

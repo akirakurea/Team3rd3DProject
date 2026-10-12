@@ -15,12 +15,12 @@ public sealed class InteractionInput : IInteractionInputSource, IResettableInput
 
     public HandInput Read()
     {
-        bool enabled = Application.isFocused && Cursor.lockState == CursorLockMode.Locked;
+        bool enabled = GameplayInput.IsEnabled;
         bool acceptsPress = activation.AllowsPress(enabled, Time.frameCount);
         var mouse = Mouse.current;
         return new HandInput(enabled,
             acceptsPress && mouse != null && mouse.leftButton.wasPressedThisFrame,
             enabled && mouse != null && mouse.leftButton.isPressed,
-            enabled && Keyboard.current != null && Keyboard.current.digit1Key.wasPressedThisFrame);
+            acceptsPress && Keyboard.current != null && Keyboard.current.digit1Key.wasPressedThisFrame);
     }
 }

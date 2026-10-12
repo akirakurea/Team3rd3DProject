@@ -69,7 +69,7 @@ public class HotbarManager : MonoBehaviour
     private void Update()
     {
         // 다른 입력 담당자가 선택을 제어할 때는 직접 키·휠 입력을 읽지 않습니다.
-        if (!readSelectionInput || !Application.isFocused || Time.timeScale <= 0f) return;
+        if (!readSelectionInput || !GameplayInput.IsEnabled) return;
 
         HandleNumberKeys();
         HandleScrollWheel();

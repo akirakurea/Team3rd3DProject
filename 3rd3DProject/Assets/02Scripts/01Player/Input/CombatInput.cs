@@ -59,7 +59,7 @@ public sealed class CombatInput : ICombatInputSource, IResettableInputSource
     public CombatInputFrame Read()
     {
         var mouse = Mouse.current;
-        bool enabled = Application.isFocused && Cursor.lockState == CursorLockMode.Locked && mouse != null;
+        bool enabled = GameplayInput.IsEnabled && mouse != null;
         bool acceptsPress = activation.AllowsPress(enabled, Time.frameCount);
         if (!enabled) return default;
 
