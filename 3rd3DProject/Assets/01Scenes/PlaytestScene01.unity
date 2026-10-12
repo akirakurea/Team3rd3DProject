@@ -4316,7 +4316,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 501096472}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.0236186, y: 0.051278163, z: -0.0012130538, w: 0.9984044}
+  m_LocalRotation: {x: 0.02360995, y: 0.05795031, z: -0.0013708916, w: 0.99803936}
   m_LocalPosition: {x: 0.32000002, y: 1.3789881, z: -2.3475544}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -9611,7 +9611,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 974152145}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.023618596, y: 0.05127816, z: -0.0012130536, w: 0.9984044}
+  m_LocalRotation: {x: 0.023609947, y: 0.0579503, z: -0.0013708911, w: 0.99803936}
   m_LocalPosition: {x: 0.32000002, y: 1.3789881, z: -2.3475544}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -15045,11 +15045,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 95193d206a86ea247b58a0abc56f27d6, type: 3}
---- !u!1 &1705940536 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3069511196506018740, guid: 71db0952959b85248a676276c7b152b2, type: 3}
-  m_PrefabInstance: {fileID: 1759949195}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1722005890 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6284580545445803945, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
@@ -17702,7 +17697,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 477fe86fe9f640d4ba532b4d55625bc8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TreasureManager
-  treasurePrefab: {fileID: 806964301418696137, guid: 06b2454e8ecb0964385f8ebd52d506d4, type: 3}
+  treasurePrefab:
+  - {fileID: 806964301418696137, guid: 06b2454e8ecb0964385f8ebd52d506d4, type: 3}
 --- !u!1 &2069757425 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -3602342492472545342, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
@@ -18748,3 +18744,5 @@ SceneRoots:
   - {fileID: 90374508}
   - {fileID: 1397510599}
   - {fileID: 1678145257}
+  - {fileID: 121382282}
+  - {fileID: 820381317}

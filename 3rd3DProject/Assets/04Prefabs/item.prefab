@@ -138,4 +138,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86495d619cbf87d498409a2e43752e1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Treasure
-  visuals: []
+  visuals:
+  - {fileID: 1000, guid: 6286f249640d9e434f9abb7ae0b7d889, type: 3}
+  - {fileID: 1000, guid: e27facb8a901dab8f613391a49de91b1, type: 3}
+  - {fileID: 1000, guid: bb40304afa5e5b8dca6efb2df3cd6321, type: 3}
+  - {fileID: 1000, guid: 33c5b056debccc6a95f86888d3c4b88d, type: 3}

@@ -12,7 +12,7 @@ public class TreasureManager : MonoBehaviour
 {
     public static TreasureManager Instance { get; private set; }
 
-    [SerializeField] private Treasure treasurePrefab;
+    [SerializeField] private Treasure[] treasurePrefab;
 
     private readonly List<Treasure> treasures = new List<Treasure>();
     private readonly List<TreasureSpawnPoint> validPoints = new List<TreasureSpawnPoint>();
@@ -105,7 +105,7 @@ public class TreasureManager : MonoBehaviour
 
     private void SpawnTreasures(int count)
     {
-        if (treasurePrefab == null)
+        if (treasurePrefab == null || treasurePrefab.Length == 0)
         {
             Debug.LogError("TreasureManager: Treasure Prefab이 비어 있습니다.");
             return;
@@ -117,9 +117,13 @@ public class TreasureManager : MonoBehaviour
             count = validPoints.Count;
         }
 
+        //성능 영향 없음으로 풀링 포기.
+        foreach (var t in treasures)
+            if (t != null) Destroy(t.gameObject);
+        treasures.Clear();
         // 필요한 만큼만 만들어 두고 재사용
-        while (treasures.Count < count)
-            treasures.Add(Instantiate(treasurePrefab, transform));
+        //while (treasures.Count < count)
+        //    treasures.Add(Instantiate(treasurePrefab, transform));
 
         // 스폰 포인트를 섞어서 앞에서부터 count개 사용 (Fisher-Yates, 리스트 재사용)
         shuffleOrder.Clear();
@@ -130,17 +134,19 @@ public class TreasureManager : MonoBehaviour
             (shuffleOrder[i], shuffleOrder[j]) = (shuffleOrder[j], shuffleOrder[i]);
         }
 
-        for (int i = 0; i < treasures.Count; i++)
+        for (int i = 0; i < count; i++)
         {
-            if (i < count)
-            {
+            
                 Transform p = validPoints[shuffleOrder[i]].transform;
-                treasures[i].Init(p.position, p.rotation, transform);
-            }
-            else
-            {
-                treasures[i].gameObject.SetActive(false);   // 이번 라운드에 안 쓰는 여분
-            }
+            Treasure prefab = treasurePrefab[Random.Range(0, treasurePrefab.Length)];
+            Treasure newTreasure = Instantiate(prefab, transform);
+                newTreasure.Init(p.position, p.rotation, transform);
+            treasures.Add(newTreasure);
+            //treasures[i].gameObject.SetActive(false);   // 이번 라운드에 안 쓰는 여분
+            /*마지막 for 루프를 treasures.Count 기준(비어있던 대상)이 아니라 count 기준(스폰해야 할 목표 개수)으로 돌리고,
+             * 그 안에서 Instantiate + Init + treasures.Add를 한 번에 처리하도록 바꿨어요.
+             * else 분기(여분 비활성화)는 매 라운드 새로 만드는 방식에선 필요 없어져서(남는 걸 재사용 안 하니까) 뺐습니다.*/
+
         }
     }
 
