@@ -9,9 +9,7 @@ using UnityEngine.InputSystem;
 public interface IItemInventory
 {
     bool HasSpace { get; }
-    HotbarItemData GetSlot(int index);
     bool TryAdd(HotbarItemData item, out int index);
-    bool TryRemove(int index, HotbarItemData expected);
 }
 
 public enum RegisteredTargetKind { Item, Enemy }
@@ -77,10 +75,8 @@ public class ItemInteractor : MonoBehaviour, IRegisteredInteraction
         readonly HotbarManager manager;
         public HotbarStore(HotbarManager manager) { this.manager = manager; }
         public bool HasSpace => manager && manager.HasSpace;
-        public HotbarItemData GetSlot(int index) => manager ? manager.GetSlot(index) : null;
         public bool TryAdd(HotbarItemData item, out int index)
         { index = -1; return manager && manager.TryAdd(item, out index); }
-        public bool TryRemove(int index, HotbarItemData expected) => manager && manager.TryRemove(index, expected);
     }
 
     readonly Dictionary<GameObject, InteractionRegistration> registrations = new Dictionary<GameObject, InteractionRegistration>();
@@ -143,7 +139,7 @@ public class ItemInteractor : MonoBehaviour, IRegisteredInteraction
 
     void Update()
     {
-        bool enabled = Application.isFocused && Cursor.lockState == CursorLockMode.Locked && Time.timeScale > 0f;
+        bool enabled = GameplayInput.IsEnabled;
         pressedThisFrame = activation.AllowsPress(enabled, Time.frameCount) && FPressed();
     }
 

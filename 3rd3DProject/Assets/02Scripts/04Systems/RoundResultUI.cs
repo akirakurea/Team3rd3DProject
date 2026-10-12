@@ -47,36 +47,57 @@ public class RoundResultUI : MonoBehaviour
     [SerializeField, Min(0.1f)] private float countdownStep = 0.8f; // 숫자 하나당 시간(초)
 
     [Header("커서")]
-    [Tooltip("켜면 결과 화면이 뜰 때 마우스 커서를 풀고, 닫힐 때 원래대로 되돌린다. (게임이 커서를 잠그고 있을 때 버튼을 누르려면 필요)")]
+    [Tooltip("결과 패널이 열려 있는 동안 공통 입력 권한에 차단을 요청합니다. 커서 자체는 CameraCursorLock이 관리합니다.")]
     [SerializeField] private bool manageCursor = true;
 
     private GameManager gm;
     private Coroutine countdownRoutine;
-    private bool cursorSaved;
-    private CursorLockMode prevLockState;
-    private bool prevCursorVisible;
 
     private void Start()
     {
         panel.SetActive(false);
 
-        // GameManager는 한 프레임 뒤 게임을 시작하므로 Start에서 구독해도 안전
-        gm = GameManager.Instance;
-        if (gm == null)
-        {
-            Debug.LogWarning("RoundResultUI: GameManager를 찾을 수 없습니다.");
-            return;
-        }
-        gm.OnRoundResult += HandleRoundResult;
-        gm.OnStateChanged += HandleStateChanged;
+        BindGameManager();
         continueButton.onClick.AddListener(OnContinueClicked);
     }
 
-    private void OnDestroy()
+    private void OnEnable()
     {
+        BindGameManager();
+        // 결과창을 잠시 비활성화했다 켜도 다음 라운드 버튼을 다시 사용할 수 있다.
+        if (gm != null && gm.State == GameManager.GameState.RoundResult && panel != null && panel.activeSelf)
+        {
+            GameplayInput.SetBlocked(this, manageCursor);
+            if (continueButton != null) continueButton.interactable = true;
+            SetContinueLabel($"라운드 {gm.CurrentRound + 1} 시작");
+        }
+    }
+    private void Update() => BindGameManager();
+
+    private void OnDisable()
+    {
+        StopPresentation();
+        GameplayInput.SetBlocked(this, false);
         if (gm == null) return;
         gm.OnRoundResult -= HandleRoundResult;
         gm.OnStateChanged -= HandleStateChanged;
+        gm = null;
+    }
+
+    private void BindGameManager()
+    {
+        var current = GameManager.Instance;
+        if (gm == current) return;
+        if (gm != null)
+        {
+            gm.OnRoundResult -= HandleRoundResult;
+            gm.OnStateChanged -= HandleStateChanged;
+        }
+        gm = current;
+        if (gm == null) return;
+        gm.OnRoundResult += HandleRoundResult;
+        gm.OnStateChanged += HandleStateChanged;
+        HandleStateChanged(gm.State);
     }
 
     private void HandleStateChanged(GameManager.GameState state)
@@ -107,14 +128,7 @@ public class RoundResultUI : MonoBehaviour
         SetContinueLabel($"라운드 {result.round + 1} 시작");
         continueButton.interactable = true;
 
-        if (manageCursor && !cursorSaved)
-        {
-            cursorSaved = true;
-            prevLockState = Cursor.lockState;
-            prevCursorVisible = Cursor.visible;
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
+        GameplayInput.SetBlocked(this, manageCursor);
 
         panel.SetActive(true);
 
@@ -155,19 +169,18 @@ public class RoundResultUI : MonoBehaviour
 
     private void ClosePanel()
     {
+        StopPresentation();
+        if (panel != null && panel != gameObject) panel.SetActive(false);
+        GameplayInput.SetBlocked(this, false);
+    }
+
+    private void StopPresentation()
+    {
         StopCheeseReveal();
         if (countdownRoutine != null)
         {
             StopCoroutine(countdownRoutine);
             countdownRoutine = null;
-        }
-        panel.SetActive(false);
-
-        if (cursorSaved)
-        {
-            cursorSaved = false;
-            Cursor.lockState = prevLockState;
-            Cursor.visible = prevCursorVisible;
         }
     }
 

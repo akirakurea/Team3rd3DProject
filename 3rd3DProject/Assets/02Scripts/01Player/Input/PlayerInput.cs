@@ -36,7 +36,7 @@ public sealed class KeyboardInput : IPlayerInputSource, IResettableInputSource
     public PlayerInputFrame Read()
     {
         var keyboard = Keyboard.current;
-        bool enabled = Application.isFocused && Cursor.lockState == CursorLockMode.Locked && keyboard != null;
+        bool enabled = GameplayInput.IsEnabled && keyboard != null;
         bool acceptsJump = jumpActivation.AllowsPress(enabled, Time.frameCount);
         if (!enabled) return new PlayerInputFrame(Vector2.zero, false, inputBlocked: true);
 

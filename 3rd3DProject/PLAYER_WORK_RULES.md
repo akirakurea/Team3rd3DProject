@@ -1,8 +1,28 @@
-# 플레이어 작업 필수조건
+﻿# 플레이어 작업 필수조건
 
 이 프로젝트에서 모든 요청과 작업을 시작하기 전에 이 파일을 읽는다.
 
 현재 작업 프로젝트는 `C:/Users/307/Desktop/unity/Team3rd3DProject/3rd3DProject`이다. 아래 과거 기록보다 최신 사용자 요청과 이 문서의 현재 범위가 우선한다.
+
+## 2026-10-12 RAt (1) F 상호작용 연결 교정
+
+- 이번 요청은 PlaytestScene01의 Player ItemInteractor 등록 항목 중 RAt (1)의 잘못된 대상 참조 하나만 교정한다. 동일 이름 표시만으로 연결 정상 여부를 판단하지 않고 실제 씬 인스턴스와 Collider 부모 관계까지 검사한다.
+- Enemy 코드·프리팹·콜라이더, 기존 메타·GUID, 다른 씬과 설정은 수정하지 않는다. 원래 연결되어 있던 비활성 빈 오브젝트와 별개의 누락 항목은 삭제하거나 정리하지 않는다.
+
+## 2026-10-12 ESC UI 입력 누락과 복귀 잠금 후속 수정
+
+- 사용자 요청에 따라 `PlaytestScene01`의 누락된 Unity 기본 EventSystem/InputSystemUIInputModule 구성과 기존 `CameraCursorLock.cs`의 ESC 복귀 잠금 시점을 수정한다. 다른 씬, Enemy, 기존 메타·GUID와 프로젝트 설정은 보존한다.
+- 메뉴 복귀 잠금은 ESC 해제 이후 프레임에 한 번 적용하며, 포커스 상실·메뉴 재개방·비활성화 시 보류 요청을 취소한다.
+- UI 검증은 직접 콜백 호출만으로 완료하지 않는다. 실제 화면 좌표 Raycast와 InputSystemUIInputModule을 통한 클릭·드래그 및 값 변경을 확인한다.
+
+## 2026-10-12 설정창 커서 충돌과 검토한 SOLID 개선
+
+- 최신 사용자의 “그렇게 수정” 요청으로 공통 입력 권한, 설정 UI와 엔진 설정 적용 분리, 획득용 인벤토리 계약 축소를 적용한다.
+- 수정 범위는 `01Player/Camera/CameraCursorLock.cs`, 기존 기본 입력 공급자, `04Systems/PauseMenuUI.cs`, `RoundResultUI.cs`, `ItemInteractor.cs`, `HotbarManager.cs` 및 관련 기존 작업 문서다. 새 보조 클래스 `Domain/InputPermission.cs`, `Input/GameplayInput.cs`, `04Systems/GameSettingsApplier.cs`는 씬에 붙이지 않는다.
+- 실행 중 Cursor 쓰기는 CameraCursorLock 하나에서만 한다. 메뉴는 `GameplayInput.SetBlocked(this, true/false)`로 자기 요청만 등록·해제한다. 표준 이동·점프·운반·장비·사격·F·핫바 입력은 같은 권한을 확인한다.
+- RoundClear 결과 전 대기 구간의 조작 허용은 기존대로 유지한다. Ready/RoundResult/Win/Lose, 일시정지, 열린 메뉴와 포커스 상실은 차단한다. 메뉴 복귀 클릭은 게임 명령으로 쓰지 않는다.
+- 기존 C# 이름·직렬화 필드·메타·GUID·씬·프리팹·Enemy·프로젝트 설정을 보존한다. 기존 파일 삭제·이름 변경·커밋·설치는 하지 않는다. 새 C# 파일의 메타만 Unity 최초 임포트에서 생성되며 기존 메타를 재발급하지 않는다.
+- 이번 설정 분리는 기존 소리·해상도 적용 동작을 옮기는 작업이다. 마우스 감도 값의 실제 카메라 적용 등 별도 기능은 추가하지 않는다.
 
 ## 2026-10-08 점프 진입·복귀 연결 개선 승인
 
@@ -109,7 +129,7 @@
 - 게임패드·AI 등 새 입력은 `IPlayerInputSource`를 구현하고 `PlayerController.SetInputSource(...)`로 연결한다. `null`을 전달하면 기본 키보드 입력으로 복귀한다. 커스텀 입력의 메뉴·기절 등 차단 정책은 해당 입력 공급자에서 처리한다.
 - 지형 처리 교체는 작은 `IStepSolver` 계약을 따른다. 실제 Rigidbody 쓰기는 `PlayerMovement`에 모아 중복 제어를 피한다.
 - 재사용·리스폰 시 `ResetRuntimeState()`로 입력, 턱 목표, 애니메이션 캐시를 초기화한다. 비활성화 시에도 자동 호출되며 위치나 수평 속도를 임의로 초기화하지 않는다.
-- UI가 커서를 제어할 때는 `CameraCursorLock.SetLocked(bool)`를 사용한다. 커서 해제 중에는 기본 키보드 이동과 카메라 회전이 차단된다.
+- UI는 `GameplayInput.SetBlocked(this, true/false)`로 요청하고 실제 커서는 `CameraCursorLock`이 제어한다. 메뉴·상태 차단과 커서 해제 중에는 기본 게임 입력이 차단된다.
 - 승인된 클래스·파일명 변경에도 meta의 내용과 GUID, PlayerController의 `view`, `walkSpeed`, `runSpeed`, `acceleration`, `turnSpeed`, `steps` 필드명은 연결 보존을 위해 유지한다. 카메라 InputAction GUID도 유지한다.
 - 매 프레임 새 컬렉션을 만들지 않는다. 물리 검사는 NonAlloc 버퍼를 재사용하고 애니메이션 상태 해시는 초기화 때만 계산한다. 변경 가능성이 없는 부분까지 인터페이스나 MonoBehaviour로 분할하지 않는다.
 - 상태 초기화가 필요한 상호작용·전투 입력만 `IResettableInputSource`를 구현한다. 포커스 상실·비활성화 때 이 약속으로 초기화하며, 모든 입력에 불필요한 초기화 함수를 강요하지 않는다. 두 기본 입력은 `InputActivationGate`를 공유해 입력이 다시 켜진 첫 프레임의 클릭을 집기·발사로 쓰지 않는다.
