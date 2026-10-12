@@ -1,103 +1,120 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
 
 namespace TexasCashRegisterComplete
 {
+    [System.Serializable]
+    public class MoneyTakenEvent : UnityEvent<int> { }
+
+    // 금전등록기에 붙입니다. 플레이어와 AI 모두 같은 함수를 사용합니다.
     [SelectionBase]
     public class CashRegisterInteractable : MonoBehaviour
     {
-        [Header("Drawer")]
+        [Header("서랍")]
         public Transform drawer;
         public Vector3 openOffset = new Vector3(0f, 0f, -0.26f);
         [Min(0.01f)] public float moveDuration = 0.3f;
         public bool startOpen;
-        [Header("Interaction")]
-        [Tooltip("고양이 캐릭터의 루트 Transform을 넣으세요. 비어 있으면 Player 태그로 찾습니다.")]
-        public Transform player;
-        public Transform interactionPoint;
-        [Min(0.1f)] public float interactionDistance = 1.8f;
-        public bool enableKeyboard = true;
-        public bool showPrompt = true;
-        [Header("Events (optional)")]
+
+        [Header("서랍 안의 돈")]
+        [Tooltip("돈 모델만 연결하세요. 서랍이나 금전등록기 전체는 연결하지 마세요.")]
+        public GameObject moneyVisual;
+        [Min(0)] public int startingMoney = 100;
+
+        [Header("추가 동작 (선택 사항)")]
         public UnityEvent onOpened = new UnityEvent();
         public UnityEvent onClosed = new UnityEvent();
-        public bool IsOpen { get { return targetOpen; } }
-        public bool IsMoving { get { return moving; } }
-        Vector3 closedPosition;
-        float progress;
-        bool targetOpen, moving;
-        float nextPlayerSearch;
+        public MoneyTakenEvent onMoneyTaken = new MoneyTakenEvent();
 
-        void Awake()
+        // IsOpen은 목표 상태입니다. 완전히 열린 상태는 CanTakeMoney로 확인하세요.
+        public bool IsOpen => targetOpen;
+        public bool IsMoving => moving;
+        public int RemainingMoney { get; private set; }
+        public bool HasMoney => RemainingMoney > 0;
+        public bool CanTakeMoney => ready && targetOpen && !moving && HasMoney;
+
+        private Vector3 closedPosition;
+        private float progress;
+        private bool targetOpen;
+        private bool moving;
+        private bool ready;
+
+        private void Awake()
         {
             if (drawer == null)
             {
-                Debug.LogError("Cash register: Drawer reference is missing.", this);
-                enabled = false; return;
+                Debug.LogError("금전등록기의 Drawer에 서랍을 연결하세요.", this);
+                enabled = false;
+                return;
             }
+
+            // 모델은 닫힌 위치에 배치하세요. 그 위치를 기준으로 움직입니다.
             closedPosition = drawer.localPosition;
             targetOpen = startOpen;
             progress = startOpen ? 1f : 0f;
+            RemainingMoney = Mathf.Max(0, startingMoney);
+            ready = true;
             ApplyPosition();
-            FindPlayer();
+            UpdateMoneyVisual();
         }
-        void FindPlayer()
+
+        private void Update()
         {
-            if (player != null) return;
-            // Unity's built-in Player tag is available without creating a new tag.
-            GameObject found = GameObject.FindGameObjectWithTag("Player");
-            if (found != null) player = found.transform;
-            nextPlayerSearch = Time.unscaledTime + 1f;
-        }
-        public bool CanInteract()
-        {
-            if (player == null) return false;
-            Vector3 point = interactionPoint == null ? transform.position : interactionPoint.position;
-            return (player.position - point).sqrMagnitude <= interactionDistance * interactionDistance;
-        }
-        void Update()
-        {
-            if (player == null && Time.unscaledTime >= nextPlayerSearch) FindPlayer();
-            if (enableKeyboard && CanInteract() && PressedE()) ToggleDrawer();
             if (!moving) return;
-            progress = Mathf.MoveTowards(progress, targetOpen ? 1f : 0f, Time.deltaTime / Mathf.Max(.01f, moveDuration));
+
+            float target = targetOpen ? 1f : 0f;
+            progress = Mathf.MoveTowards(progress, target,
+                Time.deltaTime / Mathf.Max(0.01f, moveDuration));
             ApplyPosition();
-            if (progress == (targetOpen ? 1f : 0f))
-            {
-                moving = false;
-                if (targetOpen) onOpened.Invoke(); else onClosed.Invoke();
-            }
+
+            // 서랍이 끝까지 움직인 뒤 이벤트를 실행합니다.
+            if (progress != target) return;
+            moving = false;
+            if (targetOpen) onOpened.Invoke();
+            else onClosed.Invoke();
         }
-        static bool PressedE()
+
+        private void ApplyPosition()
         {
-#if ENABLE_INPUT_SYSTEM
-            return Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
-#elif ENABLE_LEGACY_INPUT_MANAGER
-            return Input.GetKeyDown(KeyCode.E);
-#else
-            return false;
-#endif
+            // 시작과 끝에서 부드럽게 움직이도록 보간합니다.
+            float smooth = Mathf.SmoothStep(0f, 1f, progress);
+            drawer.localPosition = closedPosition + openOffset * smooth;
         }
-        void ApplyPosition()
-        {
-            if (drawer != null) drawer.localPosition = closedPosition + openOffset * Mathf.SmoothStep(0f, 1f, progress);
-        }
-        public void ToggleDrawer() { SetOpen(!targetOpen); }
-        public void OpenDrawer() { SetOpen(true); }
-        public void CloseDrawer() { SetOpen(false); }
+
+        // 캐릭터 구분 없이 상호작용 코드나 BT에서 호출하세요.
+        public void ToggleDrawer() => SetOpen(!targetOpen);
+        public void OpenDrawer() => SetOpen(true);
+        public void CloseDrawer() => SetOpen(false);
+
         public void SetOpen(bool open)
         {
-            if (drawer == null || targetOpen == open) return;
-            targetOpen = open; moving = true;
+            if (!ready || targetOpen == open) return;
+            targetOpen = open;
+            moving = true;
         }
-        void OnGUI()
+
+        // 완전히 열린 서랍에서 돈을 전부 꺼냅니다.
+        // 꺼낸 금액을 반환합니다. 돈이 없거나 닫혀 있으면 0입니다.
+        public int TakeMoney()
         {
-            if (!showPrompt || !enableKeyboard || !CanInteract()) return;
-            Rect rect = new Rect(Screen.width * .5f - 130f, Screen.height - 75f, 260f, 40f);
-            GUI.Box(rect, targetOpen ? "E : CLOSE DRAWER" : "E : OPEN DRAWER");
+            if (!CanTakeMoney) return 0;
+
+            int amount = RemainingMoney;
+            RemainingMoney = 0;
+            UpdateMoneyVisual();
+            onMoneyTaken.Invoke(amount);
+            return amount;
+        }
+
+        // 반환값을 사용하지 않는 Inspector 이벤트에서 연결할 수 있습니다.
+        public void CollectMoney()
+        {
+            TakeMoney();
+        }
+
+        private void UpdateMoneyVisual()
+        {
+            if (moneyVisual != null) moneyVisual.SetActive(HasMoney);
         }
     }
 }
