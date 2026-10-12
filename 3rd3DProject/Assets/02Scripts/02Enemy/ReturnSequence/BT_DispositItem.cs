@@ -11,11 +11,11 @@ public class BT_DispositItem : BT_Leaf
 
     public override BT_NodeStatus Evaluate()
     {
-        if(bb.CarriedItem != null)
+        if(bb.IsCarryingItem)
         {
             Debug.Log("[BT]탈출구 도착. 아이템을 기지로 돌려보냅니다");
 
-            bb.CompletEscape();
+            bb.CompleteEscape();
             //Object.Destroy(bb.CarriedItem);
             
             //bb.CarriedItem = null;
