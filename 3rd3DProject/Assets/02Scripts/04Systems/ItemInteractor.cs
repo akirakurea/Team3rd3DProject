@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
@@ -157,6 +157,7 @@ public class ItemInteractor : MonoBehaviour, IRegisteredInteraction
         {
             if (registrations.TryGetValue(node.gameObject, out var entry))
                 return entry.IsHighlightAvailable && !captured.Contains(entry.target);
+            if (useItemPickupRegistration && node.TryGetComponent<ThiefController>(out _)) return true;
             if (useItemPickupRegistration && node.TryGetComponent<ItemPickup>(out var pickup) && pickup.Item) return true;
         }
         return false;
@@ -177,7 +178,15 @@ public class ItemInteractor : MonoBehaviour, IRegisteredInteraction
             if (useItemPickupRegistration && node.TryGetComponent<ItemPickup>(out var pickup) && pickup.Item)
             {
                 var discovered = new InteractionRegistration { target = node.gameObject, item = pickup.Item };
-                if (Register(discovered) && interaction.IsRegisteredTargetVisible(hit, discovered.target.transform)) Target = discovered;
+                if (Register(discovered) && interaction.IsRegisteredTargetVisible(hit, discovered.target.transform)) 
+                    Target = discovered;
+                return;
+            }
+            if(node.TryGetComponent<ThiefController>(out var thief))
+            {
+                var discovered = new InteractionRegistration { target = node.gameObject, kind = RegisteredTargetKind.Enemy };
+                if (Register(discovered) && interaction.IsRegisteredTargetVisible(hit, discovered.target.transform))
+                    Target = discovered;
                 return;
             }
         }
@@ -222,8 +231,16 @@ public class ItemInteractor : MonoBehaviour, IRegisteredInteraction
         GameObject target = entry.target;
         // 기존 쥐의 보물 정리 경로만 재사용합니다. 기절 제한·점수·라운드 카운트는 호출하지 않습니다.
         var thief = target.GetComponentInChildren<ThiefController>();
+
+        if (thief != null && !thief.IsCapturable)
+        { 
+            captured.Remove(target);
+            entry.reserved = false;
+            return false;
+        }
+
         if (thief) thief.GetCaptured();
-        if (target) target.SetActive(false);
+        //if (target) target.SetActive(false);
         LastResult = "쥐 포획 (카운트 미구현)";
         EnemyCaptured?.Invoke(target);
         return true;
