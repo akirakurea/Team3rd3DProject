@@ -4247,7 +4247,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 501096472}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.023620212, y: 0.049905196, z: -0.0011805729, w: 0.99847394}
+  m_LocalRotation: {x: 0.023620212, y: 0.04990519, z: -0.0011805727, w: 0.99847394}
   m_LocalPosition: {x: 0.32000002, y: 1.3789881, z: -2.3475544}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -9560,7 +9560,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 974152145}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.023620209, y: 0.049905185, z: -0.0011805722, w: 0.99847394}
+  m_LocalRotation: {x: 0.023620209, y: 0.049905177, z: -0.001180572, w: 0.99847394}
   m_LocalPosition: {x: 0.32000002, y: 1.3789881, z: -2.3475544}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -13937,6 +13937,11 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 5446337277724037010, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
+--- !u!1 &1621327891 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3069511196506018740, guid: 71db0952959b85248a676276c7b152b2, type: 3}
+  m_PrefabInstance: {fileID: 1759949195}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1633866189 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7282023961519821602, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
@@ -18514,6 +18519,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2353795627978320787, guid: 6e59d3b72784e984cbf46071ab57cff1, type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
+      objectReference: {fileID: 1072018569}
+    - target: {fileID: 1939868539036904771, guid: 6e59d3b72784e984cbf46071ab57cff1, type: 3}
+      propertyPath: targets.Array.data[1].target
+      value: 
+      objectReference: {fileID: 1621327891}
+    - target: {fileID: 1939868539036904771, guid: 6e59d3b72784e984cbf46071ab57cff1, type: 3}
+      propertyPath: targets.Array.data[2].target
       value: 
       objectReference: {fileID: 2100000, guid: b9b8ab868aa05dd488daf6bb9464e62e, type: 2}
     - target: {fileID: 3537903157592677424, guid: 6e59d3b72784e984cbf46071ab57cff1, type: 3}
