@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1150}
   - component: {fileID: 1589712080638303886}
   - component: {fileID: -5470807175637027283}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: CashBundle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -98,7 +98,7 @@ GameObject:
   - component: {fileID: 1101}
   - component: {fileID: 1102}
   - component: {fileID: 1103}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TSP_Paper_001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -188,7 +188,7 @@ GameObject:
   - component: {fileID: 1111}
   - component: {fileID: 1112}
   - component: {fileID: 1113}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TSP_Money_001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -278,7 +278,7 @@ GameObject:
   - component: {fileID: 1121}
   - component: {fileID: 1122}
   - component: {fileID: 1123}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TSP_CashLabel_001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -368,7 +368,7 @@ GameObject:
   - component: {fileID: 1131}
   - component: {fileID: 1132}
   - component: {fileID: 1133}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TSP_Band_001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -458,7 +458,7 @@ GameObject:
   - component: {fileID: 1141}
   - component: {fileID: 1142}
   - component: {fileID: 1143}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TSP_Cream_001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -546,7 +546,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1162}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: CarryPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}

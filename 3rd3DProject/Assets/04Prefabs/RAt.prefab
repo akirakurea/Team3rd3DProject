@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 6432519240719482303}
   - component: {fileID: 992108030372614095}
   - component: {fileID: -456694092097527670}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: RAt
   m_TagString: Thief
   m_Icon: {fileID: 0}
@@ -147,8 +147,8 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 2
-  m_BaseOffset: 1
+  m_Height: 1.21
+  m_BaseOffset: 0.95
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
 --- !u!143 &6432519240719482303
@@ -169,13 +169,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 1.8
+  m_Height: 1.4
   m_Radius: 0.41
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: -0.15, z: 0}
+  m_Center: {x: 0, y: -0.34, z: 0}
 --- !u!114 &992108030372614095
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,6 +212,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7552456444151313439}
     m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: a879d3d26024f08479d4b2640a5826bd, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a879d3d26024f08479d4b2640a5826bd, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a879d3d26024f08479d4b2640a5826bd, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.75
+      objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a879d3d26024f08479d4b2640a5826bd, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.014

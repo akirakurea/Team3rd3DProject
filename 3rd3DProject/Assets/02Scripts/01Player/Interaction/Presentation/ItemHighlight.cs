@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -42,7 +42,7 @@ public sealed class ItemHighlight : System.IDisposable
             if (renderer is SkinnedMeshRenderer skinned && skinned.sharedMesh != null)
             {
                 var baked = new Mesh { name = "Highlight baked mesh" };
-                skinned.BakeMesh(baked);
+                skinned.BakeMesh(baked, true);
                 parts.Add(new Part
                 {
                     original = skinned.sharedMesh, source = baked, transform = renderer.transform,
@@ -106,13 +106,13 @@ public sealed class ItemHighlight : System.IDisposable
         foreach (var part in parts)
         {
             if (part.renderer == null || !part.renderer.enabled || !part.renderer.gameObject.activeInHierarchy) continue;
-            if (part.skinned != null) part.skinned.BakeMesh(part.source);
+            if (part.skinned != null) part.skinned.BakeMesh(part.source, true);
             DrawPart(part, fill, part.source);
             DrawPart(part, halo, part.smooth != null ? part.smooth : part.source);
             DrawPart(part, edge, part.smooth != null ? part.smooth : part.source);
         }
     }
-    void DrawPart(Part part, Material material, Mesh mesh)
+    void DrawPart(Part part, Material material, Mesh mesh) 
     {
         if (material == null) return;
         Bounds bounds = part.renderer.bounds; bounds.Expand(.04f);
