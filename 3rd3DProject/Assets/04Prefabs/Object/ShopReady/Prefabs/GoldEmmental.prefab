@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1150}
   - component: {fileID: 1737946235777039391}
   - component: {fileID: 1287188997313808253}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: GoldEmmental
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -97,7 +97,7 @@ GameObject:
   - component: {fileID: 1101}
   - component: {fileID: 1102}
   - component: {fileID: 1103}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TSP_GoldLight_001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -187,7 +187,7 @@ GameObject:
   - component: {fileID: 1111}
   - component: {fileID: 1112}
   - component: {fileID: 1113}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TSP_GoldLight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -277,7 +277,7 @@ GameObject:
   - component: {fileID: 1121}
   - component: {fileID: 1122}
   - component: {fileID: 1123}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TSP_Gold_001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -367,7 +367,7 @@ GameObject:
   - component: {fileID: 1131}
   - component: {fileID: 1132}
   - component: {fileID: 1133}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TSP_Gold
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -457,7 +457,7 @@ GameObject:
   - component: {fileID: 1141}
   - component: {fileID: 1142}
   - component: {fileID: 1143}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TSP_CheeseLabel_001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -545,7 +545,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1162}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: CarryPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
