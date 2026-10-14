@@ -24,49 +24,22 @@ public sealed class InventoryPickupEffect : MonoBehaviour, IPickupPort
     [SerializeField, Range(64, 512)] int iconResolution = 256;
 
     public UnityEvent<string> Collected => collected;
-    public bool IsBusy => activeItem != null || iconTexture != null;
+    public bool IsBusy => reservation != null || iconTexture != null;
 
     Canvas overlay;
     RectTransform overlayRect;
     UnityEngine.UI.RawImage icon;
     RenderTexture iconTexture;
-    CatInteractionItem activeItem;
+    PickupReservation reservation;
     RectTransform activeTarget;
     Camera sourceCamera;
     Vector2 startScreenPosition;
     Vector2 startPixelSize;
     float elapsed;
-    string activeItemId;
-    bool previousAvailability;
-    RendererState[] rendererStates;
-    ColliderState[] colliderStates;
-    BodyState[] bodyStates;
-
-    struct RendererState
-    {
-        public Renderer renderer;
-        public bool enabled;
-    }
-
-    struct ColliderState
-    {
-        public Collider collider;
-        public bool enabled;
-    }
-
-    struct BodyState
-    {
-        public Rigidbody body;
-        public bool isKinematic;
-        public bool detectCollisions;
-        public Vector3 linearVelocity;
-        public Vector3 angularVelocity;
-    }
-
     /// <summary>UI를 생성한 쪽에서 실제 도착 지점을 등록합니다. null은 등록 해제입니다.</summary>
     public void RegisterTarget(RectTransform target)
     {
-        if (activeItem != null && activeTarget != target) CancelCollection();
+        if (reservation != null && activeTarget != target) CancelCollection();
         inventoryTarget = target;
     }
 
@@ -87,13 +60,10 @@ public sealed class InventoryPickupEffect : MonoBehaviour, IPickupPort
             return false;
 
         EnsureOverlay();
-        activeItem = item;
-        activeItemId = item.itemId;
+        // 월드 상태의 예약·복구는 UI 이동과 별도로 관리합니다.
+        reservation = new PickupReservation(item, renderers);
         activeTarget = inventoryTarget;
         sourceCamera = view;
-        previousAvailability = item.IsAvailable;
-        item.IsAvailable = false;
-        SaveAndHideItem(item, renderers);
         iconTexture = texture;
         icon.texture = iconTexture;
         elapsed = 0f;
@@ -109,13 +79,13 @@ public sealed class InventoryPickupEffect : MonoBehaviour, IPickupPort
 
     void LateUpdate()
     {
-        if (activeItem == null)
+        if (reservation == null || !reservation.IsValid)
         {
-            // 외부에서 아이템을 파괴했을 때 남은 임시 UI도 해제합니다.
-            if (iconTexture != null) CancelCollection();
+            // 외부에서 아이템을 파괴·비활성화했을 때 남은 임시 UI도 해제합니다.
+            if (reservation != null || iconTexture != null) CancelCollection();
             return;
         }
-        if (!activeItem.isActiveAndEnabled || activeTarget != inventoryTarget
+        if (activeTarget != inventoryTarget
             || sourceCamera == null
             || !TryGetTargetScreenPoint(activeTarget, sourceCamera, out Vector2 targetPoint))
         {
@@ -215,6 +185,110 @@ public sealed class InventoryPickupEffect : MonoBehaviour, IPickupPort
         return Mathf.Clamp(size, 32f, 240f);
     }
 
+    void CompleteCollection()
+    {
+        // 콜백에서 다시 진입해도 같은 예약을 두 번 완료하지 않습니다.
+        PickupReservation completed = reservation;
+        reservation = null;
+        activeTarget = null;
+        string itemId = null;
+        bool committed = completed != null && completed.TryCommit(out itemId);
+        ClearPresentation();
+        if (committed) collected?.Invoke(itemId);
+    }
+
+    void CancelCollection()
+    {
+        PickupReservation cancelled = reservation;
+        reservation = null;
+        activeTarget = null;
+        cancelled?.Cancel();
+        ClearPresentation();
+    }
+
+    void ClearPresentation()
+    {
+        if (icon != null) icon.texture = null;
+        if (overlay != null) overlay.gameObject.SetActive(false);
+        ItemIconCapture.Release(iconTexture);
+        iconTexture = null;
+        sourceCamera = null;
+    }
+
+    void OnDisable() => CancelCollection();
+
+    void OnDestroy()
+    {
+        CancelCollection();
+        if (overlay != null) Destroy(overlay.gameObject);
+    }
+}
+
+/// <summary>획득 연출 동안 월드 물체의 예약과 상태 복구만 맡습니다. UI와 저장소는 알지 못합니다.</summary>
+internal sealed class PickupReservation
+{
+    CatInteractionItem item;
+    public bool IsValid => item != null && item.isActiveAndEnabled;
+    readonly string itemId;
+    readonly bool previousAvailability;
+    RendererState[] rendererStates;
+    ColliderState[] colliderStates;
+    BodyState[] bodyStates;
+
+    struct RendererState
+    {
+        public Renderer renderer;
+        public bool enabled;
+    }
+
+    struct ColliderState
+    {
+        public Collider collider;
+        public bool enabled;
+    }
+
+    struct BodyState
+    {
+        public Rigidbody body;
+        public bool isKinematic;
+        public bool detectCollisions;
+        public Vector3 linearVelocity;
+        public Vector3 angularVelocity;
+    }
+
+    public PickupReservation(CatInteractionItem item, Renderer[] renderers)
+    {
+        this.item = item;
+        itemId = item.itemId;
+        previousAvailability = item.IsAvailable;
+        item.IsAvailable = false;
+        SaveAndHideItem(item, renderers);
+    }
+
+    public bool TryCommit(out string collectedId)
+    {
+        collectedId = null;
+        if (!IsValid)
+        {
+            Cancel();
+            return false;
+        }
+        CatInteractionItem completed = item;
+        item = null;
+        completed.gameObject.SetActive(false);
+        RestoreItemState();
+        collectedId = itemId;
+        return true;
+    }
+
+    public void Cancel()
+    {
+        CatInteractionItem cancelled = item;
+        item = null;
+        if (cancelled != null) cancelled.IsAvailable = previousAvailability;
+        RestoreItemState();
+    }
+
     void SaveAndHideItem(CatInteractionItem item, Renderer[] renderers)
     {
         rendererStates = new RendererState[renderers.Length];
@@ -274,43 +348,4 @@ public sealed class InventoryPickupEffect : MonoBehaviour, IPickupPort
         bodyStates = null;
     }
 
-    void CompleteCollection()
-    {
-        CatInteractionItem item = activeItem;
-        string itemId = activeItemId;
-        // 비활성화 콜백이나 이벤트에서 다시 진입해도 완료가 중복되지 않게 먼저 예약을 해제합니다.
-        activeItem = null;
-        activeTarget = null;
-        item.gameObject.SetActive(false);
-        RestoreItemState();
-        ClearPresentation();
-        collected?.Invoke(itemId);
-    }
-
-    void CancelCollection()
-    {
-        if (activeItem != null) activeItem.IsAvailable = previousAvailability;
-        activeItem = null;
-        activeTarget = null;
-        RestoreItemState();
-        ClearPresentation();
-    }
-
-    void ClearPresentation()
-    {
-        if (icon != null) icon.texture = null;
-        if (overlay != null) overlay.gameObject.SetActive(false);
-        ItemIconCapture.Release(iconTexture);
-        iconTexture = null;
-        sourceCamera = null;
-        activeItemId = null;
-    }
-
-    void OnDisable() => CancelCollection();
-
-    void OnDestroy()
-    {
-        CancelCollection();
-        if (overlay != null) Destroy(overlay.gameObject);
-    }
 }

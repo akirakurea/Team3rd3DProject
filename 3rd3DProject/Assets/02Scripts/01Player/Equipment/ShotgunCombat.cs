@@ -11,6 +11,8 @@ public sealed class ShotgunCombat : MonoBehaviour, IAimState, IShotSpreadState
     public ShotgunEquipment equipment;
     public ShotgunPose pose;
     public Camera view;
+    [Tooltip("덫 설치 등 다른 동작이 좌클릭을 사용하는 동안 발사 요청만 차단합니다.")]
+    public MonoBehaviour primaryAction;
     [Tooltip("실제 총열 끝. 로컬 +Z가 총구가 향하는 방향입니다.")] public Transform muzzle;
     [Tooltip("총이 벽을 뚫고 나왔는지 검사하는 몸통 쪽 시작점입니다.")] public Transform guardOrigin;
     [Header("발사")]
@@ -63,6 +65,8 @@ public sealed class ShotgunCombat : MonoBehaviour, IAimState, IShotSpreadState
         Bind();
         inputSource ??= new CombatInput();
         var input = inputSource.Read();
+        if (primaryAction && primaryAction.isActiveAndEnabled && primaryAction is IPrimaryAction action && action.ClaimsPrimaryInput)
+            input = new CombatInputFrame(input.Enabled, input.AimHeld, false);
         bool ready = equipment && equipment.IsEquipped && equipment.IsReady && pose && pose.isActiveAndEnabled &&
             equipment.aimingPose == pose && pose.fireMotion && pose.fireMoment <= pose.fireMotion.length &&
             view && view.isActiveAndEnabled && muzzle && guardOrigin;

@@ -15,6 +15,7 @@ using UnityEngine.InputSystem;
 /// 고양이 컨트롤러는 SelectedIndex / SelectedItem을 읽어서 사용하면 된다.
 ///   예) var item = HotbarManager.Instance.SelectedItem;
 /// </summary>
+[DefaultExecutionOrder(-200)]
 public class HotbarManager : MonoBehaviour
 {
     public static HotbarManager Instance { get; private set; }
@@ -22,6 +23,8 @@ public class HotbarManager : MonoBehaviour
     [SerializeField] private HotbarItemData[] slots = new HotbarItemData[5];
     [Tooltip("끄면 숫자키·휠로 칸을 선택하지 않습니다. 코드와 UI의 Select 호출은 유지됩니다.")]
     public bool readSelectionInput = true;
+    [Tooltip("숫자 1을 샷건에 쓰는 씬에서는 끄고 휠 선택만 사용합니다.")]
+    public bool readNumberKeys = true;
 
     public int SlotCount => slots.Length;
     public bool HasSpace => FirstEmptySlot >= 0;
@@ -71,7 +74,7 @@ public class HotbarManager : MonoBehaviour
         // 다른 입력 담당자가 선택을 제어할 때는 직접 키·휠 입력을 읽지 않습니다.
         if (!readSelectionInput || !GameplayInput.IsEnabled) return;
 
-        HandleNumberKeys();
+        if (readNumberKeys) HandleNumberKeys();
         HandleScrollWheel();
     }
 
@@ -144,6 +147,7 @@ public class HotbarManager : MonoBehaviour
         if (Mathf.Abs(scroll) < 0.01f) return;
 
         int count = slots.Length;
+        if (count == 0) return;
         int next = ((SelectedIndex + (scroll > 0f ? -1 : 1)) % count + count) % count;   // 순환 이동
         Select(next);
     }

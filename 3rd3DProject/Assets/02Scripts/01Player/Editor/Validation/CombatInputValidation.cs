@@ -34,6 +34,9 @@ public static class CombatInputValidation
     static int checks, failures, pellets;
     static float originalFov;
     static string logPath;
+    static IDisposable inventorySelection;
+    static GameObject pausePanel;
+    static Vector2 mousePosition;
 
     sealed class Pause
     {
@@ -77,6 +80,15 @@ public static class CombatInputValidation
         running = true;
         try
         {
+            var menus = PlayerEditorScope.FindAll<PauseMenuUI>().Where(value => value.isActiveAndEnabled).ToArray();
+            if (menus.Length > 1) throw new InvalidOperationException("검증불가: 활성 PauseMenuUI가 여러 개라 ESC 담당을 특정할 수 없습니다.");
+            pausePanel = menus.Length == 0 ? null : new SerializedObject(menus[0]).FindProperty("panel").objectReferenceValue as GameObject;
+            if (menus.Length != 0 && (!pausePanel || !GameManager.Instance))
+                throw new InvalidOperationException("검증불가: PauseMenuUI의 패널과 GameManager 연결이 필요합니다.");
+            if (pausePanel) PlayerEditorScope.RequireOwned(pausePanel);
+            mousePosition = new Vector2(Screen.width * .5f, Screen.height * .5f);
+            inventorySelection = PlayerEditorScope.UseNonTrapSelection(interaction.primaryAction, combat.primaryAction);
+            report.AppendLine("사격·운반 검증용 덫 외 슬롯 선택. 슬롯 내용은 보존하고 종료 시 선택·선택 입력을 복구합니다.");
             started = EditorApplication.timeSinceStartup;
             keyboard = InputSystem.AddDevice<Keyboard>("CatCombatValidationKeyboard");
             mouse = InputSystem.AddDevice<Mouse>("CatCombatValidationMouse");
@@ -94,7 +106,10 @@ public static class CombatInputValidation
             AssemblyReloadEvents.beforeAssemblyReload += Reload;
             cases = Cases(); pause = new Pause(.4f, 6); Flush();
         }
-        catch (Exception exception) { Finish("FAIL 시작 오류: " + exception); }
+        catch (Exception exception)
+        {
+            Finish(exception.Message.StartsWith("검증불가:") ? exception.Message : "FAIL 시작 오류: " + exception);
+        }
     }
 
     [MenuItem("Tools/Cat Player/실제 조준 입력 검증 중단")]
@@ -109,7 +124,7 @@ public static class CombatInputValidation
         if (!running || InputState.currentUpdateType != InputUpdateType.Dynamic) return;
         InputSystem.QueueStateEvent(keyboard, keys);
         InputSystem.QueueStateEvent(mouse, new MouseState
-        { position = new Vector2(Screen.width * .5f, Screen.height * .5f), buttons = (ushort)((left ? 1 : 0) | (right ? 2 : 0)) });
+        { position = mousePosition, buttons = (ushort)((left ? 1 : 0) | (right ? 2 : 0)) });
     }
     static void SelectDevices()
     {
@@ -129,11 +144,16 @@ public static class CombatInputValidation
             if (EditorApplication.timeSinceStartup < pause.Until || Time.frameCount < pause.Frame) return;
             if (cases.MoveNext()) pause = cases.Current; else Finish(null);
         }
-        catch (Exception exception) { Finish("FAIL 검증 오류: " + exception); }
+        catch (Exception exception)
+        {
+            Finish(exception.Message.StartsWith("검증불가:") ? exception.Message : "FAIL 검증 오류: " + exception);
+        }
     }
 
     static IEnumerator<Pause> Cases()
     {
+        if (!Application.isFocused || !GameplayInput.AllowsGameplay)
+            throw new InvalidOperationException("검증불가: Game 창 포커스와 진행 중 게임 상태가 필요합니다. " + InputStateDescription());
         Check(Application.isFocused && Cursor.lockState == CursorLockMode.Locked && Mouse.current == mouse && Keyboard.current == keyboard,
             "Game 포커스·커서 잠금·가상 장치 current 준비");
         right = true; yield return new Pause();
@@ -165,9 +185,35 @@ public static class CombatInputValidation
         keys = new KeyboardState(Key.Escape); yield return new Pause();
         Check(Cursor.lockState == CursorLockMode.None && !combat.IsAiming, "Esc 실제 입력으로 커서 해제·조준 중단");
         keys = default; yield return new Pause(); before = combat.ShotsFired;
-        left = true; yield return new Pause(.8f, 6);
-        Check(Cursor.lockState == CursorLockMode.Locked && combat.ShotsFired == before, "재잠금용 좌클릭은 발사하지 않음");
-        left = false; yield return new Pause(); left = true; yield return new Pause(.9f, 6);
+        if (pausePanel)
+        {
+            Check(pausePanel.activeInHierarchy && !GameplayInput.AllowsGameplay,
+                "ESC로 실제 설정창을 열면 게임 입력을 차단");
+            // 버튼·슬라이더를 누르지 않는 좌표에서 커서 유지와 발사 차단만 확인합니다.
+            mousePosition = PassiveMenuPoint(); yield return new Pause();
+            left = true; yield return new Pause(.8f, 6);
+            Check(pausePanel.activeInHierarchy && Cursor.lockState == CursorLockMode.None &&
+                !GameplayInput.AllowsGameplay && combat.ShotsFired == before,
+                "설정창 좌클릭은 커서를 잠그거나 총을 발사하지 않음");
+            left = false; yield return new Pause();
+            keys = new KeyboardState(Key.Escape); yield return new Pause();
+            Check(!pausePanel.activeInHierarchy && combat.ShotsFired == before,
+                "두 번째 ESC로 설정창을 닫으며 발사하지 않음");
+            keys = default; yield return new Pause(.4f, 6);
+            Check(Application.isFocused && Cursor.lockState == CursorLockMode.Locked &&
+                GameplayInput.IsEnabled && combat.ShotsFired == before,
+                "ESC 해제 뒤 게임 입력과 커서 잠금 복구·자동 발사 없음");
+            mousePosition = new Vector2(Screen.width * .5f, Screen.height * .5f);
+        }
+        else
+        {
+            // 설정창이 없는 기존 플레이어 시험 구성은 클릭으로 커서를 다시 잡습니다.
+            left = true; yield return new Pause(.8f, 6);
+            Check(Cursor.lockState == CursorLockMode.Locked && combat.ShotsFired == before,
+                "설정창 없는 구성의 재잠금용 좌클릭은 발사하지 않음");
+            left = false; yield return new Pause();
+        }
+        left = true; yield return new Pause(.9f, 6);
         Check(combat.ShotsFired == before + 1, "재잠금 후 새 좌클릭은 정상 발사");
         left = false; yield return new Pause();
         keys = new KeyboardState(Key.Digit1); yield return new Pause();
@@ -178,11 +224,35 @@ public static class CombatInputValidation
         left = right = false; yield return new Pause();
     }
 
+    static string InputStateDescription() =>
+        $"focus={Application.isFocused}, state={(GameManager.Instance ? GameManager.Instance.State.ToString() : "None")}, " +
+        $"timeScale={Time.timeScale}, gameplay={GameplayInput.IsEnabled}, menu={(pausePanel && pausePanel.activeInHierarchy)}, lock={Cursor.lockState}";
+
+    static Vector2 PassiveMenuPoint()
+    {
+        var system = UnityEngine.EventSystems.EventSystem.current;
+        var points = new[] { new Vector2(2, 2), new Vector2(Screen.width - 2, 2),
+            new Vector2(2, Screen.height - 2), new Vector2(Screen.width - 2, Screen.height - 2) };
+        if (!system) return points[0];
+        var hits = new List<UnityEngine.EventSystems.RaycastResult>();
+        var pointer = new UnityEngine.EventSystems.PointerEventData(system);
+        foreach (var point in points)
+        {
+            pointer.position = point; hits.Clear(); system.RaycastAll(pointer, hits);
+            if (hits.All(hit =>
+                !UnityEngine.EventSystems.ExecuteEvents.GetEventHandler<UnityEngine.EventSystems.IPointerClickHandler>(hit.gameObject) &&
+                !UnityEngine.EventSystems.ExecuteEvents.GetEventHandler<UnityEngine.EventSystems.IPointerDownHandler>(hit.gameObject) &&
+                !UnityEngine.EventSystems.ExecuteEvents.GetEventHandler<UnityEngine.EventSystems.IPointerUpHandler>(hit.gameObject)))
+                return point;
+        }
+        throw new InvalidOperationException("검증불가: 설정값이나 버튼을 건드리지 않고 클릭할 화면 모서리를 찾지 못했습니다.");
+    }
+
     static void Check(bool passed, string message)
     {
         checks++; if (!passed) failures++;
         report.AppendLine((passed ? "PASS " : "FAIL ") + message);
-        if (!passed) report.AppendLine($"  focus={Application.isFocused}, lock={Cursor.lockState}, equipped={equipment.IsEquipped}, aim={combat.IsAiming}, shots={combat.ShotsFired}, pellets={pellets}");
+        if (!passed) report.AppendLine($"  {InputStateDescription()}, equipped={equipment.IsEquipped}, aim={combat.IsAiming}, shots={combat.ShotsFired}, pellets={pellets}");
         Flush();
     }
     static void Flush() => File.WriteAllText(logPath, report.ToString());
@@ -197,7 +267,11 @@ public static class CombatInputValidation
             InputSystem.onBeforeUpdate -= QueueDevices; InputSystem.onAfterUpdate -= SelectDevices;
             EditorApplication.update -= Tick; EditorApplication.playModeStateChanged -= Mode;
             AssemblyReloadEvents.beforeAssemblyReload -= Reload;
-            if (interruption != null) { failures++; report.AppendLine(interruption); }
+            if (interruption != null)
+            {
+                if (!interruption.StartsWith("검증불가:")) failures++;
+                report.AppendLine(interruption);
+            }
             try
             {
                 if (combat) { combat.PelletResolved -= OnPellet; combat.SetInputSource(null); }
@@ -209,6 +283,9 @@ public static class CombatInputValidation
             catch (Exception exception) { failures++; report.AppendLine("FAIL 정리 오류: " + exception); }
             finally
             {
+                try { inventorySelection?.Dispose(); }
+                catch (Exception exception) { failures++; report.AppendLine("FAIL 인벤토리 선택 복구: " + exception); }
+                finally { inventorySelection = null; }
                 if (keyboard != null && keyboard.added) InputSystem.RemoveDevice(keyboard);
                 if (mouse != null && mouse.added) InputSystem.RemoveDevice(mouse);
                 keyboard = null; mouse = null;

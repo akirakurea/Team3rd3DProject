@@ -1,0 +1,20 @@
+13:59:49.144 BEGIN state=Playing round=1 kept=5/5 rats=3 rewardEnabled=True inventory=0:TrapItem,1:EMPTY,2:EMPTY,3:EMPTY,4:EMPTY
+13:59:49.158 CAPTURE_API RAt(Clone) before state=Playing round=1 kept=5/5 rats=3 rewardEnabled=True inventory=0:TrapItem,1:EMPTY,2:EMPTY,3:EMPTY,4:EMPTY
+13:59:49.160 CAPTURE_DONE 1 state=Playing round=1 kept=5/5 rats=2 rewardEnabled=True inventory=0:TrapItem,1:EMPTY,2:EMPTY,3:EMPTY,4:EMPTY
+13:59:52.158 CAPTURE_API RAt(Clone) before state=Playing round=1 kept=5/5 rats=2 rewardEnabled=True inventory=0:TrapItem,1:EMPTY,2:EMPTY,3:EMPTY,4:EMPTY
+13:59:52.159 CAPTURE_DONE 2 state=Playing round=1 kept=5/5 rats=1 rewardEnabled=True inventory=0:TrapItem,1:EMPTY,2:EMPTY,3:EMPTY,4:EMPTY
+13:59:55.162 CAPTURE_API RAt(Clone) before state=Playing round=1 kept=5/5 rats=1 rewardEnabled=True inventory=0:TrapItem,1:EMPTY,2:EMPTY,3:EMPTY,4:EMPTY
+13:59:55.163 STATE RoundClear state=RoundClear round=1 kept=5/5 rats=0 rewardEnabled=True inventory=0:TrapItem,1:EMPTY,2:EMPTY,3:EMPTY,4:EMPTY
+13:59:55.168 CAPTURE_DONE 3 state=RoundClear round=1 kept=5/5 rats=0 rewardEnabled=True inventory=0:TrapItem,1:EMPTY,2:EMPTY,3:EMPTY,4:EMPTY
+13:59:56.661 STATE RoundResult state=RoundResult round=1 kept=5/5 rats=0 rewardEnabled=True inventory=0:TrapItem,1:EMPTY,2:EMPTY,3:EMPTY,4:EMPTY
+13:59:56.669 SLOT_CHANGED 1 state=RoundResult round=1 kept=5/5 rats=0 rewardEnabled=True inventory=0:TrapItem,1:TrapItem,2:EMPTY,3:EMPTY,4:EMPTY
+13:59:56.670 RESULT round=1 lost=0 total=5 perfect=True state=RoundResult round=1 kept=5/5 rats=0 rewardEnabled=True inventory=0:TrapItem,1:TrapItem,2:EMPTY,3:EMPTY,4:EMPTY
+13:59:59.181 UI_SLOT 0 enabled=True active=True sprite=TrapIcon
+13:59:59.182 UI_SLOT 1 enabled=True active=True sprite=TrapIcon
+13:59:59.182 UI_SLOT 2 enabled=False active=True sprite=NULL
+13:59:59.189 UI_SLOT 3 enabled=False active=True sprite=NULL
+13:59:59.194 UI_SLOT 4 enabled=False active=True sprite=NULL
+13:59:59.201 CHEESE 0 active=True color=RGBA(1.000, 1.000, 1.000, 1.000)
+13:59:59.206 CHEESE 1 active=True color=RGBA(1.000, 1.000, 1.000, 1.000)
+13:59:59.213 CHEESE 2 active=True color=RGBA(1.000, 1.000, 1.000, 1.000)
+13:59:59.219 END state=RoundResult round=1 kept=5/5 rats=0 rewardEnabled=True inventory=0:TrapItem,1:TrapItem,2:EMPTY,3:EMPTY,4:EMPTY
