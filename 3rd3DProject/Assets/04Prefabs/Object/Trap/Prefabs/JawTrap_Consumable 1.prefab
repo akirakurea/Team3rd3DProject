@@ -585,7 +585,6 @@ GameObject:
   - component: {fileID: 4155630286646180469}
   - component: {fileID: 5563689173888764608}
   - component: {fileID: 1513808862378546212}
-  - component: {fileID: 4011964152095888796}
   - component: {fileID: 6758210543791688519}
   m_Layer: 0
   m_Name: JawTrap_Consumable 1
@@ -632,7 +631,7 @@ MonoBehaviour:
   backJaw: {fileID: 748596708826177064}
   pressurePlate: {fileID: 7446179661841501179}
   contactTrigger: {fileID: 5563689173888764608}
-  requiredTag: 
+  requiredTag: Thief
   armDelay: 0.6
   closeDuration: 0.16
   closeAngle: 82
@@ -692,26 +691,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &4011964152095888796
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3800547040998711117}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e614283235664d999786e543e6ff1221, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TexasJawTrap.TrapConsumableInventory
-  trapPrefab: {fileID: 4155630286646180469}
-  remaining: 3
-  placeDistance: 1.1
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  maximumSlope: 45
-  enableGKey: 1
 --- !u!114 &6758210543791688519
 MonoBehaviour:
   m_ObjectHideFlags: 0

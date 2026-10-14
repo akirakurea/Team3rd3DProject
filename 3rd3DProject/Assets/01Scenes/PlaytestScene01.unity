@@ -894,7 +894,7 @@ Transform:
   m_GameObject: {fileID: 90374506}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.242, y: 1.40954, z: -15.76}
+  m_LocalPosition: {x: 5.61, y: 2.072, z: -18.428}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2165,6 +2165,135 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 8723959281721471376, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
+--- !u!1001 &198400789
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 74016353589058851, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1601464630816194196, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: windowLink
+      value: 
+      objectReference: {fileID: 1341394107}
+    - target: {fileID: 2314794646508809009, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3660057572064562078, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3660057572064562078, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3660057572064562078, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3660057572064562078, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3660057572064562078, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3660057572064562078, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3660057572064562078, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3660057572064562078, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3660057572064562078, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3660057572064562078, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6710248109694493405, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: windowLink
+      value: 
+      objectReference: {fileID: 631254492}
+    - target: {fileID: 7387619217143637210, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: windowLink
+      value: 
+      objectReference: {fileID: 1942176372}
+    - target: {fileID: 7664793026010030772, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.04
+      objectReference: {fileID: 0}
+    - target: {fileID: 7664793026010030772, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.0006
+      objectReference: {fileID: 0}
+    - target: {fileID: 8159307406726201080, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: m_Name
+      value: Texas_Station_Unity (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8616161520596451862, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: windowLink
+      value: 
+      objectReference: {fileID: 917282145}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8159307406726201080, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 198400791}
+  m_SourcePrefab: {fileID: 100100000, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+--- !u!1 &198400790 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8159307406726201080, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+  m_PrefabInstance: {fileID: 198400789}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &198400791
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 198400790}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 0
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_UseGeometry: 0
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: 4fd25624f5ee54c45abb5e05a1475c47, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1 &202241697
 GameObject:
   m_ObjectHideFlags: 0
@@ -2823,7 +2952,7 @@ Transform:
   m_GameObject: {fileID: 338896024}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.53, y: 1.40954, z: -11.795}
+  m_LocalPosition: {x: -4.46, y: 1.365, z: -10.474}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5345,6 +5474,63 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 3151738713496461517, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
+--- !u!1 &631254491
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 631254493}
+  - component: {fileID: 631254492}
+  m_Layer: 0
+  m_Name: WindowBreaker01 (3)
+  m_TagString: Untagged
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &631254492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 631254491}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6eeb5dc026fdf4b488bc7ae0138ab719, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshLink
+  m_SerializedVersion: 1
+  m_AgentTypeID: 0
+  m_StartPoint: {x: 0, y: 0, z: -1.33}
+  m_EndPoint: {x: 0, y: 0, z: 1.4063191}
+  m_StartTransform: {fileID: 0}
+  m_EndTransform: {fileID: 0}
+  m_Activated: 1
+  m_Width: 0
+  m_CostModifier: 1
+  m_IsOverridingCost: 0
+  m_Bidirectional: 1
+  m_AutoUpdatePosition: 0
+  m_Area: 0
+--- !u!4 &631254493
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 631254491}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8.48, y: 0.5, z: -8.518}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &643992383 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -1229935811051812743, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
@@ -6505,6 +6691,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
       propertyPath: m_Name
       value: Texas_Station_Unity
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2285175298776528695, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
       propertyPath: m_Enabled
@@ -7887,6 +8077,63 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 6412810198065646546, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
+--- !u!1 &917282144
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 917282146}
+  - component: {fileID: 917282145}
+  m_Layer: 0
+  m_Name: WindowBreaker01 (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &917282145
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 917282144}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6eeb5dc026fdf4b488bc7ae0138ab719, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshLink
+  m_SerializedVersion: 1
+  m_AgentTypeID: 0
+  m_StartPoint: {x: 0, y: 0, z: -1.33}
+  m_EndPoint: {x: 0, y: 0, z: 1.4063191}
+  m_StartTransform: {fileID: 0}
+  m_EndTransform: {fileID: 0}
+  m_Activated: 1
+  m_Width: 0
+  m_CostModifier: 1
+  m_IsOverridingCost: 0
+  m_Bidirectional: 1
+  m_AutoUpdatePosition: 0
+  m_Area: 0
+--- !u!4 &917282146
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 917282144}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3, y: 0.5, z: -8.518}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &918610172
 GameObject:
   m_ObjectHideFlags: 0
@@ -10545,7 +10792,7 @@ GameObject:
   - component: {fileID: 1129699769}
   - component: {fileID: 1129699768}
   m_Layer: 0
-  m_Name: Spawnpoints
+  m_Name: ww
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10572,7 +10819,7 @@ Transform:
   m_GameObject: {fileID: 1129699767}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.242, y: 1.40954, z: -11.795}
+  m_LocalPosition: {x: 5.242, y: 1.99, z: -13.516}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12148,6 +12395,63 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 1940491741708717315, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
+--- !u!1 &1341394106
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1341394108}
+  - component: {fileID: 1341394107}
+  m_Layer: 0
+  m_Name: WindowBreaker01
+  m_TagString: Untagged
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1341394107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1341394106}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6eeb5dc026fdf4b488bc7ae0138ab719, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshLink
+  m_SerializedVersion: 1
+  m_AgentTypeID: 0
+  m_StartPoint: {x: 0, y: 0, z: -1.33}
+  m_EndPoint: {x: 0, y: 0, z: 1.4063191}
+  m_StartTransform: {fileID: 0}
+  m_EndTransform: {fileID: 0}
+  m_Activated: 1
+  m_Width: 0
+  m_CostModifier: 1
+  m_IsOverridingCost: 0
+  m_Bidirectional: 1
+  m_AutoUpdatePosition: 0
+  m_Area: 0
+--- !u!4 &1341394108
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1341394106}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 8.41, y: 0.5, z: -8.518}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1348537562 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -7867385811410874832, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
@@ -12519,7 +12823,7 @@ Transform:
   m_GameObject: {fileID: 1397510597}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.87, y: 1.40954, z: -15.7}
+  m_LocalPosition: {x: -2.031, y: 1.385, z: -21.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -14036,7 +14340,7 @@ Transform:
   m_GameObject: {fileID: 1678145255}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.06, y: 1.40954, z: -15.46}
+  m_LocalPosition: {x: 3.57, y: 2.048, z: -17.63}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -16224,6 +16528,63 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1940663700}
   m_CullTransparentMesh: 1
+--- !u!1 &1942176371
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1942176373}
+  - component: {fileID: 1942176372}
+  m_Layer: 0
+  m_Name: WindowBreaker01 (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1942176372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1942176371}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6eeb5dc026fdf4b488bc7ae0138ab719, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshLink
+  m_SerializedVersion: 1
+  m_AgentTypeID: 0
+  m_StartPoint: {x: 0, y: 0, z: -1.33}
+  m_EndPoint: {x: 0, y: 0, z: 1.4063191}
+  m_StartTransform: {fileID: 0}
+  m_EndTransform: {fileID: 0}
+  m_Activated: 1
+  m_Width: 0
+  m_CostModifier: 1
+  m_IsOverridingCost: 0
+  m_Bidirectional: 1
+  m_AutoUpdatePosition: 0
+  m_Area: 0
+--- !u!4 &1942176373
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1942176371}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.18, y: 0.5, z: -8.518}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1958553932 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -2470008250475046449, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
@@ -18228,3 +18589,8 @@ SceneRoots:
   - {fileID: 1397510599}
   - {fileID: 1678145257}
   - {fileID: 957637890}
+  - {fileID: 1341394108}
+  - {fileID: 1942176373}
+  - {fileID: 917282146}
+  - {fileID: 631254493}
+  - {fileID: 198400789}
