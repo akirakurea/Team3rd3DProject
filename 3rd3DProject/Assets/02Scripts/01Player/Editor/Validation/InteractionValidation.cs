@@ -41,6 +41,7 @@ public static class InteractionValidation
     static int checks, failures, events;
     static float previousYaw, accumulatedYaw, pickupDuration;
     static string expectedItemId, logPath, capturePrefix;
+    static IDisposable inventorySelection;
     static GameObject obstruction, testCanvas, genericRoot;
     static RectTransform destination;
     static IEnumerator<Pause> sequence;
@@ -101,6 +102,8 @@ public static class InteractionValidation
         running = true;
         try
         {
+            inventorySelection = PlayerEditorScope.UseNonTrapSelection(control.primaryAction, combat ? combat.primaryAction : null);
+            report.AppendLine("사격·운반 검증용 덫 외 슬롯 선택. 슬롯 내용은 보존하고 종료 시 선택·선택 입력을 복구합니다.");
             started = EditorApplication.timeSinceStartup;
             Application.runInBackground = true;
             motor.enabled = false; body.isKinematic = true; brain.enabled = false; cursor.enabled = false;
@@ -118,7 +121,10 @@ public static class InteractionValidation
             sequence = Cases(); waiting = new Pause(.3f, 3);
             Flush();
         }
-        catch (Exception exception) { Finish("FAIL 시작 오류: " + exception); }
+        catch (Exception exception)
+        {
+            Finish(exception.Message.StartsWith("검증불가:") ? exception.Message : "FAIL 시작 오류: " + exception);
+        }
     }
 
     [MenuItem("Tools/Cat Player/상호작용 검증 중단")]
@@ -534,6 +540,9 @@ public static class InteractionValidation
             catch (Exception exception) { failures++; report.AppendLine("FAIL 종료 정리: " + exception); }
             finally
             {
+                try { inventorySelection?.Dispose(); }
+                catch (Exception exception) { failures++; report.AppendLine("FAIL 인벤토리 선택 복구: " + exception); }
+                finally { inventorySelection = null; }
                 // DontSave 객체는 Play 종료만으로 정리되지 않을 수 있으므로 직접 제거합니다.
                 if (obstruction) UnityEngine.Object.DestroyImmediate(obstruction);
                 if (testCanvas) UnityEngine.Object.DestroyImmediate(testCanvas);

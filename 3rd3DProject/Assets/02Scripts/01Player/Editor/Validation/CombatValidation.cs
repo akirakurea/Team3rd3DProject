@@ -50,6 +50,7 @@ public static class CombatValidation
     static int checks, failures, shotEvents, pelletEvents, pelletInCurrentShot;
     static double started;
     static string logPath, capturePrefix;
+    static IDisposable inventorySelection;
     static ShotHit firstHit;
 
     sealed class Pause
@@ -135,6 +136,8 @@ public static class CombatValidation
         running = true;
         try
         {
+            inventorySelection = PlayerEditorScope.UseNonTrapSelection(interaction.primaryAction, combat.primaryAction);
+            report.AppendLine("사격·운반 검증용 덫 외 슬롯 선택. 슬롯 내용은 보존하고 종료 시 선택·선택 입력을 복구합니다.");
             started = EditorApplication.timeSinceStartup;
             Application.runInBackground = true;
             cursor.enabled = false; cameraInput.enabled = false;
@@ -161,7 +164,10 @@ public static class CombatValidation
             cases = Cases(); pause = new Pause(1f, 8);
             Flush();
         }
-        catch (Exception exception) { Finish("FAIL 시작 오류: " + exception); }
+        catch (Exception exception)
+        {
+            Finish(exception.Message.StartsWith("검증불가:") ? exception.Message : "FAIL 시작 오류: " + exception);
+        }
     }
 
     [MenuItem("Tools/Cat Player/조준 발사 검증 중단")]
@@ -444,7 +450,11 @@ public static class CombatValidation
         {
             EditorApplication.update -= Tick; InputSystem.onAfterUpdate -= Pump;
             EditorApplication.playModeStateChanged -= Mode; AssemblyReloadEvents.beforeAssemblyReload -= Reload;
-            if (interruption != null) { failures++; report.AppendLine(interruption); }
+            if (interruption != null)
+            {
+                if (!interruption.StartsWith("검증불가:")) failures++;
+                report.AppendLine(interruption);
+            }
             try
             {
                 if (combat) { combat.PelletResolved -= OnPellet; combat.ShotFired -= OnShot; combat.SetInputSource(null); }
@@ -461,6 +471,9 @@ public static class CombatValidation
             catch (Exception exception) { failures++; report.AppendLine("FAIL 정리 오류: " + exception); }
             finally
             {
+                try { inventorySelection?.Dispose(); }
+                catch (Exception exception) { failures++; report.AppendLine("FAIL 인벤토리 선택 복구: " + exception); }
+                finally { inventorySelection = null; }
                 // 이 검증기가 만든 Play 전용 객체만 제거합니다. 원래 씬 객체/파일은 삭제하지 않습니다.
                 foreach (var created in temporaryObjects) if (created) UnityEngine.Object.DestroyImmediate(created);
                 temporaryObjects.Clear();

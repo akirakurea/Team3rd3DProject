@@ -1,12 +1,10 @@
 using UnityEngine;
 
-/// <summary>등록 대상의 F 상호작용과 기존 손 조작이 공유하는 최소 상태입니다.</summary>
+/// <summary>F 입력 우선권, 대상 강조와 Trigger 선택 허용 여부를 전달합니다.</summary>
 public interface IRegisteredInteraction
 {
-    GameObject HeldObject { get; }
     bool ConsumesHandInput { get; }
     IHighlightSource HoveredHighlight { get; }
-    bool TryStowHeld();
     bool AcceptsTrigger(Collider collider);
 }
 
@@ -18,10 +16,12 @@ public sealed class InteractionController : MonoBehaviour
     [Header("연결")]
     public Camera view;
     public InventoryPickupEffect pickup;
-    [Tooltip("등록 물체의 F 획득과 손 점유 상태를 공유하는 기존 ItemInteractor입니다.")]
+    [Tooltip("F 입력 우선권, 대상 강조와 Trigger 선택을 연결하는 기존 ItemInteractor입니다.")]
     public MonoBehaviour registeredInteraction;
     [Tooltip("양손을 사용하는 장비. 장착 중에는 아이템을 집을 수 없습니다.")]
     public MonoBehaviour equipment;
+    [Tooltip("좌클릭을 사용하는 선택 동작. 비워 두면 기존 집기 동작을 유지합니다.")]
+    public MonoBehaviour primaryAction;
     public Material highlightFill, highlightEdge, highlightHalo;
     [Header("상호작용")]
     [Min(.2f)] public float reach = 2.2f;
@@ -39,7 +39,7 @@ public sealed class InteractionController : MonoBehaviour
         {
             var pickupPort = Pickup;
             var weapon = Equipment;
-            return Held == null && (Registered == null || !Registered.HeldObject) && (pickupPort == null || !pickupPort.IsBusy) &&
+            return Held == null && (pickupPort == null || !pickupPort.IsBusy) &&
                 (weapon == null || !weapon.IsEquipped);
         }
     }
@@ -90,7 +90,12 @@ public sealed class InteractionController : MonoBehaviour
         return true;
     }
 
-    void Update() => input = inputSource.Read();
+    void Update()
+    {
+        input = inputSource.Read();
+        if (primaryAction && primaryAction.isActiveAndEnabled && primaryAction is IPrimaryAction action && action.ClaimsPrimaryInput)
+            input = new HandInput(input.Enabled, false, false, input.ToggleEquipment);
+    }
 
     void LateUpdate()
     {
@@ -114,7 +119,7 @@ public sealed class InteractionController : MonoBehaviour
         switch (HandPolicy.Decide(input, state))
         {
             case HandCommand.Pickup:
-                if (Registered == null || !Registered.HeldObject) TryPickup();
+                TryPickup();
                 break;
             case HandCommand.Release:
                 ReleaseHeld();
@@ -187,7 +192,6 @@ public sealed class InteractionController : MonoBehaviour
             // 덫의 기존 Trigger를 변경하지 않습니다. 등록된 대상만 F 선택 후보로 허용합니다.
             if (h.collider.isTrigger && (!registeredTriggers || Registered == null || !Registered.AcceptsTrigger(h.collider))) continue;
             if (h.collider.transform.IsChildOf(transform) || (Held != null && h.collider.transform.IsChildOf(Held.transform))) continue;
-            if (Registered != null && Registered.HeldObject && h.collider.transform.IsChildOf(Registered.HeldObject.transform)) continue;
             if (h.distance < closest) { closest = h.distance; result = h; }
         }
         return closest < float.PositiveInfinity;
@@ -217,7 +221,6 @@ public sealed class InteractionController : MonoBehaviour
         }
         var pickupPort = Pickup;
         if (!weapon.IsReady || (pickupPort != null && pickupPort.IsBusy)) return false;
-        if (Registered != null && Registered.HeldObject && !Registered.TryStowHeld()) return false;
         if (Held != null && !carrier.TryDrop()) return false;
         ClearTarget();
         return weapon.TryEquip();

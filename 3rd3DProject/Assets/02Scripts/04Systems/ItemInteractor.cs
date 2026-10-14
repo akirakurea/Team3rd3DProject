@@ -30,6 +30,7 @@ public sealed class InteractionRegistration : IHighlightSource
     public Renderer[] VisualRenderers => renderers ??= target ? target.GetComponentsInChildren<Renderer>(true) : Array.Empty<Renderer>();
     public int VisualRevision => 0;
     public bool IsHighlightAvailable => target && target.activeInHierarchy && !reserved &&
+        (!target.TryGetComponent<ItemPickup>(out var pickup) || pickup.CanPickup) &&
         (!target.TryGetComponent<CatInteractionItem>(out var legacy) || legacy.IsAvailable);
 
     internal HotbarItemData Data()
@@ -49,7 +50,7 @@ public sealed class InteractionRegistration : IHighlightSource
 
 /// <summary>기존 F 상호작용의 진입점. 중앙 대상 선택, 인벤토리 저장과 포획을 연결합니다.</summary>
 [DefaultExecutionOrder(9990), DisallowMultipleComponent]
-public class ItemInteractor : MonoBehaviour, IRegisteredInteraction
+public class ItemInteractor : MonoBehaviour, IRegisteredInteraction, IInteractionTargetQuery
 {
     [Header("연결")]
     public InteractionController interaction;
@@ -61,8 +62,7 @@ public class ItemInteractor : MonoBehaviour, IRegisteredInteraction
     [Tooltip("기존 ItemPickup을 붙이고 아이템 데이터를 연결한 물체도 등록 대상으로 사용합니다.")]
     public bool useItemPickupRegistration = true;
     public InteractionRegistration[] targets = Array.Empty<InteractionRegistration>();
-    // 기존 연결 계약을 보존합니다. F 획득은 손을 점유하지 않습니다.
-    public GameObject HeldObject => null;
+    // F 입력이 사용된 프레임과 강조 대상만 손 조작에 전달합니다.
     public bool ConsumesHandInput => pressedThisFrame;
     public IHighlightSource HoveredHighlight => Target;
     public InteractionRegistration Target { get; private set; }
@@ -140,7 +140,16 @@ public class ItemInteractor : MonoBehaviour, IRegisteredInteraction
     void Update()
     {
         bool enabled = GameplayInput.IsEnabled;
-        pressedThisFrame = activation.AllowsPress(enabled, Time.frameCount) && FPressed();
+        bool claimed = interaction && interaction.primaryAction && interaction.primaryAction.isActiveAndEnabled &&
+            interaction.primaryAction is IInteractionAction action && action.ClaimsInteractionInput;
+        pressedThisFrame = activation.AllowsPress(enabled, Time.frameCount) && !claimed && FPressed();
+    }
+
+    public bool HasInteractionTarget()
+    {
+        if (!isActiveAndEnabled) return false;
+        RefreshTarget();
+        return Target != null;
     }
 
     void LateUpdate()
@@ -158,7 +167,7 @@ public class ItemInteractor : MonoBehaviour, IRegisteredInteraction
             if (registrations.TryGetValue(node.gameObject, out var entry))
                 return entry.IsHighlightAvailable && !captured.Contains(entry.target);
             if (useItemPickupRegistration && node.TryGetComponent<ThiefController>(out _)) return true;
-            if (useItemPickupRegistration && node.TryGetComponent<ItemPickup>(out var pickup) && pickup.Item) return true;
+            if (useItemPickupRegistration && node.TryGetComponent<ItemPickup>(out var pickup) && pickup.Item && pickup.CanPickup) return true;
         }
         return false;
     }
@@ -175,7 +184,7 @@ public class ItemInteractor : MonoBehaviour, IRegisteredInteraction
                 return;
             }
             // 기존 ItemPickup 데이터도 등록으로 취급하여 원래 ItemInteractor 사용처를 유지합니다.
-            if (useItemPickupRegistration && node.TryGetComponent<ItemPickup>(out var pickup) && pickup.Item)
+            if (useItemPickupRegistration && node.TryGetComponent<ItemPickup>(out var pickup) && pickup.Item && pickup.CanPickup)
             {
                 var discovered = new InteractionRegistration { target = node.gameObject, item = pickup.Item };
                 if (Register(discovered) && interaction.IsRegisteredTargetVisible(hit, discovered.target.transform)) 
@@ -219,7 +228,16 @@ public class ItemInteractor : MonoBehaviour, IRegisteredInteraction
         var data = entry.Data();
         if (!store.TryAdd(data, out int index)) { entry.reserved = false; return false; }
         // 새 물건만 보관합니다. 빈손·현재 장비·좌클릭으로 든 물건은 변경하지 않습니다.
-        entry.target.SetActive(false);
+        var collected = entry.target;
+        bool consumeInstance = collected.TryGetComponent<ItemPickup>(out var pickup) && pickup.ConsumeWorldInstance;
+        collected.SetActive(false);
+        // 덫은 설치 때 새 인스턴스를 만듭니다. 주운 본체와 선택 캐시가 매번 쌓이지 않게 정리합니다.
+        // 프로젝트 에셋이나 편집 중 씬 오브젝트에는 Destroy를 호출하지 않습니다.
+        if (consumeInstance && Application.isPlaying && collected.scene.IsValid())
+        {
+            registrations.Remove(collected);
+            Destroy(collected);
+        }
         LastResult = "인벤토리에 보관: " + data.displayName + " / 칸 " + (index + 1);
         return true;
     }
@@ -246,9 +264,6 @@ public class ItemInteractor : MonoBehaviour, IRegisteredInteraction
         return true;
     }
 
-    // 기존 외부 호출과 직렬화 연결을 보존합니다. F로 직접 든 물건은 없습니다.
-    public bool TryDropHeld() => false;
-    public bool TryStowHeld() => true;
 
     void OnDisable()
     {
