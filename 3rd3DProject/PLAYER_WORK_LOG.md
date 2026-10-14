@@ -475,3 +475,156 @@
 - 관련 관찰: targets의 Cylinder_2는 기존 Missing 상태로 확인했으나 이번 요청 범위가 아니므로 수정하지 않았다. 현재 Enemy.GetCaptured는 기존 GameManager.OnRatCaught를 호출한다. 과거 ItemInteractor의 '카운트 미구현' 주석과 다르지만 Enemy·카운트 규칙을 변경하지 않았다.
 - 공식 API 확인: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/SerializedProperty-objectReferenceValue.html . Unity에서 기존 대상 참조만 갱신하며 YAML 수동 편집이나 프리팹 원본 변경을 하지 않았다.
 - 실제 변경은 PlaytestScene01.unity와 기존 작업 문서3개다. 스크립트 변경·삭제·이름 변경·기존 meta/GUID 변경·Enemy 파일 변경·설치·커밋 없음. 최종 파일 지문은 scope_audit.json, 씬의 정확한 변경은 scene_change.diff, Play 결과는 live_tests.txt에 기록한다.
+
+
+## 2026-10-14 — 왼손 외곽선 연결 복구
+
+- 요청: 플레이어 왼손에서 사라진 외곽선 복구. 원본 모델·리깅·재질 값·메타·GUID를 보존했다.
+- 원인: PlaytestScene01의 Hand_L_Low22 SkinnedMeshRenderer 두 번째 재질 참조가 Cat_Outline 대신 씬 Cylinder_1 GameObject(fileID 1072018569)를 가리켰다. Unity 읽기와 복구 직전 렌더에서 GameObject → Material PPtr 변환 오류를 확인했다. 이 잘못된 연결이 생긴 시점이나 작업자는 확정하지 않았다.
+- 변경: Unity SerializedObject로 해당 Materials[1]만 기존 Cat_Outline(GUID b9b8ab868aa05dd488daf6bb9464e62e)으로 재연결해 씬 인스턴스 override로 저장했다. Width 0.01, 기존 손 색, 원본 프리팹은 유지했다. 새 게임 스크립트·재질·모델 추가, 삭제, 이름 변경 없음.
+- 검증: 씬 변경 속성 비교에서 왼손 Materials[1] 한 항목만 변경. 인접 상호작용 대상 참조는 보존했다. 프리팹 override 목록 순서는 Unity 저장 시 재배열되었다. 정면·사선 및 Walk/Run 25% 시점의 임시 복제 모델 렌더를 검사했다. 양손 외곽선 재질 동일, 셰이더 오류0, 에디터 컴파일 실패 없음. 실제 게임 Play 실행은 하지 않았다.
+- 진단 도중 MCP가 한 번 연결 없음으로 실패하여 재시도했다. 복구 호출은 기존의 잘못된 참조에서 발생한 오류 로그 때문에 도구가 부분실행 오류로 보고했으나, 저장 결과와 후속 명령을 별도로 검증하여 복구 완료를 확인했다. 후속 렌더는 정상 완료했다.
+- 미리보기 후 씬 dirty 표시가 남아 외부 사본과 저장된 씬이 동일함을 먼저 비교한 뒤 저장했다. 최종 live/saved 동일, dirty=False, Play=False, compiling=False.
+- 파일 검사: 기준 1729파일과 비교. 기존 메타·C#·모델·재질은 동일. 검증 중 EditorBuildSettings.asset의 줄바꿈이 CRLF에서 LF로 바뀌었으나 내용/설정값은 동일하다. 해당 설정 파일은 도구에서 직접 편집하지 않았고 별도 복원하지 않았다.
+- 관련 범위 밖 관찰: ItemInteractor targets[2].target에도 재질을 가리키는 기존 참조가 보이지만 이번 요청은 왼손 외곽선이므로 수정하지 않았다.
+- 기록 및 결과: C:/Users/307/Documents/Codex/LeftHandOutline20261014/ (scene_before.unity, scene_change.diff, scope_audit.json, before.png, after_front.png, after_angle.png, after_Walk.png, after_Run.png).
+- 공식 API 확인: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Renderer-sharedMaterials.html — 기존 공유 재질의 값은 변경하지 않고 Renderer의 재질 연결만 수정했다.
+
+
+## 2026-10-14 — PR #47 변경만 미커밋 상태로 반영
+
+- 최신 사용자 결정: 지금까지 작업한 내용은 커밋하지 않고 PR #47만 가져온다. Player 브랜치 HEAD 20c93f466f6812843a162b6240d6cf6f4734df5e와 Git index를 그대로 두었다. 커밋·브랜치 생성·스테이징·푸시·stash는 하지 않았다.
+- 원본: https://github.com/akirakurea/Team3rd3DProject/pull/47 / ae78d1011ee444d495ff0c8be88a598cdf5742fb. main 전체 pull 대신 해당 PR의 8개 파일 변경만 적용하여 PR #46의 Station/Trap 교체를 제외했다. Git 병합 이력을 만든 것이 아니라 작업 파일에 변경을 반영한 상태다.
+- 변경 파일: PlaytestScene01.unity, ItemInteractor.cs, Cat_Player (1).prefab, EditorBuildSettings.asset. 추가 파일: ThiefSpawner.cs와 원본 meta, RatBase.prefab과 원본 meta. 빌드 목록의 GameUI 비활성/PlaytestScene01 활성도 PR 원본 변경이다. 다른 씬 파일은 변경하지 않았다.
+- 충돌 처리: 현재 카메라 회전2곳, Cylinder_2의 정상 연결1621327891, 왼손 Cat_Outline 연결을 보존했다. Player의 씬 컴포넌트가 프리팹으로 이동한 PR 구조를 따랐으며 targets[2]는 PR의 Cylinder_3 연결1501521255를 사용했다. 메타 GUID를 새로 만들지 않았다.
+- 파일 검증: 작업 전 Assets/ProjectSettings/기존 문서2011파일을 지문 기록. 기존 meta1058개 내용 동일, GUID 중복0, 파일 삭제0, PR #46 영역 및 기존 덫 수정 동일, Git HEAD/index 동일. 기존 작업 기록은 덮어쓰지 않고 이번 내용만 추가했다.
+- Unity 검증: PlaytestScene01 재로딩과 C# 컴파일 성공. 씬 객체504개, Missing Script0, ThiefSpawner1개. RatBase의 쥐 프리팹과 spawnBase 연결 정상. 실린더1~4/큐브1~2와 양손·양발 외곽선 정상, PlayerJump Animator 정상. 빈 targets[6~8]은 PR 원본 상태로 유지했고 새 쥐는 실행 중 자동 발견된다.
+- 실제 Play: 첫 RAt(Clone) 생성, NavMesh 연결, Player Animator 초기화/2레이어 확인. 실제 중앙 레이와 공개 TryInteract 경로로 새 쥐 자동발견, 기절 전 거부(남은 수3), TakeStun 후 포획(3→2), 중복 포획 거부(2유지) 통과. 키보드 F 입력 자체/여러 라운드/전체 게임 회귀는 이번 검사 범위가 아니다. 검사 중 위치는 Play에서만 잠깐 바꾸고 복귀했으며 Play를 종료했다.
+- 도구 이슈: Unity Refresh와 도메인 재로딩 중 MCP 응답 대기/일시 연결실패, Windows 화면 캡처 시간초과2회 발생. 에디터를 강제 종료하거나 설정을 바꾸지 않았고 연결 복구 후 재로딩/실행 검사를 완료했다. 첫 진단의 FindObjectsByType 구형 인수 경고는 외부 검사 코드에서만 발생했다.
+- 주의: PR 원본 ItemInteractor에는 '카운트 미구현'이라는 예전 주석/결과 문자열이 남아 있지만 실제 GetCaptured 경로는 카운트를 감소시킨다. PR 외 코드 정리는 하지 않았다.
+- 백업/후보/검증 자료: C:/Users/307/Documents/Codex/PR47Import20261014/ (baseline.json, local_changes, pre_apply, pre_apply_manifest.json, candidate, scope_audit.json, reload_validate.cs, capture_validate.cs).
+- 종료 확인: Play=False, dirty=False, compiling=False, compileFailed=False. Unity Console Error 조회0건. 신규 스포너/프리팹 GUID는 PR 원본과 동일하다.
+
+
+## 2026-10-14 인벤토리·덫 설치 — 코드 단계 / Unity 연결 대기
+
+요청: GameUI의 휠 인벤토리를 현재 PlaytestScene01에 재사용하고 F 덫 획득, 보이지 않는 격자 설치, 좌클릭1초 유지, 위치·진행 피드백, 장애물 제외를 구현한다. 답변: 샷건 유지, 한 번 누르면 한 개, 격자 선 미표시.
+
+먼저 GameUI 씬은 파일만 읽고 현재 씬의 HotbarManager1개/HotbarUI없음, 기존 보물 HUD와 별개임을 확인했다. 덫 원본 프리팹과 ConsumableJawTrap, F ItemInteractor, 입력·장비·커서 경로를 조사했다. 원본과2015개 파일 해시, Git HEAD/index, live_before 씬 사본을 프로젝트 밖 TrapInventory20261014에 보관했다.
+
+변경: 기존 HotbarManager, HotbarUI, ItemPickup, ItemInteractor, ShotgunCombat, InteractionController6개. 추가: IPrimaryAction, PlacementHold, PlacementSurface, PlacementFeedback, TrapPickup, TrapPlacement6개. 기존 메타를 수정하지 않았다. 새 파일 메타만 Unity가 최초 생성했다. 파일 삭제/이름 변경/복구/커밋/푸시/패키지 설치 없음.
+
+설치 시간 정책, 물리 판정, 표시, 연결 역할을 분리했다. 중복 입력은 IPrimaryAction으로 제어한다. 메시에만 기반한 예고 모양을 사용해 미리보기에서 실제 덫 감지 코드가 실행되지 않게 했다. 덫 목록256개 한도에 따른 영구 설치 차단과 ESC 완료 프레임 경합을 검토 후 보완했다. 아이콘 없는 일반 물건은 슬롯 이름을 표시하도록 기존 UI를 확장했다.
+
+검증: 외부 runtime 컴파일93소스 오류0/새경고0/기존 ItemInteractor.placeDistance 미사용 경고1. PlacementHold 독립66검사 통과. 결과 compile/validation_final.json, hold_results.txt. 작업 시작 대비 기존 메타 변경0, 삭제0, Enemy/맵/원본Trap/다른씬/설정변경0, HEAD/index 동일. git diff --check는 기존 gitattributes 경고 및 기존 ItemInteractor의 후행 공백2곳을 보고했다; 기존 변경을 임의 정리하지 않았다.
+
+미완료/원인: Unity MCP 조회는 응답하지만 RunCommand는120초후 COMPILATION_IN_PROGRESS를 반환했다. 갱신 재시도, 연결 프로세스 재연결 및 에디터 창 확인을 진행했으나 내부컴파일 완료가 확인되지 않았다. UI 화면 캡처는 FrameArrived timed out, 좌표작업은 coordinate input geometry is unavailable. 사용자에게 Unity 창/팝업/MCP상태 확인을 요청했다. Unity CLI도 기존 Pipeline연결없음을 반환했으며 패키지 추가는 하지 않았다. 씬 연결은 실행하지 않았고 수동 YAML 변경으로 대체하지 않았다.
+
+다음 단계 준비: 외부 create_assets.cs, setup_scene.cs에 Player전용 데이터·프리팹변형·실제덫아이콘·표시재질·기존HotbarUI5칸·플레이어참조 연결을 준비했으나 실행 전이다. 현재 Player_FloorTrap/PlayerInventoryCanvas는 아직 생성하지 않았다. 실제 Play에서F획득→휠선택→1초설치, 총유지/미발사, 취소/빈칸, 장애물/주차선/중복/거리/모서리, UI진행과 메타·GUID를 다시 검사해야 완료다.
+
+사용한 공식 문서:
+- https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Physics.OverlapBoxNonAlloc.html — 덫 전체 설치 공간 검사.
+- https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Physics.RaycastNonAlloc.html — 조준선·벽가림 검사.
+- https://docs.unity3d.com/Packages/com.unity.inputsystem@1.14/manual/Mouse.html — 휠/클릭 유지 입력.
+- https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AI.NavMesh.SamplePosition.html — 이것만으로 벽·매대 구분을 보장하지 못하므로 실제 바닥 목록과 물리검사를 선택.
+
+## 2026-10-14 MCP 확인 후 재시도와 덫 반복 획득 보완
+
+- 사용자가 Unity 창/MCP 연결을 확인했다고 답해 새 연결로 다시 조회했다. 콘솔 조회는 성공하지만 RunCommand는 다시120초후 COMPILATION_IN_PROGRESS를 반환했다. Library/ScriptAssemblies/Assembly-CSharp.dll 갱신 시각도09:36:58 그대로여서 Unity 내부 새 코드 적용을 확인하지 못했다.
+- Unity 창 조회와 표준 창 표시 조작을 시도했으나 화면 캡처는 FrameArrived/window capture timed out이었다. 정상 종료 후 같은 프로젝트의 PlaytestScene01 재실행을 사용자에게 요청했다. 에디터 강제 종료, 라이브러리 삭제, 패키지 설치나 계정 조작은 하지 않았다.
+- 병렬 코드 검토에서 F로 주운 덫을 비활성화만 하고 설치 때 새로 생성하면 반복 획득 때 객체/등록 캐시가 누적됨을 발견했다. ItemPickup에 선택적인 IItemPickupConsumption 계약을 추가하고 TrapPickup만 소모 대상으로 지정했다. ItemInteractor는 저장 성공 뒤 해당 계약이 있는 런타임 씬 인스턴스만 등록 캐시에서 제거하고 Destroy한다. 일반 물건의 기존 비활성화 흐름은 유지하며 에셋은 Destroy하지 않는다.
+- 변경3파일 포함 런타임93소스 외부 컴파일 재검사: exit0/오류0/기존 미사용필드 경고1. compile/runtime_compile_consumption.txt, validation_consumption.json에 기록했다. 실제 Play 검사는 대기 상태다.
+- 씬/프리팹 생성 스크립트는 실행하지 않았다. 현재 씬 연결과 화면 검증은 미완료다. 기존 메타·GUID/Enemy/원본Trap/맵/설정/다른씬 및 기존 Git 변경 보존 여부를 다시 지문 검사했다. 커밋·푸시·삭제·복구 없음.
+
+
+## 2026-10-14 Unity 재시작 후 인벤토리·덫 적용과 검증 완료
+
+- 사용자 답변 “Unity를 다시 열었어요” 이후 MCP 명령 실행, 컴파일 종료/성공을 확인했다. Unity6000.5.6f1의 현재 PlaytestScene01만 조작했다. GameUI 씬은 열거나 저장하지 않았다.
+- 기존 Player의 HotbarManager1개를 재사용하고 HotbarUI5칸을 가진 PlayerInventoryCanvas를 추가했다. 휠 선택은 켜고 숫자 슬롯 선택만 꺼서 기존1번 샷건 입력을 보존했다. TrapPlacement를 기존 플레이어에 연결하고 InteractionController/ShotgunCombat에 동일한 좌클릭 우선권을 연결했다.
+- Assets/04Prefabs/Player/Inventory에 TrapItem.asset, Trap_Inventory.prefab 변형, 실제 모델을 렌더한 TrapIcon.png, TrapPreview.mat을 추가했다. 기존 원본 덫·Enemy·맵·모델·팔레트·기존 메타는 수정하지 않았다. 새 에셋 메타만 Unity가 생성했다. Player_FloorTrap1개를 검증된 바닥 칸(0,1)에 놓았다.
+- 실제 바닥12개, 격자1, 최대거리2.2, 유지시간1초, 공간검사높이1.4를 연결했다. 덫 렌더러 외형으로 반폭과 바닥 원점 보정을 측정했다. 원본 프리팹은 상속하여 F 연결만 변형에 추가했다.
+- UI 화면에서 GameUI의 기존 테두리 Sprite가 가운데까지 덮어 아이콘을 가리는 것을 발견했다. 새 PlayerInventoryCanvas의 선택 표시만 가운데가 빈4개 선으로 수정했다. 최종 inventory_final.png에서 초록 덫·진행률·아이콘·테두리를 확인했다. 카메라와 모델 색을 UI 개선 목적으로 변경하지 않았다.
+- 실제 InputSystem에 임시 키보드/마우스 이벤트를 넣어 정상 Update/LateUpdate 경로29개 PASS/FAIL0. F→휠→번호1→1초 설치→소모→계속 누름 방지→재입력 설치→F 재획득→중복 위치 차단→슬롯 변경 취소를 검사했다. 샷건 장착 유지/동시 발사0, 비활성 덫 누적0을 확인했다.
+- 실제 UI/ESC 입력과 덫 연결12개 PASS/FAIL0. ESC에서 진행취소·커서해제, ESC복귀 후 잠금, 이전 버튼 유지로 자동설치되지 않음, 새 클릭 설치, 사용한 덫 F거부, 기절 전달과3초 후 제거를 확인했다. 기절 검사는 실제 쥐 Collider를 TryTrigger에 직접 전달했다. 쥐가 자율적으로 걸어 덫을 밟는 전체 경로는 자동화하지 않았다.
+- 실제 맵 Physics 검사19개 PASS/FAIL0/SKIP2. 기둥4개, 겹치는 매대/벽/통, 빈 바닥, 원거리, 기존 덫 차단을 검사했다. 격자 중심이 장애물 밖으로 옮겨진2개 사례는 통과로 세지 않았다. 물리 판정과 입력 판정 결과를 별도 파일로 남겼다.
+- 기존 순수 시간 규칙66개 통과 및 런타임93소스 외부 컴파일 결과도 보관했다. Unity 내부 컴파일 성공. 종료 시 Console Error0, Missing Script0, HotbarManager1/HotbarUI1/TrapPlacement1, 임시 입력장치0, 런타임 유령모델 저장0, 씬 dirty=False, Play=False. 검증 종료 시 플레이어 이동/Cinemachine을 복구하고 테스트 인벤토리·임시 물리 상태는 Play종료로 폐기했다.
+- 검증 도중 외부 일회성 명령의 이름 충돌/접근자/문자열 변환 컴파일 오류를 고쳐 다시 실행했다. 첫 입력 검사는 오래 실행된 Play 상태에서 시험 덫이 사라져 중단되었다. 새 Play 세션으로 다시 시작한29개 검사는 모두 통과했다. 이 실패를 게임 코드 통과 결과에 포함하지 않았다.
+- 파일 범위: 작업 전 메타1060개 모두 동일, Enemy63개/Station12개/원본Trap 및 관련 스크립트53개/다른씬9개 동일, 파일누락0. 기존 소스6개+새 소스6개+Player신규 에셋+대상씬+작업문서3개가 구현 변경이다. Git HEAD는 같고 staged diff는 비어 있다. 커밋·푸시·브랜치·설치·파일삭제·이름변경 없음. git status의 인덱스 통계 갱신으로 index파일 자체의 해시는 변했으나 스테이징 변경은 없다.
+- 저장 차이의 예외를 별도로 확인했다. Main Camera/Cat_CinemachineCamera의 계산된 Transform 회전만 약0.139도 달라졌다. 수평/수직 축·거리·FOV·화면구도·추적 대상은 원본과 동일하다. Cinemachine ExecuteAlways가 편집 중에도 계산값을 Transform에 기록하는 경로와 일치한다. 이 출력을 고정하려고 기존 카메라 기능을 끄거나 구도 설정을 변경하지 않았다.
+- URPProjectSettings.asset는 설정값 차이 없이 CRLF→LF만 바뀌었다. 원래477바이트, 현재461바이트이며 CRLF로 메모리 변환한 SHA256이 최초/재시작 기준과 정확히 같다. 작성 프로세스는 단정하지 않는다. 사용자 AGENTS.md의 기존 변경 복원 승인 규칙에 따라 줄바꿈만 원상복원할지 질문했다. 답변 전에는 파일에 쓰지 않는다. 재시작 때 달라졌던 TMP fallback은 최종 최초 해시와 동일하며 직접 복원하지 않았다.
+- 사용자 설명서를 현재 적용 상태·조작법·설정 위치·한계에 맞춰 갱신했다. 과거 작업 로그는 보존했다.
+- 외부 자료: C:/Users/307/Documents/Codex/TrapInventory20261014/의 live_input_validation.txt(29), live_ui_cancel_validation.txt(12), surface_validation.txt(19/2), final_inspection.txt(13), inventory_final.png, scope_audit.json. Unity공식 물리/InputSystem 문서 링크는 앞선 코드 단계 기록에 있다.
+
+
+## 2026-10-14 F 유지 설치·시작 덫·3치즈 보상 적용
+
+- 사용자 승인: URPProjectSettings.asset는 줄바꿈만 원복. F를 꾹 눌러 설치하는 입력 추가, 첫 슬롯 덫 한 개로 시작, 3치즈 라운드 보상 덫 한 개. 후속 답변 “가득 차면 해당 보상은 받지 않음”에 따라 보류/스택/바닥 드롭 없이 생략한다.
+- 작업 전2037파일 지문과 관련 원본을 외부 TrapInventoryF20261014/before에 보관했다. 초기 dirty=true 씬을 외부 사본으로 저장해 비교한 결과680505바이트와 SHA256이 작업 시작 씬과 완전히 같아 미저장 내용 차이는 없었다. 이후 Unity API로 대상 씬만 저장했다.
+- 기존 TrapPlacement의 입력 연결과 PlacementFeedback 문구, IPrimaryAction의 작은 상호작용 계약, ItemInteractor의 F 점유 검사만 수정했다. 순수 C# PlacementInput은 키 유지/취소/F 획득 우선 규칙, Player의 TrapRoundReward는 기존 라운드 이벤트 구독만 담당한다. GameManager/RoundResultUI/HotbarManager/Enemy 코드는 이번 요청에서 수정하지 않았다.
+- F를 새로 누를 때 대상이 있으면 기존 획득/포획 우선. 같은 누름을 설치로 전환하지 않는다. 빈 바닥의 F 또는 좌클릭1초 유지로 한 개 설치. 슬롯·칸·장애물·메뉴·포커스 변화 시 취소하며 두 버튼 모두 해제 후 다시 시작한다. 기존 InputActivationGate를 재사용해 메뉴 복귀 첫 프레임을 막고 OnApplicationFocus(false)에서 유지 시간을 비운다.
+- PlaytestScene01의 Cat_Player (1) HotbarManager 슬롯0에 TrapItem을 연결했다. 슬롯1~4는 기존 빈값을 보존한다. 같은 Player에 TrapRoundReward를 연결했다. 기존 3치즈 조건(보물 손실0)으로 결과 이벤트마다 한 번 지급한다. 마지막6라운드가 OnRoundResult 없이 Win으로 이동하는 경로도 처리한다. 가득 차면 지급 시도를 끝내며 이후 소급 지급하지 않는다.
+- 순수 C# PlacementInput + PlacementHold 통합81개 PASS. Unity 실제 InputSystem 키/마우스 이벤트37개 PASS/FAIL0: 시작 덫, F 바닥 회수, 획득 후 같은 키 유지 전환 방지, F0.5초 진행 및1초 설치, 반복 유지 방지, 기존 좌클릭 설치, 휠 취소, 짧은 F, 총 상태 유지/오발0, UI 권한 차단/복귀 검사. UI 사례는 GameplayInput.SetBlocked 호출이며 이번 검사에서 실제 설정창 버튼 조작을 다시 자동화한 것은 아니다. f_hold_progress.png에서51%진행과 미리보기/슬롯을 직접 확인했다. startup_first_slot.png는 비동기 캡처 시점상 F 회수 직후2개가 표시되므로 시작1개 증거로 사용하지 않는다.
+- GameManager의 실제 라운드 전환 경로27개 PASS/FAIL0: 초기1개, 일반3치즈 보상, 2치즈 무보상, 가득 찬 보상 생략, 중복 이벤트 방지, 구독 재연결, 마지막 Win 보상. 쥐 잡기 메서드를 시험에서 호출해 라운드를 진행했으며 자율 AI 이동/포획 전체 흐름을 이번 검사로 보장하지 않는다.
+- 마지막 편집 모드15개 PASS: 컴파일 성공, Missing Script0, 최초 덫은 슬롯0에만1개, 인벤토리/표시/보상 연결 각각1개, 임시 입력장치0, 이동/Cinemachine 정상 복원. Play=False, 씬dirty=False. Unity Console Error0. 모든 검증용 재고·라운드·물리·카메라 상태는 Play 종료로 폐기했다.
+- 소스 재컴파일/Play 모드 전환 중 MCP가 일시적으로 Unity not detected를 반환했다. 준비 작업 후 재시도에서 연결과 컴파일 정상 확인 후 실행했다. 외부 감사 Python의 UTF-8 읽기 누락을 고쳐 재검사했다. 외부 입력시험 FindFirstObjectByType 사용에 Unity6000.5 폐기예정 경고2개가 있었으며 게임 스크립트 컴파일 오류는 없었다.
+- URPProjectSettings.asset: LF461바이트→CRLF477바이트만 복원. 정규화한 내용 동일, 최종 SHA256 c7fb928e0aabab57310310d78f03b61c028a8818ee6f183fc150b8eb6ca249a5로 최초 작업 전 파일과 바이트까지 동일. 다른 설정은 변경하지 않았다.
+- 삭제/이름변경/커밋/푸시/브랜치/패키지 설치 없음. 기존 로컬 작업 보존. 기존메타1072개 내용/GUID변경0, 파일누락0, Enemy/원본Trap/Station/다른씬변경0. 새 코드2개 메타만 Unity 최초 생성. 현재 문서의 조작법과 보상/수정 위치를 갱신했다. 상세 최종 범위는 외부 scope_audit.json에 기록한다.
+- 외부 검증 자료: C:/Users/307/Documents/Codex/TrapInventoryF20261014/placement_input_results.txt, live_f_results.txt, reward_results.txt, final_inspection.txt, urp_eol_verification.json, scope_audit.json.
+- 공식 입력 API 확인: https://docs.unity3d.com/Packages/com.unity.inputsystem@1.14/api/UnityEngine.InputSystem.Controls.ButtonControl.html — 기존 InputSystem의 wasPressedThisFrame과 isPressed를 사용해 새 누름과 유지 상태를 구분했다. 별도 입력 패키지는 추가하지 않았다.
+- 최종 씬 블록 재감사: 기존1174블록에서1175블록. 기존 Player PrefabInstance 한 곳의 슬롯0 참조·컴포넌트 추가 기록과 새 TrapRoundReward 블록 한 개만 달라졌다. 삭제블록0, Enemy/맵/카메라 기존블록 모두 동일. 기존 Enemy63/Station12/원본Trap53/다른씬9 파일도 동일.
+- git diff --check에서 기존 .gitattributes 매크로 경고3곳 및 이전부터 있던 ItemInteractor 후행공백2곳을 확인했다. 이번 변경에서 생긴 게임 컴파일 오류가 아니며 요청 밖 정리는 하지 않았다.
+
+
+## 2026-10-14 미사용 코드·중복 책임 정리와 실제 입력 재검증
+
+- 요청: 내가 제작한 미사용 스크립트 정리와 겹치는 기능의 SOLID 책임 분리. 최신 “적용” 요청에 따라 코드 안의 사용하지 않는 부분을 정리했다. 기존 GUID·메타·팀원 파일·미저장 씬·기존 Git 작업을 보존했다.
+- 시작 기준: 실제 프로젝트는 Desktop/unity 아래이며 실행 씬은 PlaytestScene01이다. Assets/Packages/ProjectSettings/기존 작업 문서 2,043파일의 SHA256을 baseline.json에 기록했다. 시작부터 dirty=True인 live 씬을 live_before.unity 외부 사본(saveAsCopy)으로 보관했다. 원본 씬을 저장하지 않았다.
+- 사용 여부 조사: 기존 01Player C# 53개 및 프로젝트 코드·씬/프리팹 GUID·수동 메뉴·호환 호출을 확인했다. 파일 전체를 삭제해도 된다고 확인된 대상은 없었다. HighlightTarget은 임의 모델 강조 기능, HitscanValidation과 Editor 도구는 수동 검사/설치 기능, 구형 Idle.controller 경로는 명시적 호환 요구 때문에 보존했다. 팀원 원본 TrapConsumableInventory를 대신 지우거나 통합하지 않았다.
+- 실제 변경 C# 11개(기존 파일 이름·직렬화 필드·메타 보존):
+  - Assets/02Scripts/01Player/Interaction/ItemCarrier.cs: 호출되지 않는 RegisteredItemCarrier 클래스276줄 제거. 실제 ItemCarrier 유지.
+  - Assets/02Scripts/01Player/Domain/HandPolicy.cs: 호출되지 않는 RegisteredInteractionPolicy.Decide 8인수 오버로드 제거. 현재6인수 정책과 enum 값 유지.
+  - Assets/02Scripts/01Player/Interaction/CatInteractionItem.cs: 호출되지 않는 BeginReleaseRecovery만 제거. 저장된 호환 상태와 복구 읽기 경로 유지.
+  - Assets/02Scripts/01Player/Interaction/InteractionController.cs: IRegisteredInteraction에서 빈손 반환/아무 일도 하지 않는 손 수납 계약과 소비 경로 제거. F 입력 점유·강조·Trigger 허용 계약 유지.
+  - Assets/02Scripts/04Systems/ItemInteractor.cs: 항상 null/false/true인 HeldObject/TryDropHeld/TryStowHeld 제거. 기존 F 저장·Enemy 포획·손 상태 유지 흐름 보존.
+  - Assets/02Scripts/01Player/Interaction/Presentation/InventoryPickupEffect.cs: UI 이동은 기존 컴포넌트, 월드 상태 예약·완료·취소는 같은 파일의 내부 PickupReservation 클래스로 분리. 새 컴포넌트/파일 없이 공개 API·Collected 이벤트·직렬화 설정 유지.
+  - Assets/02Scripts/01Player/Interaction/Placement/TrapRoundReward.cs: 최종 Win을 기존 RoundResult 값으로 바꿔 일반 결과와 같은 IsPerfect 판정을 사용. 지급1회/가득 차면 생략/구독 해제 동작 보존.
+  - Assets/02Scripts/01Player/Editor/Validation/PlayerValidation.cs: 세 검증기가 재사용하는 비덫 슬롯 임시 선택·복구 범위 추가. 선택과 선택 입력만 복원하며 슬롯 데이터를 삭제하지 않음. 모든 슬롯이 덫이면 검증불가 처리.
+  - Assets/02Scripts/01Player/Editor/Validation/InteractionValidation.cs, CombatValidation.cs, CombatInputValidation.cs: 공통 선택 처리 사용·종료/예외 복구. CombatInputValidation의 오래된 메뉴 클릭 재잠금 기대값을 현재 ESC 닫기→잠금 복귀 기준으로 갱신. 실행 게임의 설정창 코드는 바꾸지 않음.
+- 설계 판단: F 즉시 저장과 UI 연출 후 Collected 이벤트는 서로 다른 계약이므로 같은 저장 함수로 무리하게 합치지 않았다. SRP는 UI/월드상태 분리, ISP는 빈 손 관리 계약 제거, 기존 입력/저장 포트는 유지했다. 변경 이유가 없는 계층·상속·컴포넌트를 새로 늘리지 않았다.
+- 컴파일: Unity 설치본의 C# 컴파일러와 기존 Bee 응답 파일을 사용하여 출력만 프로젝트 외부에 생성했다. Assembly-CSharp/Assembly-CSharp-Editor 모두 exit0. 기존 ItemInteractor.placeDistance 직렬화 호환 필드의 CS0414 경고1개는 그대로다. 순수 정책 테스트35개 PASS/FAIL0.
+- 실제 Play 입력: InteractionValidation40개 PASS/FAIL0, CombatInputValidation18개 PASS/FAIL0. 기본 InputSystem 이벤트를 통해 집기·해제·중력·장비·조준·4산탄·줌 중 걷기·설정창 클릭 입력 차단·ESC 복귀 잠금을 확인했다. 처음 포커스가 사라진 검사와 오래된 메뉴 기대값 실패는 별도 파일에 보존하고 원인 교정 후 재실행했다. 사용자 답변 “준비됨” 뒤 Game 탭 포커스 상태에서 통과했다.
+- F/덫 회귀: 실제 입력37개 PASS/FAIL0. 시작1개, F 획득, F/좌클릭1초 설치, 반복 유지 방지, 휠·UI 취소, 총 보유/동시발사 차단 확인. 기존 미저장 live 씬에 Player_FloorTrap이 없는 것을 작업 전 외부 사본에서도 확인했다. 최초2회는 이 전제 부족으로 실행 전 중단했고, 이후 실제 연결된 프리팹으로 Play 안에만 임시 시험 덫을 만들어 검사했다. 삭제된 씬 덫을 복원하거나 씬을 저장하지 않았다. UI 게이트 취소는 GameplayInput.SetBlocked 호출이며 실제 설정창 입력 검사는 별도의 CombatInputValidation이 담당했다.
+- 보상: GameManager의 공개 메서드로 실제 라운드 이벤트 경로27개 PASS/FAIL0. 일반3치즈/미달성/가득찬슬롯/중복호출/재연결/마지막Win 보상 확인. Enemy 자율 이동 검증은 아니다.
+- UI 연출 경계 검사: 실제 InventoryPickupEffect 공개 API·기본0.55초 LateUpdate로109개 PASS/FAIL0, Unity Error/Exception/Assert0. UI 미등록·비활성, 동시 요청, 대상 교체·해제, 물체·컴포넌트 삭제, 완료 콜백에서 다음 획득 시작, 이벤트중복0, 임시UI/텍스처 잔존0 확인. 프로젝트 외부 harness만 사용했다.
+- 경계 검사 첫 실패는 비활성 Rigidbody까지 원속도를 보장한다고 가정한1개 assertion이며 예외가 더해져 FAIL2로 집계됐다. 기존/현재 SaveAndHideItem 및 RestoreItemState 본문이 동일함을 확인하고, 같은 이전 처리 순서의 순수 Rigidbody 대조군을 추가했다. 비활성/완료된 물체의 선·각속도는 실제와 대조군 모두(0,0,0), 활성 물체 취소는 원속도 그대로여서 이번 분리의 회귀는 확인되지 않았다. 비활성 물체가 나중에 다시 켜져도 원속도가 유지된다는 보장은 하지 않는다. 첫 실패 보고서는 pickup_edge_results_first_failure.txt에 보존했다.
+- 도구 문제: 도메인 재로딩 직후 MCP의 일시 Unity not detected, 외부 검증 GetInstanceID의 Unity6000.5 CS0619를 재시도/외부 스크립트 GetEntityId 변경으로 처리했다. Edit 상태에서 실행한 검증 명령1회와 바닥 시험 덫 부재 명령은 실행 조건 실패이며 게임 런타임 통과로 세지 않았다. 강제 종료·설치·Library 삭제를 하지 않았다.
+- 읽기 전용 Git diff에서 기존 .gitattributes10~12행 매크로 경고와 LF/CRLF 안내를 확인했다. 이 요청 밖 파일을 수정하지 않았다. 기존 사용자의 변경을 포함한 Git 전체 diff와 이번 baseline 차이를 혼동하지 않았다.
+- PLAYER_WORK_RULES.md와 PLAYER_IMPLEMENTATION_GUIDE.md에 이번 범위·담당 코드·수정 위치·검사 방법을 추가했다. 과거 로그는 보존했다. 파일 삭제/이름변경/커밋/푸시/브랜치/패키지 설치 없음.
+- 공식 자료: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Events.UnityEvent.html (기존 완료 이벤트), https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Object.Destroy.html (런타임 임시물체 정리), https://docs.unity3d.com/6000.0/Documentation/Manual/AssetMetadata.html (메타 보존), https://docs.unity3d.com/6000.5/Documentation/ScriptReference/GameObject.SetActive.html (비활성 컴포넌트 동작).
+- 외부 증거: C:/Users/307/Documents/Codex/PlayerSolidCleanup20261014/의 baseline.json, compile_results.json, policy_results.txt, interaction_results.txt, combat_results.txt, live_f_results.txt, reward_results.txt, pickup_edge_results.txt, scope_audit.json. 배포 빌드·전체 게임/자율 AI 경로·다른 씬 실행은 검증하지 않았다.
+
+- 최종 편집 모드 검사34개 PASS/FAIL0: Missing Script0, 임시 입력장치/시험 오브젝트/획득 텍스처0, Animator Idle/Walk/Run·모델 본·총·인벤토리·덫·보상 참조 정상. 시작 슬롯0 덫1개·휠입력 설정 복구. Play=False, 기존 dirty=True 보존. 마지막 Unity Console Error0(로그 삭제하지 않음).
+- 최종 파일 범위: 기존 C#11개와 기존 작업 문서3개만 변경. 새 프로젝트파일0/누락0/메타1074개 변경0/GUID중복0. Enemy·맵·원본Trap·씬파일·Packages·ProjectSettings는 작업 전 SHA256과 동일하다.
+- live_before.unity와 live_after.unity 외부 사본도 SHA256 289467c7d423ea01ab6578da0b03cdff4188d24217fbba69e6cddd411141cc55로 바이트까지 동일하다. 미저장 씬 내용이 실제로 보존됐으며 디스크 씬으로 덮어쓰지 않았다. 상세 최종 연결은 final_inspection.txt에 기록했다.
+
+
+## 2026-10-14 라운드 종료 시 설치 덫 제거 및 3치즈 조건 설명
+
+- 요청: 라운드가 끝나도 바닥에 남는 설치 덫 제거, 기존 덫 보상/3치즈 조건 설명. 보상 자체를 모든 라운드에 지급하도록 변경하라는 요청은 아니므로 기존 보상 기준을 유지했다.
+- 원인: TrapPlacement는 설치·재고 차감만 했고 종료 신호를 처리하지 않았다. 원본 ConsumableJawTrap은 사용한 덫만 removeDelay 후 없애므로 미사용 덫은 남았다. GameManager는 일반 클리어 즉시 RoundClear,1.5초 후 RoundResult로 바뀌며 마지막은 곧바로 Win, 보물전멸은 Lose다. OnRoundResult만 구독하면 승패 경로를 놓친다.
+- 작업 시작: 실제 Desktop/unity 프로젝트의2,043파일 SHA256/기존메타1,074개를 외부 baseline.json에 기록했다. 기존 dirty=True PlaytestScene01을 외부 live_before.unity에 사본만 저장했다. 이전 사용자 변경과 Enemy·원본덫·맵·프로젝트 설정을 보존했다.
+- 변경 코드1개: Assets/02Scripts/01Player/Interaction/Placement/TrapPlacement.cs. 같은 파일의 내부 일반 C# PlacedTrapLifetime이 이 설치기가 성공적으로 만든 월드 인스턴스만 추적한다. RoundClear/RoundResult/Win/Lose와 같은 씬 재시작의 OnRoundStarted에서 비활성화 후 지연 없는 Destroy로 정리한다. 미리 놓인 맵 덫이나 프리팹 에셋을 전체 탐색하여 삭제하지 않는다. 재고·보상 담당과 수명 담당을 분리했다.
+- 종료 시 진행 중인 설치·후보·미리보기와 LastPlaced를 비운다. 설치기의 Update/TickPlacement/완료 직전 경로는 GameManager가 있으면 Playing에서만 설치를 허용한다. RoundClear의 이동·카메라·다른 기존 조작 정책은 바꾸지 않았다. 인벤토리 재고·F회수 후 재고·보상은 삭제하지 않는다. PlacedCount 누적 의미는 보존했다.
+- 설치 컴포넌트를 잠깐 꺼도 이미 깔린 덫은 라운드 종료 신호를 받는다. 재활성 시 같은 매니저 중복 구독을 피하며 소유 컴포넌트 파괴 시 해제·정리한다. 재회수/소멸한 참조는 다음 등록 또는 종료 때 정리한다. 종료나 다음 라운드 진입이 눌린 키를 새 설치로 취급하지 않도록 기존 입력 초기화/해제 규칙을 유지한다.
+- 보상 코드 검증: GameManager.cs RoundResult.IsPerfect는 treasuresLost==0. 현재 live 씬의 treasuresPerRound=5, resultDelay=1.5, RoundResultUI.twoCheeseMinKept=3이다. 따라서 보물5개 모두를 보존하고 쥐를 모두 잡아 클리어하면3치즈,3~4개남으면2치즈,1~2개남으면1치즈다.0개면Lose. 속도/치즈3개수집/3라운드가 조건은 아니다. 손실은 OnTreasureStolen으로 기록한다.
+- TrapRoundReward는 일반라운드 결과시점과 마지막Win에 라운드당한번 빈칸에 덫1개를 지급한다. 가득차면 생략하며 나중에 소급지급하지 않는다. 시작첫칸덫1개는별개다. GameManager/RoundResultUI/TrapRoundReward/HotbarManager는 읽기만 했고 이번에 수정하지 않았다.
+- 컴파일: 기존Unity컴파일러/Bee응답파일로 런타임/에디터 어셈블리를 외부에 출력하여 모두 exit0. 기존 ItemInteractor.placeDistance 호환필드 CS0414 경고1개 유지. 기존 정책35개 PASS/FAIL0. Unity내부컴파일도 성공했다.
+- 실제Play검사101개 PASS/FAIL0: 기존 TrapPlacement.TickPlacement로 실물설치·재고소모, ItemInteractor.TryInteract로 실제 조준대상회수, GameManager 공개콜백으로라운드진행. RoundClear즉시비활성/프레임후Destroy,1.5초대기중설치금지,0.5초진행취소,다음라운드설치,사용한덫/비활성설치기정리,Win/Lose에서Time.timeScale0이어도삭제,다음게임/동일씬재시작정리,재고보존,원본범위밖임시덫보존,3치즈/미달/만석/중복보상방지확인. Unity Error/Exception/Assert0. 실제키입력이아닌공개API를정상실행루프와조합한검사이며 Enemy자율이동완주검사는아니다.
+- 별도기존보상회귀27개 PASS/FAIL0: 일반/마지막라운드/가득찬경우/재연결/중복호출의기존지급규칙유지확인. 테스트 카메라·입력공급자·선택입력·설치기활성·Rigidbody제약은복구하고재고/라운드임시상태는Play종료로폐기했다. 스크립트갱신과Play전환때 MCP가 일시 Unity not detected를반환하여 재로딩후재시도했다. 설치/강제종료/파일삭제는하지않았다.
+- 기존PLAYER_WORK_RULES.md와PLAYER_IMPLEMENTATION_GUIDE.md에이번수명범위·보상표·수정위치·확인절차를추가했다. 메타/GUID재발급·씬저장·원본프리팹수정·Git커밋/푸시·이름변경·프로젝트파일삭제없음.
+- 공식API확인: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Object.Destroy.html — 지연없는런타임인스턴스삭제와프레임완료시점. 정지상태의실제삭제는이번Play검사에서별도확인했다.
+- 외부증거: C:/Users/307/Documents/Codex/TrapRoundCleanup20261014/의baseline.json,compile_results.json,round_cleanup_results.txt,reward_results.txt,scope_audit.json. 배포빌드/전체게임/다른씬검사는포함하지않았다.
+
+- 최종 편집 모드 연결 검사34개 PASS/FAIL0. Missing Script와 임시 입력장치·획득 텍스처·시험 객체 잔존0. 기존 이동·애니메이션·인벤토리·보상·덫 연결 정상, 첫 칸 덫1개 유지, Play=False, 원래 미저장 dirty=True 보존.
+- live_before.unity와 live_after.unity 사본 SHA256은 모두289467c7d423ea01ab6578da0b03cdff4188d24217fbba69e6cddd411141cc55로 동일하다. 씬 내용은 바이트까지 보존했다. 최종 파일 차이는 TrapPlacement.cs1개와 기존 작업 문서3개뿐이며, 새 파일/누락0, 메타1,074개 변경0/GUID중복0, Enemy·원본Trap·맵·다른씬·Packages·ProjectSettings 변경0이다.
+- 마지막 Unity Console 조회 오류0. 로그를 지우지 않았으며, 외부 MCP 검증 연결을 종료했다.

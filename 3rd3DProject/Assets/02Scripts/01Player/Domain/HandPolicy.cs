@@ -51,8 +51,4 @@ public static class RegisteredInteractionPolicy
         return inventoryReady && hasSpace ? RegisteredCommand.Store : RegisteredCommand.None;
     }
 
-    // 이전 호출 형식과 호환됩니다. 두 손 상태는 더 이상 F 획득 결과에 영향을 주지 않습니다.
-    public static RegisteredCommand Decide(bool enabled, bool busy, bool hasTarget, bool enemy,
-        bool inventoryReady, bool hasSpace, bool holdingRegistered, bool holdingOther) =>
-        Decide(enabled, busy, hasTarget, enemy, inventoryReady, hasSpace);
 }

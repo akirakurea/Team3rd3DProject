@@ -66,16 +66,6 @@ public sealed class CatInteractionItem : MonoBehaviour, IHighlightSource
         if (releaseRecovery != null) TryCompleteRelease();
     }
 
-    internal void BeginReleaseRecovery(Collider[] colliders, bool[] enabled, bool available)
-    {
-        releaseRecovery = new ReleaseRecovery
-        {
-            origin = Body.position, rotation = Body.rotation,
-            colliders = colliders, enabled = enabled, available = available
-        };
-        TryCompleteRelease();
-    }
-
     bool TryCompleteRelease()
     {
         if (releaseRecovery == null || !Body) return false;

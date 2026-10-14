@@ -412,6 +412,77 @@ internal static class PlayerEditorScope
         if (validationOwner == owner) validationOwner = null;
     }
 
+    /// <summary>손·사격 검증 동안 덫 설치가 좌클릭을 선점하지 않도록 선택만 빌립니다. 슬롯 내용은 바꾸지 않습니다.</summary>
+    internal static IDisposable UseNonTrapSelection(params MonoBehaviour[] primaryActions)
+    {
+        RequireScene();
+        if (!EditorApplication.isPlaying)
+            throw new InvalidOperationException("Play 모드에서만 검증용 인벤토리 선택을 바꿀 수 있습니다.");
+        var placements = primaryActions.OfType<TrapPlacement>()
+            .Where(value => value && value.isActiveAndEnabled && value.inventory && value.trapItem && value.trapItem.placePrefab)
+            .Distinct().ToArray();
+        var selections = placements.Select(value => value.inventory).Distinct().Select(inventory =>
+        {
+            RequireOwned(inventory);
+            var traps = placements.Where(value => value.inventory == inventory).Select(value => value.trapItem).ToArray();
+            int index = Enumerable.Range(0, inventory.SlotCount)
+                .Where(slot => !traps.Contains(inventory.GetSlot(slot))).DefaultIfEmpty(-1).First();
+            if (index < 0)
+                throw new InvalidOperationException("검증불가: " + inventory.name + "의 모든 슬롯이 덫입니다. " +
+                    "사격·운반 검증에는 빈 칸 또는 덫이 아닌 칸이 필요합니다. 아이템은 삭제하지 않았습니다.");
+            if (inventory.SelectedIndex >= 0 && inventory.SelectedIndex < inventory.SlotCount &&
+                !traps.Contains(inventory.SelectedItem)) index = inventory.SelectedIndex;
+            return new HotbarSelection(inventory, index);
+        }).ToArray();
+        // 모든 인벤토리의 전제를 먼저 확인한 뒤 변경하므로 중간 실패로 일부만 바뀌지 않습니다.
+        var scope = new HotbarSelectionScope(selections);
+        try
+        {
+            foreach (var selection in selections) selection.Apply();
+            return scope;
+        }
+        catch { scope.Dispose(); throw; }
+    }
+
+    sealed class HotbarSelection
+    {
+        readonly HotbarManager inventory;
+        readonly int previousIndex, testIndex;
+        readonly bool previousInput;
+        public HotbarSelection(HotbarManager inventory, int testIndex)
+        {
+            this.inventory = inventory; this.testIndex = testIndex;
+            previousIndex = inventory.SelectedIndex; previousInput = inventory.readSelectionInput;
+        }
+        public void Apply()
+        {
+            inventory.readSelectionInput = false;
+            inventory.Select(testIndex);
+        }
+        public void Restore()
+        {
+            if (!inventory) return;
+            try { inventory.Select(previousIndex); }
+            finally { inventory.readSelectionInput = previousInput; }
+        }
+    }
+
+    sealed class HotbarSelectionScope : IDisposable
+    {
+        HotbarSelection[] selections;
+        public HotbarSelectionScope(HotbarSelection[] selections) { this.selections = selections; }
+        public void Dispose()
+        {
+            var saved = selections;
+            selections = Array.Empty<HotbarSelection>();
+            Exception firstError = null;
+            foreach (var selection in saved)
+                try { selection.Restore(); }
+                catch (Exception exception) { firstError ??= exception; }
+            if (firstError != null) throw firstError;
+        }
+    }
+
     internal static string OutputDirectory
     {
         get

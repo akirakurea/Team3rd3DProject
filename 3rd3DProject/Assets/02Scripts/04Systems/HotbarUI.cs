@@ -24,6 +24,7 @@ public class HotbarUI : MonoBehaviour
     {
         public Image icon;
         public GameObject border;   // 선택 시에만 SetActive(true)
+        public TMPro.TMP_Text label; // 선택 사항: 아이콘이 없는 물건도 이름으로 구분합니다.
     }
 
     [SerializeField] private SlotView[] slots = new SlotView[5];
@@ -44,6 +45,7 @@ public class HotbarUI : MonoBehaviour
         for (int i = 0; i < slots.Length; i++)
         {
             if (slots[i].icon != null) slots[i].icon.raycastTarget = false;
+            if (slots[i].label != null) slots[i].label.raycastTarget = false;
             RefreshSlot(i);
             if (slots[i].border != null)
             {
@@ -75,11 +77,19 @@ public class HotbarUI : MonoBehaviour
     private void RefreshSlot(int i)
     {
         var icon = slots[i].icon;
-        if (icon == null) return;   // Inspector에 Icon이 연결 안 된 칸은 건너뜀
-
         var item = hb.GetSlot(i);
-        icon.enabled = item != null && item.icon != null;
-        icon.sprite = item != null ? item.icon : null;
+        if (icon != null)
+        {
+            icon.enabled = item != null && item.icon != null;
+            icon.sprite = item != null ? item.icon : null;
+        }
+        var label = slots[i].label;
+        if (label != null)
+        {
+            label.enabled = item != null;
+            label.text = item == null ? string.Empty :
+                string.IsNullOrWhiteSpace(item.displayName) ? item.name : item.displayName;
+        }
     }
 
     private void HandleSelectedChanged(int selectedIndex)
