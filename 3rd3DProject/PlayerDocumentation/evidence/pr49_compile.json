@@ -1,0 +1,12 @@
+{
+  "Assembly-CSharp": {
+    "exit": 0,
+    "candidateScripts": 95,
+    "output": "C:\\Users\\307\\Documents\\Codex\\PR49Conflict20261014\\candidate\\3rd3DProject\\Assets\\02Scripts\\04Systems\\ItemInteractor.cs(61,53): warning CS0414: The field 'ItemInteractor.placeDistance' is assigned but its value is never used\n"
+  },
+  "Assembly-CSharp-Editor": {
+    "exit": 0,
+    "candidateScripts": 24,
+    "output": ""
+  }
+}

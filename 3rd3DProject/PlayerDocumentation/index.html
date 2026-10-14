@@ -1,0 +1,4184 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>플레이어 구현 기술문서</title><style>
+:root{--ink:#243448;--muted:#68768a;--line:#dce3ea;--paper:#fff;--accent:#16736b}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:#f2f5f8;font:15px/1.85 "Malgun Gothic","Apple SD Gothic Neo",sans-serif}header{padding:20px 26px;background:#173d43;color:white;display:flex;align-items:center;justify-content:space-between;gap:20px}header strong{font-size:20px}header small{display:block;color:#c7dedf;font-size:12px;letter-spacing:.06em}.layout{display:grid;grid-template-columns:275px minmax(0,1fr);max-width:1600px;margin:auto}aside{position:sticky;top:0;height:100vh;overflow:auto;padding:24px 18px;border-right:1px solid var(--line)}nav a{display:flex;gap:10px;padding:11px 9px;color:var(--ink);text-decoration:none;border-radius:7px;font-size:13px;line-height:1.5;margin:3px 0}nav a span{color:var(--accent);font-weight:700;min-width:25px}nav a.active,nav a:hover{background:#dfeeea}input{width:100%;padding:12px;border:1px solid #b7c7ce;border-radius:7px;font:inherit;font-size:14px;outline-color:var(--accent)}label{display:block;color:var(--muted);font-size:12px;margin:0 0 5px}.search-wrap{margin-bottom:20px}.note{font-size:12px;color:var(--muted);padding:14px 8px}.content{padding:30px 40px 80px;min-width:0}article{background:var(--paper);padding:38px 46px;border:1px solid var(--line);border-radius:12px;max-width:1130px;margin:auto;box-shadow:0 5px 25px #29445c05}h1{font-size:29px;line-height:1.4;letter-spacing:-.04em;margin:22px 0 26px;color:#123f46}h2{font-size:22px;margin:46px 0 16px;padding-bottom:10px;border-bottom:2px solid #d8e9e4;line-height:1.55}h3{font-size:17px;margin:30px 0 12px;color:#226960}h4{font-size:15px;margin-top:26px}p{margin:12px 0 18px}a{color:#176e91;text-underline-offset:3px}ul,ol{padding-left:25px}li{margin:6px 0}table{display:block;overflow-x:auto;border-collapse:collapse;font-size:13px;line-height:1.7;width:100%;margin:22px 0}th{background:#eef5f3;color:#22544e;text-align:left}th,td{padding:11px 12px;border:1px solid var(--line);vertical-align:top;min-width:95px}tr:nth-child(even) td{background:#fafcfd}td code,th code{overflow-wrap:anywhere}code{font-family:Consolas,monospace;font-size:.91em;background:#eef2f4;border-radius:3px;padding:2px 4px}pre{background:#172b37;color:#edf5f5;padding:18px 21px;border-radius:8px;overflow:auto;font-size:13px;line-height:1.75}pre code{background:none;padding:0;color:inherit}blockquote{border-left:4px solid #7aa89d;padding:1px 18px;margin:20px 0;background:#f3f8f6}hr{border:0;border-top:1px solid var(--line);margin:32px 0}.article-tools{display:flex;justify-content:flex-end;gap:16px;align-items:center;font-size:12px}button{font:inherit;cursor:pointer;border:1px solid #c7d7d8;border-radius:5px;background:white;padding:4px 11px;color:#35646a}footer{border-top:1px solid var(--line);margin-top:45px;padding-top:18px;display:flex;justify-content:space-between;color:var(--muted);font-size:12px}#results{max-width:1130px;margin:0 auto 20px;background:white;padding:25px;border-radius:10px;border:1px solid var(--line)}.result{display:block;width:100%;text-align:left;margin:9px 0;padding:14px;font-size:14px;background:#f6faf9}.result small{display:block;color:var(--muted)}.badge{font-size:12px;border:1px solid #80a8a3;border-radius:99px;padding:5px 12px;white-space:nowrap}mark{background:#f6e9a0}#sectionNav a{font-size:12px;display:block;padding:4px 8px;text-decoration:none;color:#52706c;line-height:1.55}#sectionNav{border-top:1px solid var(--line);margin-top:22px;padding-top:12px}#sectionNav strong{font-size:12px;color:#647872;padding:8px}#live{font-size:12px;color:var(--muted);margin-top:6px}.focused{outline:3px solid #93cabb;outline-offset:8px} [hidden]{display:none!important}
+@media(max-width:900px){.layout{display:block}aside{position:relative;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:15px}.content{padding:16px 12px}article{padding:24px 20px}nav{display:flex;flex-wrap:wrap}nav a{max-width:270px}#sectionNav,.note{display:none}header{padding:18px}header strong{font-size:18px}h1{font-size:25px}footer{display:block}}@media print{header,aside,.article-tools,#results{display:none!important}.layout,.content{display:block;padding:0;background:white}article,article[hidden]{display:block!important;border:0;box-shadow:none;padding:0;max-width:none;border-radius:0;page-break-before:always;font-size:10pt}article:first-child{page-break-before:auto}table{display:table;font-size:8pt}th,td{min-width:0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:8pt}h2,h3{break-after:avoid}a{color:inherit;text-decoration:none}footer{display:none}}
+</style></head><body><header><div><small>TEAM3RD3DPROJECT · PLAYER</small><strong>플레이어 구현 기술문서</strong></div><span class="badge">13개 구현 항목 · C# 63개</span></header><div class="layout"><aside><div class="search-wrap"><label for="search">문서 전체 검색</label><input id="search" type="search" placeholder="예: 점프, GUID, 3치즈" autocomplete="off"><div id="live" aria-live="polite"></div></div><nav aria-label="문서 목차"><a href="#chapter-0" data-chapter="0"><span>시작</span>플레이어 구현 기술문서</a><a href="#chapter-1" data-chapter="1"><span>01</span>전체 구조와 읽는 방법</a><a href="#chapter-2" data-chapter="2"><span>02</span>입력·이동·카메라·애니메이션 기술문서</a><a href="#chapter-3" data-chapter="3"><span>03</span>물건 상호작용과 샷건</a><a href="#chapter-4" data-chapter="4"><span>04</span>인벤토리와 덫</a><a href="#chapter-5" data-chapter="5"><span>05</span>에디터 도구, 에셋, 협업 연결</a><a href="#chapter-6" data-chapter="6"><span>06</span>구현 이력과 검증 근거 추적표</a><a href="#chapter-7" data-chapter="7"><span>07</span>스크립트와 구현 위치 색인</a><a href="#chapter-8" data-chapter="8"><span>08</span>코드 검토와 검증 근거</a></nav><div class="note">설명 → 실제 코드 → 수정 위치 → 확인 사례 순서로 읽어보세요.</div><div id="sectionNav"></div></aside><main class="content"><section id="results" hidden></section><article data-index="0" data-file="README.md" ><div class="article-tools"><a href="README.md">Markdown 원본</a><button onclick="window.print()">인쇄</button></div><h1 id="c0-s0">플레이어 구현 기술문서</h1>
+<p><strong><a href="index.html">목차와 검색이 있는 열람 화면 열기</a></strong></p>
+<p>고양이 플레이어의 이동·카메라·애니메이션·상호작용·샷건·인벤토리·덫을 이해하고, 실제 수정할 파일과 확인 방법을 찾는 문서입니다. 2026-10-14의 저장된 프로젝트와 커밋 <code>6b8bafde</code>를 기준으로 작성했습니다.</p>
+<p>처음 읽는 분은 <strong>전체 구조 → 관심 기능 → 수정 후 확인</strong> 순서로 읽으세요. 스크립트 이름을 이미 안다면 열람 화면의 검색이나 스크립트 색인을 이용하세요. Markdown 원본은 아래에서 바로 열 수 있습니다.</p>
+<table>
+<thead>
+<tr>
+<th>문서</th>
+<th>찾을 수 있는 내용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="01_ARCHITECTURE.md">01 전체 구조</a></td>
+<td>13개 구현 항목, 조작표, 호출 관계, 설정 UI, 쉬운 용어</td>
+</tr>
+<tr>
+<td><a href="02_MOTION_CAMERA.md">02 이동과 카메라</a></td>
+<td>입력 권한, 작은 턱·마찰, Cinemachine, ESC, Animator, 점프·버퍼</td>
+</tr>
+<tr>
+<td><a href="03_INTERACTION_COMBAT.md">03 상호작용과 사격</a></td>
+<td>좌클릭 운반, F 저장·포획, 강조, 획득 연출, 4산탄·총구 가림</td>
+</tr>
+<tr>
+<td><a href="04_INVENTORY_TRAPS.md">04 인벤토리와 덫</a></td>
+<td>기존 Hotbar 재사용, 보이지 않는 격자, 1초 설치, 3치즈·라운드 정리</td>
+</tr>
+<tr>
+<td><a href="05_EDITOR_ASSETS.md">05 에디터와 에셋</a></td>
+<td>구성·검증 도구, 모델·리그·재질 현황, GUID와 Git 협업</td>
+</tr>
+<tr>
+<td><a href="06_HISTORY.md">06 작업 이력</a></td>
+<td>기존 작업 31건, 원문 제목 전체 색인, 초기 모델 요청과 확인 범위</td>
+</tr>
+<tr>
+<td><a href="07_SCRIPT_INDEX.md">07 스크립트 색인</a></td>
+<td>Player C# 53개와 직접 연계 Systems 10개의 책임·타입·소스 링크</td>
+</tr>
+<tr>
+<td><a href="08_REVIEW_AND_VALIDATION.md">08 코드 검토와 검증</a></td>
+<td>SOLID 검토, 현재 설명 불일치, 알려진 한계, 시험 근거·회귀 사례</td>
+</tr>
+</tbody></table>
+<h2 id="c0-s1">어느 문서를 고치면 되나요?</h2>
+<p>현재 기능 규칙이 바뀌면 해당 기능 문서를 수정하고, 왜 바꿨는지는 기존 <a href="../PLAYER_WORK_LOG.md">작업 로그</a>에 추가합니다. 빠른 사용 설명은 기존 <a href="../PLAYER_IMPLEMENTATION_GUIDE.md">구현 설명서</a>에 유지합니다. 과거 기록을 현재 설명으로 덮어쓰지 않습니다.</p>
+<p>이 문서의 HTML은 Markdown을 읽기 쉽게 모아 둔 출력물입니다. 원본 Markdown을 고친 뒤 HTML도 다시 생성해야 두 형식이 일치합니다. 작성 도구와 외부 초안은 이번 게임 구현 파일에 포함하지 않았습니다.</p>
+<h2 id="c0-s2">문서 기준과 확인 범위</h2>
+<ul>
+<li>현재 코드와 저장된 씬 설정을 확인했습니다. 에디터에만 남은 미저장 상태를 자동 저장하지 않았습니다.</li>
+<li>실제 코드 발췌, 한 줄씩 풀이, 설정 위치, 수정 방법, 확인 사례를 각 기능에 함께 넣었습니다.</li>
+<li>과거 플레이 시험과 이번 문서의 정적 검토를 구분했습니다. 3치즈 미지급은 기존 재현 검사에서 재현되지 않아 원인 미확정으로 남겼습니다.</li>
+<li>현재 Player는 여러 SkinnedMeshRenderer를 사용합니다. 과거의 단일 메시·쿼드·900폴리곤 요청이 현재 Unity 에셋에서 전부 충족된다고 단정하지 않습니다.</li>
+<li>게임 코드·씬·에셋·메타를 변경하지 않고 문서와 문서 안내·작업 기록만 추가했습니다. 이번 문서의 커밋·푸시는 하지 않았습니다.</li>
+</ul>
+<h2 id="c0-s3">채택한 문서 작성 지침</h2>
+<p>읽는 목적별 구분은 <a href="https://diataxis.fr/">Diátaxis</a>, 구조·실행 흐름·설계 결정·위험의 분류는 <a href="https://arc42.org/overview/">arc42</a>, 독자의 수준과 핵심을 먼저 제시하는 방식은 <a href="https://developers.google.com/tech-writing/one/documents">Google 기술문서 지침</a>을 참고했습니다. 프로젝트 내용은 실제 소스와 작업 기록을 바탕으로 새로 작성했습니다.</p>
+<p>에셋 식별자와 메타의 관계는 <a href="https://docs.unity3d.com/6000.0/Documentation/Manual/AssetMetadata.html">Unity 공식 에셋 메타데이터 안내</a>, 상태와 전환 구조는 <a href="https://docs.unity3d.com/6000.0/Documentation/Manual/class-AnimatorController.html">Unity Animator Controller 안내</a>도 함께 참고할 수 있습니다.</p>
+<footer><a href="#chapter-0" data-chapter="0">목차로 돌아가기</a><span>기준 2026.10.14 · 6b8bafde</span></footer></article><article data-index="1" data-file="01_ARCHITECTURE.md" hidden><div class="article-tools"><a href="01_ARCHITECTURE.md">Markdown 원본</a><button onclick="window.print()">인쇄</button></div><h1 id="c1-s0">전체 구조와 읽는 방법</h1>
+<h2 id="c1-s1">이 문서가 설명하는 현재 상태</h2>
+<p>고양이 플레이어는 카메라 기준 이동, 걷기·달리기·점프, 물건 운반, F 획득·적 포획 연결, 샷건 조준·사격, 5칸 인벤토리와 덫 설치를 함께 사용합니다. 이 문서는 이 대화에서 만들거나 수정·연결한 기능을 중심으로, <strong>현재 파일의 구현과 저장된 씬 연결</strong>을 설명합니다. 팀원이 만든 GameManager·Hotbar·Enemy·덫 원본은 재사용 경계를 설명하며 모두 Codex가 처음 만든 코드라고 표시하지 않습니다.</p>
+<p>기준 날짜는 <strong>2026-10-14, 한국 시간</strong>입니다. 기준 Git 커밋은 <code>6b8bafde9f16129d6c6a9a7c7127aaca5582a63a</code>입니다. 문서 작성 시작 시 작업 폴더의 추적 파일 변경은 없었습니다. 문서 작성 때문에 Unity 씬을 저장하거나 게임 코드를 바꾸지 않았습니다. Unity 편집기에만 남아 있는 미저장 내용은 이 디스크 기준 문서와 다를 수 있습니다.</p>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>확인한 값</th>
+<th>근거</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>프로젝트</td>
+<td><code>C:/Users/307/Desktop/unity/Team3rd3DProject/3rd3DProject</code></td>
+<td>실제 Git 작업 폴더</td>
+</tr>
+<tr>
+<td>대상 씬</td>
+<td><code>Assets/01Scenes/PlaytestScene01.unity</code></td>
+<td>현재 저장된 씬</td>
+</tr>
+<tr>
+<td>Unity</td>
+<td>6000.5.6f1</td>
+<td>ProjectSettings/ProjectVersion.txt</td>
+</tr>
+<tr>
+<td>카메라</td>
+<td>Cinemachine 3.1.7</td>
+<td>Packages/manifest.json</td>
+</tr>
+<tr>
+<td>입력</td>
+<td>Input System 1.20.0</td>
+<td>Packages/manifest.json</td>
+</tr>
+<tr>
+<td>화면 출력</td>
+<td>URP 17.5.0, uGUI 2.5.0</td>
+<td>Packages/manifest.json</td>
+</tr>
+<tr>
+<td>상세 조사 코드</td>
+<td>Player C# 53개 + 직접 연결된 Systems C# 10개</td>
+<td><a href="07_SCRIPT_INDEX.md">스크립트 색인</a></td>
+</tr>
+</tbody></table>
+<p>코드 안의 기본값은 새 컴포넌트를 만들 때의 출발값입니다. 기존 씬이나 프리팹에 이미 저장한 값이 있으면 그 값이 우선합니다. 따라서 문서는 <strong>코드 기본값</strong>, <strong>저장된 씬 값</strong>, <strong>과거 시험 결과</strong>, <strong>현재 미확인 사항</strong>을 나누어 표시합니다.</p>
+<h2 id="c1-s2">문서 형식을 고른 이유</h2>
+<p>모든 프로젝트에 하나의 “가장 올바른 양식”이 있는 것은 아닙니다. 이 프로젝트는 개발자가 바뀌어도 코드를 찾아 고칠 수 있어야 하므로 다음 공식 지침의 목적을 조합했습니다. 양식의 원문을 그대로 복제한 것이 아니라 프로젝트에 맞게 구성한 문서입니다.</p>
+<ul>
+<li><strong>읽는 목적 구분:</strong> 처음 배우기, 특정 작업 수행, 정확한 참고 자료, 원리 이해를 분리합니다. 이 문서의 빠른 시작·수정 절차·스크립트 색인·구조 설명에 대응합니다. <a href="https://diataxis.fr/">Diátaxis</a></li>
+<li><strong>설계 정보 추적:</strong> 목표와 제약, 구성요소, 실행 흐름, 결정 이유, 품질·위험·용어를 남깁니다. 각 기능의 담당 파일과 검증 근거를 연결한 이유입니다. <a href="https://arc42.org/overview/">arc42 개요</a></li>
+<li><strong>초보자에게 필요한 순서:</strong> 범위와 독자를 먼저 정하고 핵심을 앞에 제시한 뒤 설명을 이어 갑니다. 코드 문법보다 실제 행동을 먼저 설명합니다. <a href="https://developers.google.com/tech-writing/one/documents">Google 기술문서 작성 지침</a></li>
+</ul>
+<p>읽는 분은 Unity에서 오브젝트를 선택하고 Inspector를 볼 수 있는 초급 개발자를 가정합니다. C#을 처음 보더라도 아래 용어표와 짧은 코드 설명을 함께 읽으면 어느 파일을 고칠지 찾을 수 있게 구성했습니다.</p>
+<h2 id="c1-s3">13개 구현 항목</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>구현 항목</th>
+<th>설명·코드리뷰</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>F01</td>
+<td>키보드·마우스 입력과 게임 조작 권한</td>
+<td><a href="02_MOTION_CAMERA.md">이동과 카메라</a></td>
+</tr>
+<tr>
+<td>F02</td>
+<td>이동, 작은 턱, 기본 물리와 마찰</td>
+<td><a href="02_MOTION_CAMERA.md">이동과 카메라</a></td>
+</tr>
+<tr>
+<td>F03</td>
+<td>3인칭 카메라, 정지 회전 제한, 커서 잠금</td>
+<td><a href="02_MOTION_CAMERA.md">이동과 카메라</a></td>
+</tr>
+<tr>
+<td>F04</td>
+<td>Animator, 걷기·달리기·대기·점프와 사격 연결</td>
+<td><a href="02_MOTION_CAMERA.md">이동과 카메라</a></td>
+</tr>
+<tr>
+<td>F05</td>
+<td>좌클릭 유지로 들고 놓기</td>
+<td><a href="03_INTERACTION_COMBAT.md">상호작용과 사격</a></td>
+</tr>
+<tr>
+<td>F06</td>
+<td>F 인벤토리 획득과 Enemy 포획 연결</td>
+<td><a href="03_INTERACTION_COMBAT.md">상호작용과 사격</a></td>
+</tr>
+<tr>
+<td>F07</td>
+<td>중앙 커서, 노란 강조, 획득 이동 연출</td>
+<td><a href="03_INTERACTION_COMBAT.md">상호작용과 사격</a></td>
+</tr>
+<tr>
+<td>F08</td>
+<td>샷건 장착, 줌, 4산탄 히트스캔, 총구 차단</td>
+<td><a href="03_INTERACTION_COMBAT.md">상호작용과 사격</a></td>
+</tr>
+<tr>
+<td>F09</td>
+<td>5칸 인벤토리 데이터와 UI 재사용</td>
+<td><a href="04_INVENTORY_TRAPS.md">인벤토리와 덫</a></td>
+</tr>
+<tr>
+<td>F10</td>
+<td>보이지 않는 격자 설치, 보상, 설치물 수명</td>
+<td><a href="04_INVENTORY_TRAPS.md">인벤토리와 덫</a></td>
+</tr>
+<tr>
+<td>F11</td>
+<td>에디터 연결 도구와 검증기</td>
+<td><a href="05_EDITOR_ASSETS.md">에디터·에셋</a></td>
+</tr>
+<tr>
+<td>F12</td>
+<td>Git 충돌, GUID·메타 보존, 협업</td>
+<td><a href="05_EDITOR_ASSETS.md">에디터·에셋</a></td>
+</tr>
+<tr>
+<td>F13</td>
+<td>모델, 리깅, 모션, 재질, Unity 에셋 전달</td>
+<td><a href="05_EDITOR_ASSETS.md">에디터·에셋</a></td>
+</tr>
+</tbody></table>
+<h2 id="c1-s4">전체 호출 구조</h2>
+<pre><code class="language-text">사용자 키보드와 마우스
+        │
+        ▼
+GameplayInput ── 게임 상태 / 열린 메뉴 / 포커스 / 커서 잠금 확인
+        │
+        ├─ PlayerController
+        │    ├─ MovementPolicy / JumpPolicy      언제 어떻게 움직일지 판단
+        │    ├─ PlayerMovement / PlayerJump     Rigidbody와 실제 위치 연결
+        │    └─ PlayerAnimation                 Animator 매개변수 전달
+        │
+        ├─ CameraCursorLock / CameraOrbitLimit / AimZoom
+        │                                        잠금·회전 제한·시야 변화
+        │
+        ├─ InteractionController ─ ItemCarrier   손 운반
+        │                      └─ ItemInteractor
+        │                           ├─ ItemPickup             자료·획득 규칙 조회
+        │                           ├─ HotbarStore ─ HotbarManager ─ HotbarUI
+        │                           └─ ThiefController.GetCaptured   적 포획 요청
+        │
+        ├─ ShotgunEquipment / ShotgunCombat ─ HitscanQuery
+        │                         └─ ShotgunPose / ShotSpreadRing
+        │
+        └─ TrapPlacement ─ PlacementInput / PlacementHold / PlacementSurface
+                    ├─ PlacementFeedback        위치·시간 표시
+                    ├─ HotbarManager            재고 소비
+                    └─ PlacedTrapLifetime       라운드 종료 정리
+
+GameManager의 라운드 결과 ─ TrapRoundReward ─ HotbarManager ─ HotbarUI
+</code></pre>
+<p>이 그림은 실행 순서를 한 줄로 강제한 것이 아니라 누가 누구에게 일을 맡기는지를 나타냅니다. 실제 시간별 실행은 입력을 읽는 <code>Update</code>, 물리를 갱신하는 <code>FixedUpdate</code>, 본·표시를 마무리하는 담당 코드로 나뉩니다.</p>
+<h3 id="c1-s5">폴더가 나뉜 이유</h3>
+<table>
+<thead>
+<tr>
+<th>폴더</th>
+<th>쉬운 설명</th>
+<th>대표 파일</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Core</td>
+<td>필요한 담당자를 조립하는 곳</td>
+<td>PlayerController</td>
+</tr>
+<tr>
+<td>Domain</td>
+<td>Unity 밖에서도 설명할 수 있는 게임 규칙</td>
+<td>MovementPolicy, JumpPolicy, PlacementHold</td>
+</tr>
+<tr>
+<td>Input</td>
+<td>실제 키보드·마우스를 읽는 곳</td>
+<td>PlayerInput, GameplayInput</td>
+</tr>
+<tr>
+<td>Movement</td>
+<td>판단 결과를 물리에 연결</td>
+<td>PlayerMovement, StepSolver</td>
+</tr>
+<tr>
+<td>Camera</td>
+<td>화면의 방향·잠금·줌</td>
+<td>CameraCursorLock, CameraOrbitLimit, AimZoom</td>
+</tr>
+<tr>
+<td>Animation</td>
+<td>애니메이션 상태와 자세 전달</td>
+<td>PlayerAnimation, ShotgunPose</td>
+</tr>
+<tr>
+<td>Equipment</td>
+<td>총 장착·발사·명중</td>
+<td>ShotgunEquipment, ShotgunCombat, HitscanQuery</td>
+</tr>
+<tr>
+<td>Interaction</td>
+<td>집기·내려놓기와 설치</td>
+<td>InteractionController, ItemCarrier, TrapPlacement</td>
+</tr>
+<tr>
+<td>Presentation</td>
+<td>보이는 피드백</td>
+<td>ItemHighlight, CenterCursor, PlacementFeedback</td>
+</tr>
+<tr>
+<td>Editor</td>
+<td>개발자가 수동으로 사용하는 연결·검사 도구</td>
+<td>Setup, Validation</td>
+</tr>
+<tr>
+<td>04Systems</td>
+<td>기존 게임 시스템과 연결</td>
+<td>HotbarManager, GameManager, ItemInteractor, PauseMenuUI</td>
+</tr>
+</tbody></table>
+<p>일반 C# 클래스는 Unity 오브젝트에 하나씩 붙이지 않아도 <code>new</code>로 만들어 사용할 수 있습니다. 따라서 스크립트 파일이 53개라는 것이 Player에 컴포넌트 53개가 붙었다는 뜻은 아닙니다. 인터페이스나 자료 구조 파일도 포함된 수입니다.</p>
+<h2 id="c1-s6">현재 조작 규칙</h2>
+<table>
+<thead>
+<tr>
+<th>입력</th>
+<th>조건</th>
+<th>동작</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>WASD</td>
+<td>게임 입력 허용</td>
+<td>카메라 기준 이동·걷기</td>
+</tr>
+<tr>
+<td>Shift + WASD</td>
+<td>조준하지 않음</td>
+<td>달리기</td>
+</tr>
+<tr>
+<td>마우스 이동</td>
+<td>입력 허용</td>
+<td>3인칭 회전. 정지 시 멈춘 방향 기준 좌우 60도 제한, 이동 의도 있을 때 수평 제한 해제</td>
+</tr>
+<tr>
+<td>Space</td>
+<td>점프 사용 컨트롤러와 입력 허용</td>
+<td>눌림→상승→낙하→착지. 착지 전 짧은 입력 보관</td>
+</tr>
+<tr>
+<td>숫자 1</td>
+<td>장비 입력 허용</td>
+<td>기존 샷건 장착·해제</td>
+</tr>
+<tr>
+<td>좌클릭 유지</td>
+<td>빈손·운반 대상·설치 입력 미점유</td>
+<td>들고, 떼면 현재 위치에서 기본 물리로 내려놓기</td>
+</tr>
+<tr>
+<td>좌클릭 새 누름</td>
+<td>샷건 장착·설치 입력 미점유</td>
+<td>한 발사에 산탄 4개</td>
+</tr>
+<tr>
+<td>우클릭 유지</td>
+<td>샷건 장착</td>
+<td>줌, 조준 중 걷기 제한</td>
+</tr>
+<tr>
+<td>F 새 누름</td>
+<td>유효한 물건/적 대상</td>
+<td>인벤토리 보관 또는 기존 Enemy 포획 경로</td>
+</tr>
+<tr>
+<td>휠</td>
+<td>인벤토리 선택 입력 허용</td>
+<td>5칸 순환 선택</td>
+</tr>
+<tr>
+<td>좌클릭/F 유지</td>
+<td>선택한 덫·유효 바닥, F 대상 우선권 없음</td>
+<td>같은 칸에 1초 유지 후 덫 1개 설치</td>
+</tr>
+<tr>
+<td>Esc</td>
+<td>게임/설정 UI 상태에 따라</td>
+<td>설정 열기·닫기. 메뉴에서는 커서를 풀고 게임 복귀 시 잠금 복구</td>
+</tr>
+</tbody></table>
+<p>핵심은 <strong>입력 허용과 행동 우선순위를 먼저 확인한다</strong>는 점입니다. 샷건을 들었다고 언제나 좌클릭이 발사는 아닙니다. 덫이 선택되어 설치가 입력을 사용하면 설치가 우선합니다. 같은 입력을 여러 담당자가 동시에 실행하지 않게 작은 계약으로 조율합니다.</p>
+<h2 id="c1-s7">공통 권한과 UI 연결</h2>
+<p><code>InputPermission</code>은 메뉴별 차단 요청을 집합으로 기억합니다. 설정창 A와 결과창 B가 모두 차단 중일 때 A만 닫아도 B의 차단은 남습니다. 한 개의 전역 bool을 아무 메뉴나 true/false로 바꾸는 방식보다 요청의 주인이 분명합니다.</p>
+<p><code>GameplayInput.IsEnabled</code>는 게임 상태뿐 아니라 시간 정지, 메뉴, 창 포커스, 커서 잠금, 해당 프레임 억제를 함께 확인합니다. <code>CameraCursorLock</code>이 실행 중 Cursor 값을 쓰는 담당자입니다. 메뉴는 커서를 직접 잠그지 않고 차단을 요청합니다. ESC로 메뉴를 닫는 누름이나 클릭이 동시에 사격·집기로 사용되지 않도록 입력 재개 시점을 제한합니다.</p>
+<table>
+<thead>
+<tr>
+<th>게임 상태</th>
+<th>일반 게임 입력 정책</th>
+<th>새 덫 설치</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Ready</td>
+<td>차단</td>
+<td>차단</td>
+</tr>
+<tr>
+<td>Playing</td>
+<td>메뉴·포커스·잠금 등 추가 조건 통과 시 허용</td>
+<td>조건 통과 시 허용</td>
+</tr>
+<tr>
+<td>RoundClear</td>
+<td>결과 전 대기 조작을 허용하는 정책</td>
+<td>차단</td>
+</tr>
+<tr>
+<td>RoundResult / Win / Lose</td>
+<td>차단</td>
+<td>차단</td>
+</tr>
+<tr>
+<td>GameManager 없는 독립 시험</td>
+<td>다른 입력 조건에 따름</td>
+<td>설치기의 독립 실행 경로 허용</td>
+</tr>
+</tbody></table>
+<h3 id="c1-s8">설정창 코드의 역할</h3>
+<p><code>PauseMenuUI</code>는 화면의 열림·닫힘, 슬라이더와 버튼 이벤트를 다룹니다. 실제 음량·해상도 반영은 <code>IGameSettingsApplier</code>를 통해 <code>GameSettingsApplier</code>에 요청합니다. <code>GameSettings</code>는 PlayerPrefs 저장값과 변환 계산을 담당합니다. PlayerPrefs는 이 프로젝트의 일반 게임 설정 저장이며 보관함 재고 저장이 아닙니다.</p>
+<pre><code class="language-csharp">Time.timeScale = 0f;
+GameplayInput.SetBlocked(this, true);
+panel.SetActive(true);
+</code></pre>
+<p>출처: <a href="../Assets/02Scripts/04Systems/PauseMenuUI.cs">PauseMenuUI.Open</a>. 게임 시간을 멈추고, 이 메뉴가 입력을 막고 있음을 등록한 뒤 패널을 켭니다. 닫을 때는 자기 차단 요청을 해제합니다. UI 클릭에는 EventSystem/InputSystemUIInputModule의 정상 연결도 필요합니다. 커서 표시만 고쳐도 UI 입력 모듈이 없으면 클릭이 되지 않는 이유입니다.</p>
+<p><code>GameSettingsApplier</code>는 전체 음량을 AudioListener에, 효과 음량을 연결된 AudioMixer 파라미터에 적용합니다. 믹서가 없으면 효과 음량의 실제 믹서 반영은 하지 않습니다. 해상도는 드래그 중 글자만 바꾸고 버튼을 놓을 때 적용합니다. 실제 창 크기 변화는 빌드 환경에서도 확인해야 합니다.</p>
+<p>현재 <code>MouseSensitivity</code>는 설정 저장·화면 표시 경로만 검색되며 Player 카메라 입력에 곱하는 사용처는 확인되지 않았습니다. <strong>감도 슬라이더 값 저장과 실제 회전 감도 적용을 같은 기능으로 설명하지 않습니다.</strong> <a href="08_REVIEW_AND_VALIDATION.md">코드 검토 목록</a>에 확장 시 확인할 항목으로 남겼습니다.</p>
+<h2 id="c1-s9">설계 결정 기록</h2>
+<table>
+<thead>
+<tr>
+<th>결정</th>
+<th>이유</th>
+<th>지금 지켜야 할 조건</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>실제 움직임은 Rigidbody, 모양 변화는 본 애니메이션</td>
+<td>점프 높이와 몸의 눌림이 서로 중복 이동하지 않게 함</td>
+<td>애니메이션 Root Motion과 물리 이동 중복 확인</td>
+</tr>
+<tr>
+<td>Animator Controller가 전환, C#은 상태 전달</td>
+<td>Unity 창에서 상태·혼합 시간을 볼 수 있게 함</td>
+<td>구형 Idle.controller 호환을 함부로 삭제하지 않기</td>
+</tr>
+<tr>
+<td>게임 규칙 일부를 일반 C#으로 분리</td>
+<td>테스트·이식이 쉬움</td>
+<td>Unity 어댑터와 순수 정책의 경계를 유지</td>
+</tr>
+<tr>
+<td>입력과 커서 잠금에 공통 권한 사용</td>
+<td>설정창에서 마우스가 사라지는 충돌 감소</td>
+<td>메뉴마다 같은 owner로 등록·해제</td>
+</tr>
+<tr>
+<td>기존 Hotbar 사용</td>
+<td>재고가 두 군데에 나뉘는 문제 방지</td>
+<td>저장 데이터와 UI 이벤트 연결 유지</td>
+</tr>
+<tr>
+<td>설치 시작과 완료 시 조건 재검사</td>
+<td>1초 동안 칸·장애물·재고가 바뀔 수 있음</td>
+<td>재고 제거 성공 시에만 실물 유지</td>
+</tr>
+<tr>
+<td>라운드 수명과 재고 분리</td>
+<td>설치한 덫만 지우고 미사용 물건은 보존</td>
+<td>프리팹 에셋에 Destroy 호출 금지</td>
+</tr>
+<tr>
+<td>기존 메타·GUID 보존</td>
+<td>팀원 PC의 Missing 참조 방지</td>
+<td>파일과 meta를 짝으로 관리, 재발급으로 해결하지 않기</td>
+</tr>
+</tbody></table>
+<h2 id="c1-s10">처음 읽을 때의 순서</h2>
+<ol>
+<li>이 문서의 조작 규칙에서 실제 행동을 먼저 이해합니다.</li>
+<li>고칠 기능의 F번호를 고릅니다. 예를 들어 덫 시간은 F10입니다.</li>
+<li>해당 장에서 <strong>담당 파일 → 인스펙터 값 → 코드 흐름 → 확인 사례</strong> 순서로 읽습니다.</li>
+<li>이름을 모르면 <a href="07_SCRIPT_INDEX.md">스크립트 색인</a>에서 파일명이나 클래스명을 찾습니다.</li>
+<li>왜 이렇게 바뀌었는지는 <a href="06_HISTORY.md">작업 이력</a>과 원본 로그를 대조합니다.</li>
+<li>수정 전후에 <a href="08_REVIEW_AND_VALIDATION.md">검토·검증 안내</a>의 해당 사례를 확인합니다.</li>
+</ol>
+<h2 id="c1-s11">쉬운 용어표</h2>
+<table>
+<thead>
+<tr>
+<th>용어</th>
+<th>뜻과 이 프로젝트의 예</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>클래스</td>
+<td>한 가지 역할의 설계도. PlacementHold는 유지 시간 계산 담당</td>
+</tr>
+<tr>
+<td>인스턴스</td>
+<td>설계도로 실제 만든 물건. 바닥에 설치한 덫 한 개</td>
+</tr>
+<tr>
+<td>컴포넌트</td>
+<td>Unity 오브젝트에 붙이는 기능. Rigidbody, TrapPlacement</td>
+</tr>
+<tr>
+<td>인터페이스</td>
+<td>다른 담당자에게 요청할 수 있는 기능의 약속. IPrimaryAction</td>
+</tr>
+<tr>
+<td>이벤트 / 구독</td>
+<td>일이 일어났다고 알림 / 그 알림을 듣기로 연결. OnSlotChanged</td>
+</tr>
+<tr>
+<td>직렬화</td>
+<td>값을 파일에 저장할 수 있는 형태로 기록. Inspector의 참조와 수치</td>
+</tr>
+<tr>
+<td>프리팹</td>
+<td>여러 번 생성할 수 있는 오브젝트 원본</td>
+</tr>
+<tr>
+<td>프리팹 변형</td>
+<td>원본을 이어받고 차이만 저장한 에셋. Trap_Inventory</td>
+</tr>
+<tr>
+<td>오버라이드</td>
+<td>이 씬의 인스턴스에서 원본과 다르게 저장한 값</td>
+</tr>
+<tr>
+<td>ScriptableObject</td>
+<td>오브젝트 행동 대신 공유할 자료를 저장하는 에셋. TrapItem</td>
+</tr>
+<tr>
+<td>GUID</td>
+<td>Unity가 에셋을 찾을 때 쓰는 고유 식별자. 파일 이름과 다름</td>
+</tr>
+<tr>
+<td>meta</td>
+<td>GUID와 가져오기 설정이 들어 있는 짝 파일</td>
+</tr>
+<tr>
+<td>Collider</td>
+<td>물체의 충돌 범위. 겉모양 메시와 다를 수 있음</td>
+</tr>
+<tr>
+<td>Rigidbody</td>
+<td>질량·중력·속도 등 기본 물리 처리를 연결하는 컴포넌트</td>
+</tr>
+<tr>
+<td>Trigger</td>
+<td>통과하면서 감지 알림을 받을 수 있는 충돌 영역</td>
+</tr>
+<tr>
+<td>Raycast</td>
+<td>선을 쏘아 무엇을 먼저 만나는지 검사하는 기능</td>
+</tr>
+<tr>
+<td>히트스캔</td>
+<td>발사 순간 선으로 명중 판정. 실제 날아가는 탄환 오브젝트가 아님</td>
+</tr>
+<tr>
+<td>bounds</td>
+<td>외형 전체를 감싸는 상자. 회전한 복잡한 모양을 정확히 따라가는 표면은 아님</td>
+</tr>
+<tr>
+<td>스키닝</td>
+<td>본이 움직일 때 각 정점이 얼마나 따라갈지 연결하는 것</td>
+</tr>
+<tr>
+<td>Animator</td>
+<td>상태와 매개변수에 따라 클립을 재생·혼합하는 Unity 기능</td>
+</tr>
+<tr>
+<td>회귀 검사</td>
+<td>고친 기능 외에 원래 되던 기능도 여전히 되는지 확인</td>
+</tr>
+<tr>
+<td>해시</td>
+<td>파일 내용의 지문. 같은지 비교하기 위한 값</td>
+</tr>
+</tbody></table>
+<footer><a href="#chapter-0" data-chapter="0">목차로 돌아가기</a><span>기준 2026.10.14 · 6b8bafde</span></footer></article><article data-index="2" data-file="02_MOTION_CAMERA.md" hidden><div class="article-tools"><a href="02_MOTION_CAMERA.md">Markdown 원본</a><button onclick="window.print()">인쇄</button></div><h1 id="c2-s0">입력·이동·카메라·애니메이션 기술문서</h1>
+<p>문서 ID: <code>PD-02</code> · 기능 ID: <code>F01</code>~`F04` · 코드 확인일: 2026-10-14</p>
+<p>이 문서는 현재 파일을 읽어 확인한 구현을 설명합니다. 문서 작성 과정에서는 게임 코드, 씬, 메타 파일을 변경하지 않았으며 새 플레이 검사를 실행하지 않았습니다. 아래의 검사 절차는 <strong>앞으로 재검사할 방법</strong>이며 이번 문서 작업의 실행 성공 기록이 아닙니다. 과거 작업 로그의 통과 기록도 현재 플레이 상태의 보증으로 바꾸어 해석하지 않습니다.</p>
+<p>대상은 <code>Assets/02Scripts/01Player</code>의 Core·Input·Movement·Camera·Animation과 해당 도메인 규칙입니다. 씬에 저장된 값은 C# 파일에 적힌 기본값과 다를 수 있습니다. 아래 표에서 ‘기본값’은 <strong>스크립트가 처음 생성될 때의 값</strong>을 뜻하며 현재 씬 값을 단정하지 않습니다. 씬 연결표는 전체 문서의 적용 현황을 함께 보세요.</p>
+<h2 id="c2-s1">1. 먼저 이해할 구조</h2>
+<p>키보드는 ‘앞으로 가고 싶다’는 요청을 만듭니다. 이동 규칙은 걷기인지 달리기인지를 결정합니다. Unity의 Rigidbody는 실제 위치를 움직이고, Animator는 본의 자세를 바꿉니다. 카메라는 이 둘을 지켜보는 별도 기능입니다.</p>
+<p>예를 들어 벽 앞에서 W를 누르면 ‘걷고 싶다’는 요청은 계속 있지만 충돌 때문에 실제 위치는 움직이지 않을 수 있습니다. 현재 <code>IsMoving</code>과 대기·걷기·달리기 선택은 <strong>실제 속도가 아니라 입력 의도</strong>를 사용합니다. 따라서 벽에 막혀도 걷기 모션이 나올 수 있고 카메라는 이동 중 회전 규칙을 사용할 수 있습니다. 이것은 현재 코드에서 확인되는 설계이며 ‘실제 이동 속도를 읽는다’고 설명하면 틀립니다.</p>
+<pre><code class="language-mermaid">flowchart LR
+    Device[키보드·마우스] --&gt; Permission[GameplayInput: 입력 허용 확인]
+    Permission --&gt; Input[입력 값 만들기]
+    Input --&gt; Controller[PlayerController: 실행 순서 연결]
+    Controller --&gt; Policy[이동·점프 규칙]
+    Policy --&gt; Physics[PlayerMovement: Rigidbody에 적용]
+    Policy --&gt; Animation[PlayerAnimation: Animator 매개변수]
+    Controller --&gt; Motion[IMotionState: 이동 의도 공개]
+    Motion --&gt; Orbit[카메라 수평 회전 제한]
+</code></pre>
+<p>용어를 쉬운 말로 바꾸면 다음과 같습니다.</p>
+<table>
+<thead>
+<tr>
+<th>용어</th>
+<th>뜻</th>
+<th>이 프로젝트의 예</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>정책·규칙</td>
+<td>무엇을 할지 결정하는 계산</td>
+<td>조준 중에는 달리기 요청을 끄기</td>
+</tr>
+<tr>
+<td>연결부</td>
+<td>규칙의 결과를 Unity 기능으로 실행하는 코드</td>
+<td>Rigidbody 속도를 쓰는 <code>PlayerMovement</code></td>
+</tr>
+<tr>
+<td>인터페이스</td>
+<td>서로 주고받을 내용만 적은 작은 약속</td>
+<td><code>IMotionState</code>의 <code>IsMoving</code> 하나</td>
+</tr>
+<tr>
+<td>상태</td>
+<td>지금 어느 단계인지 나타내는 이름</td>
+<td>Ready → Anticipation → Airborne → Landing</td>
+</tr>
+<tr>
+<td>프레임</td>
+<td>화면이나 물리를 한 번 갱신하는 단위</td>
+<td><code>Update</code>는 화면 갱신, <code>FixedUpdate</code>는 일정한 물리 간격</td>
+</tr>
+<tr>
+<td>직렬화 값</td>
+<td>Unity가 씬·프리팹에 저장해 둔 값</td>
+<td>Inspector의 걷기 속도</td>
+</tr>
+<tr>
+<td>혼합·블렌드</td>
+<td>한 자세에서 다른 자세로 조금씩 바꾸기</td>
+<td>점프 착지에서 걷기로 0.15초 동안 전환</td>
+</tr>
+</tbody></table>
+<h2 id="c2-s2">2. 파일별 책임과 추적표</h2>
+<p>이 표의 링크는 문서가 프로젝트의 <code>PlayerDocumentation</code> 폴더에 있을 때를 기준으로 합니다. 줄 번호는 확인일의 파일 기준이며 이후 편집하면 달라질 수 있습니다. 줄 번호와 함수 이름을 함께 이용하세요.</p>
+<table>
+<thead>
+<tr>
+<th>기능</th>
+<th>파일</th>
+<th>주요 형식·함수와 줄</th>
+<th>맡은 일</th>
+<th>직접 하지 않는 일</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>공통</td>
+<td><a href="../Assets/02Scripts/01Player/Core/PlayerController.cs">Core/PlayerController.cs</a></td>
+<td><code>EnsureRuntimeServices</code> 50, <code>Update</code> 63, <code>FixedUpdate</code> 82</td>
+<td>입력·이동·점프·Animator 서비스를 연결하고 실행</td>
+<td>접지 검사 세부 계산, 키별 명령 결정</td>
+</tr>
+<tr>
+<td>F01</td>
+<td><a href="../Assets/02Scripts/01Player/Input/PlayerInput.cs">Input/PlayerInput.cs</a></td>
+<td><code>PlayerInputFrame</code> 5, <code>IPlayerInputSource</code> 25, <code>KeyboardInput.Read</code> 36</td>
+<td>WASD·Shift·Space를 이동 요청 값으로 바꿈</td>
+<td>Rigidbody 이동</td>
+</tr>
+<tr>
+<td>F01</td>
+<td><a href="../Assets/02Scripts/01Player/Input/GameplayInput.cs">Input/GameplayInput.cs</a></td>
+<td><code>StateAllowsGameplay</code> 12, <code>SetBlocked</code> 29</td>
+<td>게임 상태·메뉴·포커스·커서 조건을 합침</td>
+<td>커서 잠금 값을 직접 쓰기</td>
+</tr>
+<tr>
+<td>F01</td>
+<td><a href="../Assets/02Scripts/01Player/Domain/InputPermission.cs">Domain/InputPermission.cs</a></td>
+<td><code>AllowsGameplay</code> 8, <code>SetBlocked</code> 11</td>
+<td>여러 메뉴의 차단 요청 보관</td>
+<td>Unity 메뉴 객체 찾기</td>
+</tr>
+<tr>
+<td>F01</td>
+<td><a href="../Assets/02Scripts/01Player/Input/CombatInput.cs">Input/CombatInput.cs</a></td>
+<td><code>InputActivationGate</code> 25, <code>CombatInput.Read</code> 59</td>
+<td>우클릭 유지·좌클릭 새 누름 읽기, 재활성화 첫 클릭 제외</td>
+<td>산탄·명중 계산</td>
+</tr>
+<tr>
+<td>F01</td>
+<td><a href="../Assets/02Scripts/01Player/Input/InteractionInput.cs">Input/InteractionInput.cs</a></td>
+<td><code>IInteractionInputSource</code> 4, <code>Read</code> 16</td>
+<td>좌클릭 누름·유지, 숫자 1 누름을 손 명령으로 바꿈</td>
+<td>F 인벤토리 저장·덫 설치 구현</td>
+</tr>
+<tr>
+<td>F02</td>
+<td><a href="../Assets/02Scripts/01Player/Domain/MovementPolicy.cs">Domain/MovementPolicy.cs</a></td>
+<td><code>MovementIntent</code> 2, <code>MovementSettings</code> 19, <code>MovementPolicy</code> 44</td>
+<td>엔진 벡터 없이 이동 요청·설정·상태 결정</td>
+<td>실제 충돌 처리</td>
+</tr>
+<tr>
+<td>F02</td>
+<td><a href="../Assets/02Scripts/01Player/Movement/PlayerMovement.cs">Movement/PlayerMovement.cs</a></td>
+<td><code>Apply</code> 17, <code>GetDirection</code> 42</td>
+<td>카메라 기준 방향·가속·회전·수직 속도를 Rigidbody에 적용</td>
+<td>키보드 읽기, Animator 재생</td>
+</tr>
+<tr>
+<td>F02</td>
+<td><a href="../Assets/02Scripts/01Player/Movement/StepSettings.cs">Movement/StepSettings.cs</a></td>
+<td><code>StepSettings</code> 5</td>
+<td>턱 높이·거리·상승 속도·경사·레이어 설정</td>
+<td>스스로 이동시키기</td>
+</tr>
+<tr>
+<td>F02</td>
+<td><a href="../Assets/02Scripts/01Player/Movement/StepSolver.cs">Movement/StepSolver.cs</a></td>
+<td><code>IStepSolver</code> 3, <code>TryGetVerticalSpeed</code> 32</td>
+<td>턱 위에 올라갈 공간과 높이를 확인해 상승 속도 제안</td>
+<td>Rigidbody 속도 직접 변경</td>
+</tr>
+<tr>
+<td>F03</td>
+<td><a href="../Assets/02Scripts/01Player/Domain/IMotionState.cs">Domain/IMotionState.cs</a></td>
+<td><code>IMotionState</code> 2</td>
+<td>이동 의도 여부 하나만 공개</td>
+<td>플레이어 전체 구현 공개</td>
+</tr>
+<tr>
+<td>F03</td>
+<td><a href="../Assets/02Scripts/01Player/Domain/OrbitPolicy.cs">Domain/OrbitPolicy.cs</a></td>
+<td><code>Evaluate</code> 28, <code>Reset</code> 50</td>
+<td>이동 중 360도·정지 중 제한 각도 계산</td>
+<td>Cinemachine 객체 수정</td>
+</tr>
+<tr>
+<td>F03</td>
+<td><a href="../Assets/02Scripts/01Player/Camera/CameraCursorLock.cs">Camera/CameraCursorLock.cs</a></td>
+<td><code>Update</code> 30, <code>RefreshPermission</code> 56, <code>SetLocked</code> 70</td>
+<td>실제 커서 잠금·표시와 카메라 입력 활성화</td>
+<td>UI 버튼 동작</td>
+</tr>
+<tr>
+<td>F03</td>
+<td><a href="../Assets/02Scripts/01Player/Camera/CameraOrbitLimit.cs">Camera/CameraOrbitLimit.cs</a></td>
+<td><code>Update</code> 37, <code>OnDisable</code> 52</td>
+<td>OrbitPolicy 결과를 Cinemachine 수평 축에 적용·복구</td>
+<td>상하 회전 범위 변경</td>
+</tr>
+<tr>
+<td>F03</td>
+<td><a href="../Assets/02Scripts/01Player/Camera/AimZoom.cs">Camera/AimZoom.cs</a></td>
+<td><code>Update</code> 34, <code>OnDisable</code> 45</td>
+<td>조준 상태에 따라 Cinemachine 시야각 변경·복구</td>
+<td>명중률·산탄 판정</td>
+</tr>
+<tr>
+<td>F04</td>
+<td><a href="../Assets/02Scripts/01Player/Domain/JumpPolicy.cs">Domain/JumpPolicy.cs</a></td>
+<td><code>JumpFrame</code> 13, <code>JumpPolicy.Step</code> 63</td>
+<td>준비·공중·착지 단계와 버퍼·클립 시간 선택</td>
+<td>중력 직접 계산·위치 이동</td>
+</tr>
+<tr>
+<td>F04</td>
+<td><a href="../Assets/02Scripts/01Player/Movement/PlayerJump.cs">Movement/PlayerJump.cs</a></td>
+<td><code>Settings</code> 8, <code>Step</code> 41, <code>HasSupport</code> 56</td>
+<td>바닥 검사와 높이에 맞는 최초 상승 속도 계산</td>
+<td>Rigidbody에 직접 속도 쓰기</td>
+</tr>
+<tr>
+<td>F04</td>
+<td><a href="../Assets/02Scripts/01Player/Animation/PlayerAnimation.cs">Animation/PlayerAnimation.cs</a></td>
+<td>생성자 28, <code>Apply</code> 54, <code>ApplyLegacyController</code> 71</td>
+<td>이동·점프 값을 Animator에 전달</td>
+<td>기본 모션의 본 곡선을 코드로 재작성</td>
+</tr>
+<tr>
+<td>F04</td>
+<td><a href="../Assets/02Scripts/01Player/Animation/ShotgunPose.cs">Animation/ShotgunPose.cs</a></td>
+<td><code>Tick</code> 42, <code>Apply</code> 94, <code>ResetPose</code> 131</td>
+<td>사격 자세의 Animator 값과 실제 조준 방향 보정</td>
+<td>손 입력, 피해·적 체력 처리</td>
+</tr>
+</tbody></table>
+<p>추가로 읽은 연결 근거는 <a href="../Assets/02Scripts/01Player/Domain/CombatPolicy.cs">CombatPolicy.cs</a>의 <code>IAimState</code>·<code>RestrictMovement</code>, <a href="../Assets/02Scripts/01Player/Equipment/ShotgunEquipment.cs">ShotgunEquipment.cs</a>의 <code>LateUpdate</code>, <a href="../Assets/02Scripts/01Player/Editor/Setup/InteractionSettings.cs">InteractionSettings.cs</a>의 무마찰 연결, <a href="../Assets/04Prefabs/Player/Animations/PlayerJump.controller">PlayerJump.controller</a>, <a href="../Assets/03Sprites/Player/Animations/Shotgun_Fire.anim">Shotgun_Fire.anim</a>, <a href="../Assets/02Scripts/01Player/Camera/CatCameraLook.inputactions">CatCameraLook.inputactions</a>입니다. 장비·상호작용의 전체 동작은 해당 기능 문서에서 설명합니다.</p>
+<h2 id="c2-s3">3. F01 — 입력과 조작 권한</h2>
+<h3 id="c2-s4">3.1 목적과 현재 규칙</h3>
+<p>메뉴를 조작하는 마우스 클릭이 물건 집기나 총 발사로 동시에 사용되지 않도록 합니다. ‘마우스가 보인다’와 ‘게임 조작이 가능하다’를 여러 스크립트가 제각각 결정하지 않게 공통 확인 경로를 둡니다.</p>
+<p><code>GameplayInput.IsEnabled</code>가 true이려면 다음 조건을 모두 만족해야 합니다.</p>
+<ol>
+<li>GameManager가 없거나 상태가 <code>Playing</code> 또는 <code>RoundClear</code>여야 합니다.</li>
+<li>시간이 멈추지 않았어야 합니다. 기준은 <code>Time.timeScale &gt; 0</code>입니다.</li>
+<li>열린 메뉴 등에서 등록한 차단 요청이 없어야 합니다.</li>
+<li>Unity 게임 창이 포커스를 가지고 있어야 합니다.</li>
+<li>커서가 <code>Locked</code>여야 합니다.</li>
+<li>메뉴를 닫거나 잠금을 복구한 바로 그 프레임이 지나야 합니다.</li>
+</ol>
+<p>따라서 결과 표시 전 <code>RoundClear</code> 구간은 공통 입력에서 허용합니다. 하지만 덫 설치처럼 더 좁은 상태 조건을 가진 기능은 따로 금지될 수 있습니다. 이 문서의 공통 허용과 모든 개별 기능의 허용을 같은 뜻으로 해석하지 않습니다. 근거: <code>GameplayInput.cs</code> 12~26행.</p>
+<p>기본 이동 입력은 WASD이고 Shift는 달리기 요청, Space는 새로 눌렀을 때만 점프 요청입니다. <code>InteractionInput</code>은 좌클릭·숫자 1을 읽고, <code>CombatInput</code>은 좌클릭·우클릭을 읽습니다. 같은 버튼을 읽는다고 동시에 실행하는 것은 아닙니다. 장비·덫 선택·손 상태에 따른 실제 사용 결정은 각각의 상호작용/전투 연결부가 담당합니다.</p>
+<h3 id="c2-s5">3.2 실제 호출 순서</h3>
+<pre><code class="language-text">메뉴 열기 → GameplayInput.SetBlocked(메뉴 자신, true)
+  → InputPermission이 해당 메뉴를 차단 목록에 추가
+  → PermissionChanged 이벤트
+  → CameraCursorLock이 커서를 해제
+  → 기본 입력 공급자들이 입력을 받지 않음
+
+메뉴 닫기 → SetBlocked(같은 메뉴, false)
+  → 다른 차단자가 없을 때만 조작 허용
+  → 잠금 복구 프레임의 클릭/점프는 버림
+  → 다음 정상 입력부터 게임 명령으로 사용
+</code></pre>
+<p>차단 목록은 <code>HashSet&lt;object&gt;</code>입니다. 여러 사람이 문을 잠가 놓았다고 생각하면 쉽습니다. A 메뉴가 자기 자물쇠를 제거해도 B 메뉴의 자물쇠는 남습니다. ‘메뉴 하나가 닫혔으므로 전부 입력 허용’처럼 다른 메뉴의 권한을 지우지 않습니다.</p>
+<h3 id="c2-s6">3.3 코드 읽기</h3>
+<p>출처: <code>Domain/InputPermission.cs</code> 8~14행.</p>
+<pre><code class="language-csharp">public bool AllowsGameplay(bool stateAllowsGameplay, bool timeRunning)
+    =&gt; stateAllowsGameplay &amp;&amp; timeRunning &amp;&amp; blockers.Count == 0;
+
+public bool SetBlocked(object owner, bool blocked)
+{
+    if (owner == null) return false;
+    return blocked ? blockers.Add(owner) : blockers.Remove(owner);
+}
+</code></pre>
+<ul>
+<li>첫 줄은 게임 상태와 시간 흐름을 받아 판단하겠다는 약속입니다.</li>
+<li><code>&amp;&amp;</code>는 ‘그리고’입니다. 세 조건 중 하나라도 아니면 조작을 막습니다.</li>
+<li><code>owner</code>는 ‘누가 막았는지’를 나타내는 표입니다. 보통 메뉴 컴포넌트 자신을 넘깁니다.</li>
+<li>주인이 없으면 등록하지 않습니다. 닫을 때 누구의 요청을 해제할지 알 수 없기 때문입니다.</li>
+<li><code>blocked</code>가 true이면 추가하고 false이면 그 주인의 요청만 제거합니다.</li>
+</ul>
+<p>출처: <code>Input/CombatInput.cs</code> 30~41행 중 핵심 부분.</p>
+<pre><code class="language-csharp">if (!enabled)
+{
+    Reset();
+    return false;
+}
+if (!wasEnabled) enabledSinceFrame = frame;
+wasEnabled = true;
+return frame &gt; enabledSinceFrame;
+</code></pre>
+<ul>
+<li>입력이 꺼져 있으면 이전 상태를 비웁니다.</li>
+<li>처음 켜진 프레임 번호를 기억합니다.</li>
+<li>그 프레임보다 뒤에서만 새 클릭을 허용합니다.</li>
+<li>같은 프레임에 여러 번 읽더라도 잠금 복구용 클릭이 두 번째 읽기에서 발사로 바뀌지 않습니다.</li>
+</ul>
+<p>출처: <code>Input/PlayerInput.cs</code> 18~21행.</p>
+<pre><code class="language-csharp">Vector2 limited = Vector2.ClampMagnitude(move, 1);
+Intent = new MovementIntent(limited.x, limited.y, sprint);
+JumpPressed = jumpPressed &amp;&amp; !inputBlocked;
+InputBlocked = inputBlocked;
+</code></pre>
+<ul>
+<li>대각선 W+D를 누를 때 벡터 길이가 1보다 커지지 않게 자릅니다. 대각선만 더 빨라지는 문제를 막습니다.</li>
+<li>엔진 벡터를 순수한 숫자 두 개와 달리기 여부로 바꿉니다.</li>
+<li>입력 차단 중에는 점프 요청을 보존하지 않습니다.</li>
+<li>‘아무 키도 안 누름’과 ‘메뉴 때문에 입력을 못 받음’을 별도로 기록합니다.</li>
+</ul>
+<h3 id="c2-s7">3.4 수정 위치와 경계조건</h3>
+<ul>
+<li>키를 바꾸려면 <code>KeyboardInput.Read</code>, <code>CombatInput.Read</code>, <code>InteractionInput.Read</code> 중 해당 기능의 입력 부분을 봅니다. 카메라 Look은 별도 Input Action을 사용합니다.</li>
+<li>게임패드나 자동 검사용 입력은 <code>IPlayerInputSource.Read()</code>를 구현해 <code>PlayerController.SetInputSource(...)</code>로 연결할 수 있습니다. <code>null</code>은 기본 키보드로 복귀합니다.</li>
+<li><strong>대체 입력 공급자도 메뉴·기절 등 차단 조건을 책임져야 합니다.</strong> PlayerController는 기본 입력과 다른 모든 공급자에 전역 차단을 강제로 덧씌우지 않습니다. 테스트 입력은 의도적으로 기본 장치를 우회할 수 있습니다.</li>
+<li>UI가 차단을 등록하고 해제하지 않으면 게임 입력이 계속 막힐 수 있습니다. 닫기뿐 아니라 비활성화·파괴 경로에서도 동일한 owner로 해제하는지 확인합니다.</li>
+<li><code>GameplayInput</code>은 Unity와 GameManager에 연결된 정적 코드입니다. InputPermission까지 Unity 독립적인 것은 맞지만 전체 입력 계층을 그대로 다른 엔진에 복사할 수 있다는 뜻은 아닙니다.</li>
+</ul>
+<h3 id="c2-s8">3.5 검증 방법과 SOLID 검토</h3>
+<table>
+<thead>
+<tr>
+<th>검사</th>
+<th>실행할 일</th>
+<th>기대 결과</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>메뉴 중 오작동</td>
+<td>ESC로 설정창을 열고 버튼/슬라이더 클릭</td>
+<td>커서가 보이고 물건 집기·발사·점프가 발생하지 않음</td>
+</tr>
+<tr>
+<td>복귀 클릭 소비</td>
+<td>잠금이 풀린 상태에서 게임 화면을 클릭</td>
+<td>잠금 복구에 사용한 클릭으로 총이 발사되지 않음</td>
+</tr>
+<tr>
+<td>다중 차단</td>
+<td>두 UI가 차단한 뒤 하나만 닫음</td>
+<td>나머지 UI가 열린 동안 입력 차단 유지</td>
+</tr>
+<tr>
+<td>창 포커스</td>
+<td>키를 누르다 Alt+Tab 후 복귀</td>
+<td>이전 점프 예약·손 입력이 임의로 이어지지 않음</td>
+</tr>
+<tr>
+<td>대각선 속도</td>
+<td>평지에서 W와 W+D의 이동 거리 비교</td>
+<td>같은 시간에 대각선만 빨라지지 않음</td>
+</tr>
+</tbody></table>
+<p>좋은 점: 권한 계산과 실제 Cursor 제어가 나뉘어 있고, 필요한 입력만 <code>Reset()</code> 계약을 구현합니다. 이는 단일 책임(SRP)과 작은 인터페이스(ISP)에 맞습니다. 입력 공급자를 바꿀 수 있어 기존 이동 계산을 고치지 않고 확장할 수 있습니다(OCP).</p>
+<p>현재 제한: <code>InputActivationGate</code>와 공통 초기화 인터페이스가 이름상 전투 전용처럼 보이는 <code>CombatInput.cs</code> 안에 함께 있습니다. 이동·상호작용도 사용하는 코드이므로 파일명만으로 찾기 쉽지 않습니다. 이것은 가독성 개선 후보이며 이번 문서 작업에서 파일을 나누거나 이름을 바꾸지 않았습니다. 또한 전역 정적 입력 경로는 로컬 1인 플레이에 맞춰져 있어 서로 독립적인 다중 플레이어 입력을 그대로 지원한다고 보장할 수 없습니다.</p>
+<h2 id="c2-s9">4. F02 — 이동, 작은 턱 넘기, 무마찰</h2>
+<h3 id="c2-s10">4.1 목적과 현재 흐름</h3>
+<p>카메라를 돌린 뒤 W를 누르면 카메라가 보는 지면 방향으로 이동합니다. 걷기와 달리기 속도로 즉시 튀지 않고 현재 수평 속도에서 목표 속도로 가까워집니다. 낮은 턱은 넘을 수 있는 높이와 머리 위 공간을 확인한 뒤 조금씩 올라갑니다.</p>
+<p><code>PlayerController.Update</code>가 입력을 읽고 <code>FixedUpdate</code>가 실제 물리에 적용합니다. 화면 갱신과 물리 갱신의 횟수가 다를 수 있으므로 Space 누름은 <code>pendingJump</code>에 잠시 보관해 다음 물리 갱신에서 한 번만 사용합니다. 이 짧은 전달 보관과 뒤에서 설명할 ‘착지 전 0.15초 점프 버퍼’는 목적이 다른 두 단계입니다.</p>
+<pre><code class="language-text">PlayerController.FixedUpdate
+  → 이동 설정 묶음 만들기
+  → PlayerJump.Step으로 점프 상태 확인
+  → PlayerMovement.Apply
+      → 카메라 전방을 지면에 눕혀 이동 방향 만들기
+      → MovementPolicy로 걷기/달리기 속도 선택
+      → 가속 제한 안에서 수평 속도 변경
+      → 점프면 이륙 속도, 아니면 StepSolver의 턱 상승 결과 사용
+      → Rigidbody.linearVelocity와 MoveRotation에 적용
+</code></pre>
+<h3 id="c2-s11">4.2 코드 읽기</h3>
+<p>출처: <code>Movement/PlayerMovement.cs</code> 19~34행 중 이동 부분.</p>
+<pre><code class="language-csharp">Vector3 direction = GetDirection(new Vector2(intent.Horizontal, intent.Forward), view);
+Vector3 target = direction * MovementPolicy.SelectSpeed(intent, settings);
+Vector3 velocity = body.linearVelocity;
+Vector3 horizontal = Vector3.MoveTowards(
+    new Vector3(velocity.x, 0, velocity.z), target, settings.Acceleration * deltaTime);
+</code></pre>
+<ul>
+<li>첫 줄은 ‘W’라는 키 의미를 카메라 기준 실제 지면 방향으로 바꿉니다.</li>
+<li>둘째 줄은 방향에 걷기·달리기 속도를 곱해 목표 속도를 만듭니다.</li>
+<li>셋째 줄은 현재 물리 속도를 읽습니다.</li>
+<li>마지막 두 줄은 수평 속도만 목표에 가깝게 바꿉니다. 위아래 속도를 0으로 만들지 않기 때문에 중력·점프를 별도로 유지할 수 있습니다.</li>
+</ul>
+<p>같은 파일 25~34행의 수직 처리입니다.</p>
+<pre><code class="language-csharp">float vertical = velocity.y;
+if (jump.Active)
+{
+    steps.Reset();
+    if (jump.TakeOff) vertical = launchSpeed;
+}
+else if (steps.TryGetVerticalSpeed(horizontal, direction, deltaTime, out float stepSpeed))
+    vertical = stepSpeed;
+body.linearVelocity = new Vector3(horizontal.x, vertical, horizontal.z);
+</code></pre>
+<ul>
+<li>현재 수직 속도를 먼저 보존합니다.</li>
+<li>점프 단계가 진행 중이면 남은 턱 상승 목표를 취소합니다.</li>
+<li>이륙하는 딱 한 번에만 최초 상승 속도를 넣습니다. 계속 위로 떠오르는 힘을 매 프레임 넣지 않습니다.</li>
+<li>점프 중이 아닐 때만 턱 계산에 수직 속도 보정을 맡깁니다.</li>
+<li>계산된 수평·수직 값을 한 곳에서 Rigidbody에 씁니다. 서로 다른 기능이 같은 속도를 덮어쓰는 일을 줄입니다.</li>
+</ul>
+<h3 id="c2-s12">4.3 작은 턱을 넘는 검사 순서</h3>
+<p><code>StepSolver.TryGetVerticalSpeed</code>는 다음을 확인합니다.</p>
+<ol>
+<li>턱 기능이 켜져 있고 입력과 수평 속도가 있는지 봅니다. 현재 지원 형태는 세로 CapsuleCollider(<code>direction == 1</code>)입니다.</li>
+<li>캐릭터 발 아래에 실제로 설 수 있는 면이 있는지 확인합니다. 빠르게 상승·낙하 중이면 새 턱 넘기를 시작하지 않습니다.</li>
+<li>발 앞에 낮은 장애물이 있는지 먼저 검사합니다. 없으면 더 비싼 공간 검사는 하지 않습니다.</li>
+<li>장애물 뒤쪽 윗면을 내려다보며 높이와 경사를 확인합니다.</li>
+<li>위로 올라갈 공간, 앞으로 갈 공간, 최종 도착 위치의 몸 공간을 검사합니다.</li>
+<li>통과하면 목표 발 높이를 저장하고 최대 상승 속도 안에서 조금씩 올립니다.</li>
+<li>방향을 크게 바꾸거나 제한 시간이 지나거나 머리 위가 막히면 상승을 중단합니다.</li>
+</ol>
+<p>높이만 낮다고 무조건 벽을 통과시키는 방식이 아닙니다. 턱 위의 공간까지 확인합니다. 검사 배열은 24개씩 재사용합니다. 결과가 배열을 가득 채울 만큼 복잡한 곳에서는 누락 위험 때문에 검사를 실패로 처리합니다. 이는 안전한 거부 방식이지만, 충돌체가 매우 많은 지점에서는 넘을 수 있어 보이는 턱도 거절될 수 있다는 한계가 있습니다. 근거: <code>StepSolver.cs</code> 35<del>106, 131</del>162행.</p>
+<h3 id="c2-s13">4.4 마찰은 스크립트의 가짜 물리가 아님</h3>
+<p><a href="../Assets/04Prefabs/Player/Physics/Player_NoFriction.physicMaterial">Player_NoFriction.physicMaterial</a>에는 정지 마찰 0, 움직이는 중의 마찰 0이 저장되어 있습니다. <a href="../Assets/02Scripts/01Player/Editor/Setup/InteractionSettings.cs">InteractionSettings.cs</a> 19~31행은 기존 물리 재질이 <code>Multiply</code> 조합인지 확인하고 플레이어 Rigidbody에 속한 비 Trigger 충돌체에 연결합니다. Rigidbody의 <code>linearDamping</code>도 0으로 연결합니다.</p>
+<p>마찰 0과 이동 감속은 다릅니다. 바닥이 붙잡는 힘은 줄여도, <code>PlayerMovement</code>는 키를 떼면 목표 수평 속도 0으로 가까워지도록 계산합니다. 따라서 무마찰이라고 얼음 위처럼 끝없이 미끄러져야 하는 것은 아닙니다. 상대 충돌체의 재질 조합 방식도 최종 접촉 마찰에 영향을 줄 수 있으므로, 실제 씬에서는 양쪽 재질을 같이 확인해야 합니다.</p>
+<h3 id="c2-s14">4.5 Inspector에서 조절하는 법</h3>
+<p>대상 Player의 <code>PlayerController</code>를 선택하고 다음 필드를 확인합니다.</p>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>코드 기본값</th>
+<th>바꾸면 달라지는 점</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>view</code></td>
+<td>미지정</td>
+<td>이동의 방향 기준. 비우면 월드 전방 사용</td>
+</tr>
+<tr>
+<td><code>walkSpeed</code> / <code>runSpeed</code></td>
+<td>1.6 / 3.4</td>
+<td>초당 이동할 월드 거리</td>
+</tr>
+<tr>
+<td><code>acceleration</code></td>
+<td>18</td>
+<td>속도가 목표에 따라붙는 빠르기. 작으면 출발·정지가 느림</td>
+</tr>
+<tr>
+<td><code>turnSpeed</code></td>
+<td>720</td>
+<td>1초에 돌 수 있는 최대 각도</td>
+</tr>
+<tr>
+<td><code>steps.maxHeight</code></td>
+<td>0.28</td>
+<td>넘을 최대 턱 높이. 0이면 끔</td>
+</tr>
+<tr>
+<td><code>steps.forwardReach</code></td>
+<td>0.12</td>
+<td>몸 앞에서 추가로 검사하는 거리</td>
+</tr>
+<tr>
+<td><code>steps.riseSpeed</code></td>
+<td>1.8</td>
+<td>턱을 오르는 최대 수직 속도</td>
+</tr>
+<tr>
+<td><code>steps.maxLandingSlope</code></td>
+<td>45도</td>
+<td>턱 윗면으로 인정할 경사 한계</td>
+</tr>
+<tr>
+<td><code>steps.solidLayers</code></td>
+<td>DefaultRaycastLayers</td>
+<td>지형 검사에 포함할 레이어</td>
+</tr>
+</tbody></table>
+<p><code>aimSource</code>가 활성화된 <code>IAimState</code>를 제공하면 조준 중 Shift 요청을 지워 걷게 합니다. 멈춰 있으면 대기입니다. 조준한다고 입력 없이 앞으로 이동시키지 않습니다. 조준/사격에서 카메라 쪽으로 몸을 돌릴지도 <code>WantsCameraFacing</code>으로 별도 받습니다.</p>
+<h3 id="c2-s15">4.6 경계조건, 검사, SOLID 검토</h3>
+<ul>
+<li>CapsuleCollider의 축·크기·부모 스케일과 Rigidbody 설정은 물리 검사의 전제입니다. 코드 기본값만 바꿔 모든 모델 비율을 자동 지원한다고 볼 수 없습니다.</li>
+<li><code>PlayerController.ResetRuntimeState()</code>는 입력·점프·턱 목표·애니메이션 캐시를 비웁니다. 플레이어 위치나 수평 속도를 임의로 원점/0으로 바꾸는 리스폰 함수는 아닙니다.</li>
+<li>이동 중 벽을 향해 계속 누르면 ‘이동 의도’가 남습니다. 실제 정지 여부에 따라 모션·카메라를 바꾸려면 별도 요구사항과 검증이 필요합니다.</li>
+</ul>
+<p>검사 순서는 평지 걷기 → 달리기 → 대각선 → 키 해제 감속 → 낮은 턱 → 최대 높이보다 높은 턱 → 머리 위가 낮은 턱 → 점프 도중 턱 접근입니다. 실제 지면 위치와 Rigidbody 속도를 함께 봅니다. <code>Tools &gt; Cat Player &gt; Play 모드 이동·턱·카메라 검증</code>은 기존 수동 검증 메뉴입니다. 해당 도구는 런타임 입력과 위치를 일시 조절하므로 작업 중 직접 조작과 동시에 실행하지 않습니다.</p>
+<p>좋은 점: 지형 검사는 <code>IStepSolver</code>, 실제 물리 쓰기는 <code>PlayerMovement</code>, 실행 순서는 <code>PlayerController</code>로 나뉩니다(SRP). 다른 턱 검사기를 연결할 수 있어 구현 교체 지점도 분명합니다(DIP/OCP). 다만 <code>IStepSolver</code>의 계약 자체는 <code>Vector3</code>를 사용하므로 엔진 독립 인터페이스가 아닙니다. <code>MovementPolicy</code>는 엔진을 바꾸어도 옮기기 쉽지만 물리·좌표 연결부는 교체해야 합니다.</p>
+<h2 id="c2-s16">5. F03 — 3인칭 카메라, 커서, 조준 확대</h2>
+<h3 id="c2-s17">5.1 카메라와 커서의 역할 구분</h3>
+<p>CinemachineCamera는 카메라 구도를 계산하고 Main Camera의 CinemachineBrain이 화면에 그 결과를 출력하는 구조입니다. 따라서 Main Camera를 손으로 회전시켜도 실행 중 Brain의 결과로 바뀔 수 있습니다. 구도는 실제로 연결된 Cinemachine의 Follow 대상·궤도·렌즈에서 조절해야 합니다. 이 문서 작업에서는 현재 씬의 모든 Transform 수치를 새로 측정하지 않았습니다.</p>
+<p><a href="../Assets/02Scripts/01Player/Camera/CatCameraLook.inputactions">CatCameraLook.inputactions</a>에는 <code>Camera/Look</code>이라는 Vector2 입력에 <code>&lt;Mouse&gt;/delta</code>가 연결되어 있습니다. 마우스의 ‘화면 위치’가 아니라 <strong>이번 프레임에 움직인 양</strong>을 읽습니다. 화면 중앙 포인터의 위치와 이 Look 입력은 다른 기능입니다.</p>
+<table>
+<thead>
+<tr>
+<th>담당</th>
+<th>조절 대상</th>
+<th>조절하지 않는 대상</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CameraCursorLock</td>
+<td>Cursor 잠금·표시, Cinemachine 입력 켜기/끄기</td>
+<td>카메라 거리·줌</td>
+</tr>
+<tr>
+<td>CameraOrbitLimit</td>
+<td>수평 회전 범위</td>
+<td>수직 각도·시야각</td>
+</tr>
+<tr>
+<td>AimZoom</td>
+<td>시야각(FOV)</td>
+<td>실제 캐릭터 스케일·산탄 계산</td>
+</tr>
+</tbody></table>
+<h3 id="c2-s18">5.2 정지 중 좌우 60도 제한</h3>
+<p><code>CameraOrbitLimit.motionSource</code>에는 <code>IMotionState</code>를 구현한 PlayerController를 연결합니다. 이동 의도가 있으면 수평 축 범위를 -180~180도로 하고 끝에서 반대편으로 이어 돌 수 있게 합니다. 멈추는 순간의 방향을 기억하고 그 기준에서 좌우 <code>stationaryHalfAngle</code>만 허용합니다. 기본값은 각각 60도입니다.</p>
+<p>출처: <code>OrbitPolicy.cs</code> 37~47행.</p>
+<pre><code class="language-csharp">if (!initialized || wasMoving)
+    stationaryCenter = Normalize(currentYaw);
+initialized = true;
+wasMoving = false;
+float halfAngle = Math.Max(0f, Math.Min(180f, stationaryHalfAngle));
+float offset = Normalize(currentYaw - stationaryCenter);
+float value = stationaryCenter + Math.Max(-halfAngle, Math.Min(halfAngle, offset));
+</code></pre>
+<ul>
+<li>아직 기준이 없거나 방금까지 이동했다면 현재 카메라 방향을 새 기준으로 저장합니다.</li>
+<li>이후 정지 중에는 기준을 계속 따라 움직이지 않도록 <code>wasMoving</code>을 false로 바꿉니다.</li>
+<li>설정 범위를 0~180도로 제한합니다.</li>
+<li>지금 각도와 기준의 차이를 -180~180도 범위로 정리합니다.</li>
+<li>허용 범위 밖의 각도는 끝값에 붙입니다. 캐릭터가 멈출 때 보고 있던 방향이 중심입니다.</li>
+</ul>
+<p><code>CameraOrbitLimit.Update</code>는 실행 순서 100으로 일반 입력 Update 뒤에 적용합니다. 기본 자동 중앙복귀(Recentering)는 이 제한을 적용하는 동안 끕니다. 컴포넌트를 끄면 시작 때 저장한 범위·중심·반복 회전·중앙복귀 설정을 되돌립니다. 이것은 에셋 파일을 복원하는 것이 아니라 실행 중 변경한 Cinemachine 축 설정을 정리하는 동작입니다.</p>
+<h3 id="c2-s19">5.3 ESC 설정창에서 마우스가 사라지던 문제를 피하는 현재 구조</h3>
+<p><code>CameraCursorLock</code>은 메뉴가 열려 있을 때의 잠금 요청을 거절합니다. 메뉴를 닫고 조작 권한이 다시 허용되면 잠금을 바로 같은 프레임에 쓰지 않고 예약합니다. ESC가 해제되고 요청 프레임 다음이 된 뒤에 잠급니다. Unity Editor도 ESC로 커서를 해제할 수 있기 때문에 같은 프레임에서 잠금·해제가 싸우지 않게 한 것입니다.</p>
+<p>출처: <code>CameraCursorLock.cs</code> 45~49행.</p>
+<pre><code class="language-csharp">if (capturePending)
+{
+    if (!GameplayInput.CanCaptureCursor) capturePending = false;
+    else if (Time.frameCount &gt; captureRequestedFrame &amp;&amp;
+             (keyboard == null || !keyboard.escapeKey.isPressed))
+        SetLocked(true);
+}
+</code></pre>
+<ul>
+<li>잠금을 예약해 두었을 때만 이 경로를 사용합니다.</li>
+<li>그 사이 다시 메뉴가 열리거나 창 포커스를 잃으면 예약을 취소합니다.</li>
+<li>ESC를 아직 누르고 있거나 예약한 그 프레임이면 기다립니다.</li>
+<li>조건이 맞을 때만 잠급니다. <code>SetLocked</code> 내부에서도 권한을 한 번 더 확인합니다.</li>
+</ul>
+<p>이 코드만으로 UI 클릭 전체가 작동하는 것은 아닙니다. UI에는 정상 EventSystem과 UI 입력 모듈, Raycast 대상, 버튼 연결도 있어야 합니다. 커서가 보이는데도 버튼이 작동하지 않으면 그 연결을 별도로 확인해야 합니다. 반대로 메뉴 표시 코드는 실제 Cursor 값을 직접 쓰지 않고 <code>GameplayInput.SetBlocked</code>로 권한만 요청하는 것이 현재 역할 분리입니다.</p>
+<h3 id="c2-s20">5.4 우클릭 조준 확대</h3>
+<p><code>AimZoom.aimSource</code>는 <code>IAimState.IsAiming</code>만 읽습니다. 켜질 때 기존 Cinemachine 시야각을 기억하고, 조준하면 설정 시야각으로 좁히며, 해제하면 원래 값으로 돌아갑니다. 기본 조준 시야각은 40도, 전환 시간은 0.16초입니다. 기본 시야각이 이미 40도보다 좁다면 줌 때문에 더 넓어지지 않습니다.</p>
+<p>출처: <code>AimZoom.cs</code> 37~42행.</p>
+<pre><code class="language-csharp">float target = aiming
+    ? Mathf.Min(originalFieldOfView, Mathf.Clamp(aimedFieldOfView, 1f, 179f))
+    : originalFieldOfView;
+float next = transitionSeconds &lt;= 0f ? target : Mathf.SmoothDamp(
+    virtualCamera.Lens.FieldOfView, target, ref zoomVelocity,
+    transitionSeconds, Mathf.Infinity, Time.unscaledDeltaTime);
+virtualCamera.Lens.FieldOfView = next;
+</code></pre>
+<ul>
+<li>조준 중이면 원래보다 같거나 좁은 시야각을 고릅니다.</li>
+<li>조준하지 않으면 처음 기억한 시야각을 고릅니다.</li>
+<li>전환 시간이 0이면 즉시 바꾸고, 아니면 조금씩 부드럽게 따라갑니다.</li>
+<li><code>unscaledDeltaTime</code>은 게임 시간 배율에 영향을 받지 않는 시간입니다. 메뉴 등으로 게임 시간이 멈출 때의 시각적 복귀와 관련됩니다.</li>
+<li>Main Camera에 직접 쓰지 않고 Cinemachine 렌즈에 결과를 씁니다.</li>
+</ul>
+<h3 id="c2-s21">5.5 수정법·검사·설계 리뷰</h3>
+<p>Inspector에서 구도는 Cinemachine의 Follow/Orbit 설정, 수평 제한은 <code>CameraOrbitLimit.stationaryHalfAngle</code>, 확대는 <code>AimZoom.aimedFieldOfView</code>와 <code>transitionSeconds</code>를 수정합니다. 포인터 위치를 움직여 카메라 구도 문제를 숨기지 않습니다. 현재 공통 설정 적용 분리 기록에서는 마우스 감도 UI 값을 카메라에 새로 연결하는 일은 별도 범위였습니다. 해당 슬라이더가 존재한다는 이유만으로 감도 연결까지 완료되었다고 단정하지 않습니다.</p>
+<p>검사는 다음처럼 구분합니다.</p>
+<ul>
+<li>이동 중 수평으로 한 바퀴 회전한 뒤 멈춰 좌우 끝을 확인합니다.</li>
+<li>다른 방향을 본 상태에서 다시 이동→정지하여 새 기준이 정지 순간으로 바뀌는지 봅니다.</li>
+<li>위아래 회전은 기존 수직 범위를 유지하는지 봅니다.</li>
+<li>ESC 열기→버튼 클릭/드래그→ESC 닫기 후 잠금 복구를 확인합니다.</li>
+<li>Alt+Tab으로 포커스를 잃었을 때 잠금이 강제로 되살아나지 않는지 봅니다.</li>
+<li>조준 줌·해제·장비 해제를 반복하고 Main Camera의 실제 화면이 자연스럽게 복귀하는지 봅니다.</li>
+</ul>
+<p>좋은 점: <code>OrbitPolicy</code>에는 Unity 코드가 없고, 카메라는 전체 플레이어 구현이 아니라 <code>IMotionState</code>·<code>IAimState</code>라는 작은 계약을 읽습니다(DIP/ISP). 커서 쓰기도 한 컴포넌트로 모았습니다(SRP). 현재 제한: <code>motionSource</code>·<code>aimSource</code>는 Inspector 연결을 위해 MonoBehaviour로 저장한 뒤 실행 중 인터페이스를 확인합니다. 잘못된 종류의 컴포넌트를 넣으면 자동으로 올바른 대상을 찾아 주지 않습니다. 연결 검사가 필요합니다. Cinemachine 전용 축·렌즈 코드는 다른 엔진에서 그대로 사용할 수 없습니다.</p>
+<h2 id="c2-s22">6. F04 — Animator, 점프 모션, 사격 자세와의 연결</h2>
+<h3 id="c2-s23">6.1 실제 이동과 모양 변형의 분리</h3>
+<p>이동·점프에는 두 가지 변화가 있습니다.</p>
+<ol>
+<li>캐릭터 전체가 바닥 위에서 이동하고 실제로 떠오르는 변화: Rigidbody가 담당합니다.</li>
+<li>몸이 눌리고 늘어나며 손·귀·꼬리의 자세가 바뀌는 변화: Animator가 클립의 본 곡선을 읽고, 스키닝된 메시가 본을 따라 변형됩니다.</li>
+</ol>
+<p><code>PlayerAnimation</code> 생성자는 <code>animator.applyRootMotion = false</code>로 설정합니다. 모션의 루트 이동을 다시 캐릭터 위치에 더해 물리 이동과 중복시키지 않기 위한 구성입니다. 사격할 때 총과 양손은 Animator 평가 뒤 장비 자세 보정을 추가로 받을 수 있습니다. ‘본만 움직이고 메시 외형은 고정’인 구조가 아닙니다. 본의 변형이 스키닝된 메시의 모양을 바꿉니다. 다만 이 문서의 C# 검토만으로 모든 메시의 스킨 가중치 품질을 재검증했다고 주장하지 않습니다.</p>
+<h3 id="c2-s24">6.2 이동·점프 상태 그래프</h3>
+<p>현재 읽은 <a href="../Assets/04Prefabs/Player/Animations/PlayerJump.controller">PlayerJump.controller</a>는 Base Layer에 Idle·Walk·Run·Jump가 있고 Shotgun 레이어에 Ready·Fire가 있습니다.</p>
+<table>
+<thead>
+<tr>
+<th>매개변수</th>
+<th>타입</th>
+<th>값의 의미</th>
+<th>값을 보내는 코드</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Movement</code></td>
+<td>Int</td>
+<td>0 대기 / 1 걷기 / 2 달리기</td>
+<td>PlayerAnimation.Apply</td>
+</tr>
+<tr>
+<td><code>JumpActive</code></td>
+<td>Bool</td>
+<td>점프의 준비·공중·착지 단계 진행 중</td>
+<td>PlayerAnimation.Apply</td>
+</tr>
+<tr>
+<td><code>JumpTime</code></td>
+<td>Float</td>
+<td>정책의 2초 기준 자세 시간을 0~1로 바꿔 클립 위치 지정</td>
+<td>PlayerAnimation.Apply</td>
+</tr>
+<tr>
+<td><code>ShotActive</code></td>
+<td>Bool</td>
+<td>발사 클립 진행 여부</td>
+<td>ShotgunPose.Tick</td>
+</tr>
+<tr>
+<td><code>ShotTime</code></td>
+<td>Float</td>
+<td>발사 클립의 현재 자세 위치 0~1</td>
+<td>ShotgunPose.Tick</td>
+</tr>
+</tbody></table>
+<p>점프 진입은 <code>Any State → Jump</code> 공통 화살표 하나입니다. 이것이 Idle·Walk·Run에서 모두 점프로 들어가는 경로입니다. 각 상태에서 Jump로 따로 선이 세 개 보이지 않는다고 역방향 연결이 없는 것은 아닙니다. Jump가 끝나면 <code>Movement</code>에 따라 대기·걷기·달리기로 돌아갑니다. 현재 컨트롤러 파일의 고정 전환 시간은 점프 진입 0.08초, 점프 복귀 0.15초, 지상 이동 상태 사이 0.12초입니다. 근거: Controller 23, 48, 105, 161, 189, 272, 390, 505, 558, 586행.</p>
+<p>출처: <code>PlayerAnimation.cs</code> 58~64행.</p>
+<pre><code class="language-csharp">animator.SetInteger(Movement, (int)MovementPolicy.SelectAnimation(intent));
+animator.SetBool(JumpActive, jumpFrame.Active &amp;&amp; SupportsJump);
+if (SupportsJump &amp;&amp; jumpFrame.Active)
+    animator.SetFloat(jumpTime, Mathf.Clamp01(jumpFrame.PoseTime / 2f));
+</code></pre>
+<ul>
+<li>현재 입력 의도를 숫자 0·1·2로 바꿔 Animator에 줍니다.</li>
+<li>점프 연결이 준비되어 있고 점프가 진행 중일 때만 JumpActive를 켭니다.</li>
+<li>정책의 자세 위치를 기준값 2로 나눠 0~1로 바꿉니다. 실제 <code>Jump.anim</code>의 저장된 <code>m_StopTime</code>은 1.2초이므로, 이 2를 실제 클립 길이라고 설명하면 안 됩니다. 정규화된 비율로 현재 클립의 자세를 선택합니다.</li>
+<li><strong>점프 종료 직후에는 JumpTime을 0으로 다시 쓰지 않습니다.</strong> 복귀 혼합 동안 나가는 Jump 자세도 아직 사용되므로, 0으로 되돌리면 마지막 착지 자세가 갑자기 점프 준비 자세로 되감길 수 있기 때문입니다.</li>
+</ul>
+<p><code>SupportsJump</code>는 이름만 보고 true가 되지 않습니다. Movement(Int)·JumpActive(Bool)·JumpTime(Float) 매개변수와 Base Layer의 Jump 상태가 있어야 합니다. 설정 <code>jumpSettings.enabled</code>도 켜져야 물리 점프가 활성화됩니다.</p>
+<h3 id="c2-s25">6.3 점프 단계와 버퍼</h3>
+<table>
+<thead>
+<tr>
+<th>단계</th>
+<th>쉬운 설명</th>
+<th>다음 단계 조건</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Ready</td>
+<td>일반 대기·걷기·달리기</td>
+<td>바닥 위에서 새 Space 또는 유효한 보관 입력</td>
+</tr>
+<tr>
+<td>Anticipation</td>
+<td>뛰기 전에 몸을 누르는 준비</td>
+<td>일반 준비 0.40초가 지나면 한 번 이륙</td>
+</tr>
+<tr>
+<td>Airborne</td>
+<td>실제로 떠오르고 내려오는 중</td>
+<td>바닥 지지, 수직 속도, 최소 공중 시간 조건 만족</td>
+</tr>
+<tr>
+<td>Landing</td>
+<td>착지 충격과 회복</td>
+<td>이동 중에는 짧은 회복, 정지 중에는 나머지 착지 자세</td>
+</tr>
+</tbody></table>
+<p>코드의 <code>TakeoffTime=.40</code>, <code>ApexTime=.855</code>, <code>TouchdownTime=1.31</code>, <code>ClipEnd=2</code>는 정책의 가상 시간표입니다. <code>PlayerAnimation</code>은 이 값을 2로 나눈 비율을 현재 1.2초 클립에 전달합니다. 공중을 무조건 2초 동안 날게 만드는 상수가 아닙니다. 공중 자세는 실제 수직 속도로 고르며, 높이·중력에 따라 실제 체공 시간이 달라집니다. 오래 떨어지는 동안은 착지 직전 자세 범위에 머뭅니다. 일반 절벽 낙하를 별도의 새 낙하 상태로 처리하는 기능은 이 정책에 추가되어 있지 않습니다.</p>
+<p><code>PlayerJump</code>가 계산하는 최초 상승 속도는 다음과 같습니다. 출처: <code>PlayerJump.cs</code> 50~53행.</p>
+<pre><code class="language-csharp">LaunchSpeed = Mathf.Sqrt(2f * Mathf.Max(0.05f, settings.height) * -Physics.gravity.y);
+IsGrounded = HasSupport() &amp;&amp; body.linearVelocity.y &lt;= 0.2f;
+return policy.Step(pressed, IsGrounded, body.linearVelocity.y, deltaTime, LaunchSpeed,
+    Mathf.Max(0f, settings.jumpBufferSeconds), inputEnabled, moving);
+</code></pre>
+<ul>
+<li>원하는 높이와 Unity 중력으로 출발 속도를 구합니다. 이후의 중력은 Unity가 처리합니다.</li>
+<li>발 아래 지지면이 있어도 아직 빠르게 올라가는 중이면 착지로 인정하지 않습니다.</li>
+<li>‘키를 눌렀는지, 바닥인지, 수직 속도는 얼마인지’라는 관측값을 정책에 전달합니다.</li>
+<li>정책은 올라갈지·착지할지 판단할 뿐 이 함수에서 Rigidbody 속도를 직접 쓰지는 않습니다.</li>
+</ul>
+<p>기본 <code>jumpBufferSeconds</code>는 0.15초입니다. 착지 직전에 Space를 너무 일찍 눌러도 그 요청을 잠깐 기억하고 바닥에 닿았을 때 사용할 수 있습니다. 길게 누르는 자동 연속 점프나 공중 추가 점프를 뜻하지 않습니다. 버퍼가 만료되면 요청은 사라집니다. 메뉴·포커스 차단·입력 공급자 변경 시 아직 사용하지 않은 요청은 취소합니다.</p>
+<p>착지 직후 0.13초 안의 압축 자세에서 다음 점프가 예약되면, 준비 시간을 이미 진행한 것으로 보고 착지 자세를 거꾸로 이어 이륙합니다. 이동 중 착지 회복은 기본 정책상 0.18초 뒤 지상 모션으로 일찍 돌아갈 수 있습니다. 이미 몸이 많이 펴진 뒤 새 점프를 누른 경우까지 무조건 압축 자세로 되돌리지는 않습니다. 이 세부 분기는 <code>JumpPolicy.Step</code> 113<del>139행, <code>BeginAnticipation</code> 179</del>186행, <code>PreparationPoseTime</code> 189~196행에 있습니다.</p>
+<h3 id="c2-s26">6.4 사격 후 모션 정지를 막는 현재 연결</h3>
+<p><code>ShotgunPose</code>는 본 애니메이션 전체를 멈추는 대신 Shotgun 레이어의 <code>ShotActive</code>·<code>ShotTime</code>만 제어합니다. 현재 Controller의 Ready와 Fire는 모두 발사 클립을 연결하고 <code>Write Defaults</code>가 false입니다. Ready의 Speed는 0이며 Fire는 ShotTime 매개변수로 클립 위치를 제어합니다. 읽은 발사 클립의 바인딩은 <code>raiseWeight</code>·<code>recoilDistance</code>·<code>recoilPitch</code>라는 ShotgunPose의 숫자 세 종류입니다. 현재 파일에서 확인한 구성은 Controller 204<del>218, 433</del>452행 및 발사 클립 63<del>66, 120</del>123, 177~180행에 있습니다.</p>
+<p>‘Ready가 비어 있어도 된다’며 임의로 Motion을 제거하거나, 사격 레이어에서 모든 본의 기본값을 강제로 덮어쓰는 설정을 추가하면 지상 모션과의 관계를 다시 검증해야 합니다. 이전 오류 수정 경위는 작업 로그를 근거로 추적하고, 여기서는 현재 파일 구성을 확인한 사실과 분리합니다.</p>
+<p>발사 준비·판정·반동의 순서는 다음과 같습니다.</p>
+<pre><code class="language-text">전투 코드가 BeginShot 호출
+  → Tick이 준비 시간을 진행
+  → 준비 시각 fireMoment에 도달하면 ReadyToFire
+  → 장비의 최신 총구 자세가 적용된 뒤 실제 발사 판정
+  → AcknowledgeShot
+  → 반동 구간 진행
+  → 클립 끝에서 ShotActive 해제
+</code></pre>
+<p>판정 전에 반동만 먼저 진행되지 않도록 <code>SampleTime</code>은 판정 승인 전 <code>fireMoment</code>에서 멈춥니다(<code>ShotgunPose.cs</code> 68~69행). 기본 <code>fireMoment</code>와 <code>raiseSeconds</code>는 각각 0.12초이며 실제 씬 값과 클립 길이를 함께 맞춰야 합니다.</p>
+<p>총은 조준점 쪽으로 향하도록 <code>ShotgunPose.Apply</code>가 보정하고, 양손은 <code>ShotgunEquipment.LateUpdate</code>에서 그립 위치를 따라갑니다. 다음 Update에서 이전 손 보정을 되돌린 뒤 Animator가 새 모션을 계산하므로 이전 프레임의 손 위치 보정이 계속 쌓이는 것을 피합니다. 총구가 너무 가까운 목표 때문에 뒤집히지 않게 앞쪽 보조 목표를 쓰는 분기도 있습니다. 이 자세 보정은 실제 총구 벽 판정을 대신하지 않습니다.</p>
+<h3 id="c2-s27">6.5 남아 있는 구형 컨트롤러 호환 경로</h3>
+<p>현재 코드에서 <code>CrossFadeInFixedTime</code>과 <code>AnimationClip.SampleAnimation</code>이 보인다고 모두 미사용 중복은 아닙니다.</p>
+<ul>
+<li><code>PlayerAnimation.ApplyLegacyController</code>는 Movement·JumpActive 매개변수가 없는 구형 <code>Idle.controller</code>를 위한 대기·걷기·달리기 호환 경로입니다.</li>
+<li><code>ShotgunPose.Tick</code>의 SampleAnimation 경로는 Shotgun 레이어·매개변수가 없는 컨트롤러에서만 사용됩니다.</li>
+<li>새로운 PlayerJump.controller 경로에서는 Animator 상태 그래프와 매개변수를 사용합니다.</li>
+<li><code>PlayerController.animationSettings</code>는 기존 씬 저장 정보와 구형 연결을 유지하려고 <code>HideInInspector</code>로 남아 있습니다. 새 컨트롤러의 일반 전환 시간을 이 숨은 값으로 바꾸는 것이 아닙니다.</li>
+</ul>
+<p>다른 씬을 확인하지 않고 호환 코드를 삭제하면 공유 플레이어의 동작이 깨질 수 있습니다. 이번 문서 작업은 삭제하지 않습니다.</p>
+<h3 id="c2-s28">6.6 수정 위치와 확인 순서</h3>
+<table>
+<thead>
+<tr>
+<th>수정 목표</th>
+<th>수정할 곳</th>
+<th>함께 확인할 곳</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>실제 점프 높이</td>
+<td>PlayerController → Jump Settings → height(기본 0.45)</td>
+<td>머리 충돌·착지·총구 높이</td>
+</tr>
+<tr>
+<td>미리 누른 점프 허용 시간</td>
+<td>jumpBufferSeconds(기본 0.15초)</td>
+<td>너무 이른 입력 만료, 메뉴 복귀 시 취소</td>
+</tr>
+<tr>
+<td>바닥 경사 조건</td>
+<td>maxGroundAngle(기본 55도), groundLayers</td>
+<td>턱 설정의 경사 기준은 별도 기본 45도</td>
+</tr>
+<tr>
+<td>눌림·손·귀·꼬리 자세</td>
+<td>Unity Animation 창의 Jump 클립 곡선</td>
+<td>물리 높이를 곡선 루트 이동으로 중복 적용하지 않는지</td>
+</tr>
+<tr>
+<td>대기/걷기/달리기 전환</td>
+<td>PlayerJump.controller의 Base Layer 전환</td>
+<td>Movement 값 0·1·2와 JumpActive 조건</td>
+</tr>
+<tr>
+<td>점프 진입/복귀 부드러움</td>
+<td>Any State → Jump 및 Jump 복귀 전환</td>
+<td>JumpTime 유지, 실제 본 이동의 끊김</td>
+</tr>
+<tr>
+<td>발사 자세·반동</td>
+<td>Shotgun_Fire 클립의 세 필드</td>
+<td>ShotgunPose.fireMoment와 판정 시각</td>
+</tr>
+<tr>
+<td>조준 손 높이</td>
+<td>ShotgunPose.aimedLocalPosition, 장비 그립</td>
+<td>모델 로컬 축, muzzle, 양손 본 연결</td>
+</tr>
+</tbody></table>
+<p>이 설정을 바꿀 때는 먼저 해당 에셋이 다른 씬/프리팹과 공유되는지 확인합니다. 본 이름이나 <code>raiseWeight</code> 등의 필드명을 바꾸면 클립의 연결 경로도 달라질 수 있습니다. 파일 이름 변경과 <code>.meta</code> 재발급을 해결책으로 사용하지 않습니다.</p>
+<p>점프 검사표는 다음과 같습니다. 상태 이름만 확인하지 말고 실제 몸·발·꼬리의 변화를 함께 봅니다.</p>
+<table>
+<thead>
+<tr>
+<th>검사</th>
+<th>기대 결과</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>대기 → 점프 → 대기</td>
+<td>눌림·상승·착지·복귀가 순서대로 이어짐</td>
+</tr>
+<tr>
+<td>걷기/달리기 → 점프 → 같은 이동</td>
+<td>공중 수평 이동을 유지하고 착지 후 이동으로 자연스럽게 복귀</td>
+</tr>
+<tr>
+<td>착지 직전 Space 새 누름</td>
+<td>버퍼 범위 안이면 한 번 재점프, 오래 전 입력이면 취소</td>
+</tr>
+<tr>
+<td>Space를 계속 유지</td>
+<td>유지 자체만으로 자동 연속 점프하지 않음</td>
+</tr>
+<tr>
+<td>점프 준비 중 바닥 이탈</td>
+<td>공중에서 뒤늦게 새 상승 속도를 만들어 내지 않음</td>
+</tr>
+<tr>
+<td>이동 중 발사 → 계속 이동</td>
+<td>몸·발·꼬리 모션이 멈추지 않음</td>
+</tr>
+<tr>
+<td>점프 중 발사와 줌</td>
+<td>점프 시간·사격 시간·총구 자세가 서로 끊기지 않음</td>
+</tr>
+<tr>
+<td>착지 직전 메뉴 열기</td>
+<td>보관 입력으로 메뉴 복귀 직후 원치 않는 점프가 발생하지 않음</td>
+</tr>
+</tbody></table>
+<h3 id="c2-s29">6.7 SOLID 코드리뷰와 현재 제한</h3>
+<p>좋은 점은 실제 위치 이동, 접지 관측, 점프 단계 판단, Animator 전달이 분리되어 있다는 것입니다. 이 때문에 중력 오류는 물리 연결에서, 모션이 되감기는 오류는 JumpTime 전달에서 좁혀 볼 수 있습니다(SRP). 카메라·조준 연결도 작은 상태 계약을 사용합니다(ISP/DIP).</p>
+<p>반면 JumpPolicy는 2초 기준의 고정된 자세 시간표를 쓰고, 실제 연결된 Jump.anim의 저장 길이는 1.2초입니다. PlayerAnimation이 <code>/ 2f</code>로 정규화하므로 이 두 숫자가 다르다는 사실만으로 재생 오류를 단정할 수는 없습니다. 다만 클립을 다른 구성으로 교체하면 실제 눌림·이륙·정점·착지 자세가 시간표의 비율과 맞는지 함께 확인해야 합니다. 새 클립을 Inspector에 넣는 것만으로 모든 비율이 자동 맞는 범용 시스템은 아닙니다. 여러 캐릭터로 확장할 때 시간표를 설정 데이터로 분리하는 방안을 고려할 수 있지만 <strong>현재 구현된 기능은 아닙니다</strong>.</p>
+<p><code>PlayerAnimation</code>은 만들 때 컨트롤러의 지원 여부를 계산합니다. <code>ShotgunPose</code>처럼 매번 컨트롤러 변경을 감지해 다시 묶지는 않습니다. 실행 중 Animator Controller를 교체하는 기능을 새로 만들면 재연결을 설계해야 합니다. 지금 씬 연결 유지에 필요한 호환 코드가 존재한다고 실행 중 임의 교체까지 보장되지는 않습니다.</p>
+<p>ShotgunPose는 클립 시간 전달과 조준 자세 계산이라는 두 관심사를 한 컴포넌트에 가지고 있습니다. 현재 둘 다 ‘발사 자세 제공’이라는 좁은 기능에 속하고 장비의 별도 적용 순서를 공유합니다. 기능이 더 늘어날 때 수학 계산부를 일반 클래스로 분리할 후보가 될 수 있지만, 파일 수를 늘리기 위한 분리는 필요하지 않습니다. LSP는 단순히 인터페이스가 있다는 이유로 통과라 할 수 없습니다. 대체 입력·상태 공급자가 기존 계약과 초기화·차단 조건을 지키는지 실제 대체 검사를 해야 합니다.</p>
+<h2 id="c2-s30">7. 이 문서를 수정할 때 함께 갱신할 항목</h2>
+<ol>
+<li>파일 이름·책임이 바뀌면 2장의 추적표를 갱신합니다. 메타/GUID를 새로 만들 이유는 아닙니다.</li>
+<li>입력 허용 상태를 바꾸면 메뉴·포커스·커서·덫 설치의 별도 제한도 같이 확인합니다.</li>
+<li>이동/점프 숫자를 바꾸면 ‘코드 기본값’과 ‘현재 씬 값’을 구분해 남깁니다.</li>
+<li>Animator Controller나 클립을 바꾸면 상태/매개변수/곡선 경로와 실제 본 움직임을 검사합니다.</li>
+<li>검사를 실행했다면 날짜·대상 씬·검사 방법·관측 결과를 별도로 기록합니다. 이 문서의 정적 코드 검토를 실행 검사 성공으로 바꾸어 쓰지 않습니다.</li>
+</ol>
+<p>현재 확인 범위: 위 책임표의 C# 19개 전체 읽기, 연결 근거 코드 및 Input Action·Animator Controller·발사 클립·무마찰 재질의 읽기 검토. 현재 실행 상태·시각적 모션 품질·모든 씬 연결의 신규 플레이 재검사는 이 문서 작성 작업에서 수행하지 않았습니다.</p>
+<footer><a href="#chapter-0" data-chapter="0">목차로 돌아가기</a><span>기준 2026.10.14 · 6b8bafde</span></footer></article><article data-index="3" data-file="03_INTERACTION_COMBAT.md" hidden><div class="article-tools"><a href="03_INTERACTION_COMBAT.md">Markdown 원본</a><button onclick="window.print()">인쇄</button></div><h1 id="c3-s0">물건 상호작용과 샷건</h1>
+<p>문서 기준: 2026-10-14에 확인한 현재 작업 폴더의 C# 소스. 이 장은 F05~F08의 구현을 설명합니다. 씬에 실제로 연결된 오브젝트와 재질 값은 별도의 씬 구성표를 함께 확인해야 합니다. 아래의 숫자는 따로 표시하지 않는 한 <strong>코드에 적힌 기본값</strong>이며, Unity Inspector에서 저장한 값이 다를 수 있습니다.</p>
+<p>이 장을 작성하며 게임 코드, 씬, 메타 파일은 수정하지 않았습니다. 코드 경로는 확인했지만 이번 문서 작업에서 모든 키를 눌러 새로 플레이 검증한 것은 아닙니다. 따라서 아래의 검증 절차는 앞으로 실행할 체크리스트이며, 통과 기록을 뜻하지 않습니다.</p>
+<h2 id="c3-s1">1. 처음 읽는 사람을 위한 개념</h2>
+<p>화면 가운데의 흰 구체는 마우스 장치 자체가 아니라 <strong>조준 위치를 보여 주는 표시</strong>입니다. 실제 대상 찾기는 카메라 가운데에서 보이지 않는 선을 쏘는 <code>Raycast</code>가 담당합니다. 그 선에 먼저 닿는 충돌체를 찾고, 플레이어와의 거리 및 벽 가림을 추가로 확인합니다.</p>
+<ul>
+<li><code>Collider</code>: 물체가 차지한 공간을 표현하는 충돌 모양입니다. 이것만 붙인다고 중력이 생기지는 않습니다.</li>
+<li><code>Rigidbody</code>: 중력과 속도 등 물리 운동을 Unity에 맡기는 컴포넌트입니다.</li>
+<li><code>interface</code>: 두 코드 사이의 작은 약속입니다. 예를 들어 “빈칸이 있는가?”와 “저장할 수 있는가?”만 약속하면, 저장소의 내부 구현을 몰라도 아이템을 넣을 수 있습니다.</li>
+<li><code>Update</code>: 이번 화면 프레임의 입력과 상태를 계산하는 단계입니다.</li>
+<li><code>LateUpdate</code>: 다른 계산 뒤에 물건, 손, 총구 등 최종 위치를 맞추는 단계입니다. 이 프로젝트는 이 순서를 명시적으로 사용합니다.</li>
+<li><code>event</code>: 어떤 일이 끝났다고 다른 코드에 알려 주는 알림입니다. 알림을 보내는 쪽과 받는 쪽은 역할이 다릅니다.</li>
+</ul>
+<p>상호작용은 서로 다른 세 가지 경로가 있습니다. 이름에 “아이템”이 들어간다고 하나의 기능으로 합치면 기존 동작이 달라질 수 있습니다.</p>
+<table>
+<thead>
+<tr>
+<th>경로</th>
+<th>시작 입력</th>
+<th>물체에 일어나는 일</th>
+<th>인벤토리 저장</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>F05 손 운반</td>
+<td>빈손에서 좌클릭을 누르고 유지</td>
+<td>물체가 중앙 조준선 가까이 따라옴. 떼면 현재 위치에서 중력으로 낙하</td>
+<td>하지 않음</td>
+</tr>
+<tr>
+<td>F06 F 획득</td>
+<td>대상을 보며 F를 새로 누름</td>
+<td>일반 아이템은 월드에서 숨겨짐. 특정 소비형 아이템은 실행 중 인스턴스 제거</td>
+<td><code>ItemInteractor</code>가 저장소에 직접 요청</td>
+</tr>
+<tr>
+<td>F07 UI 획득 연출</td>
+<td><code>InventoryPickup</code> 종류의 기존 큐브를 좌클릭</td>
+<td>외형을 촬영한 아이콘이 등록된 UI로 이동</td>
+<td>연출 완료 알림만 보냄. 실제 저장은 수신자 책임</td>
+</tr>
+</tbody></table>
+<h2 id="c3-s2">2. 기능과 파일 책임표</h2>
+<p>링크는 이 문서를 프로젝트의 <code>PlayerDocumentation</code> 폴더에 놓았을 때 열리는 상대 경로입니다. 행 번호는 현재 확인본 기준이므로 이후 수정되면 함수 이름도 함께 찾아보세요.</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>파일과 확인 위치</th>
+<th>이 파일이 담당하는 일</th>
+<th>담당하지 않는 일</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>F05/F06/F07</td>
+<td><a href="../Assets/02Scripts/01Player/Interaction/InteractionController.cs">InteractionController.cs</a>, 14~264행</td>
+<td>중앙 대상 선택, 거리·가림 검사, 손 명령을 운반/연출/장비로 연결</td>
+<td>아이템 저장 규칙, 피해량</td>
+</tr>
+<tr>
+<td>F05</td>
+<td><a href="../Assets/02Scripts/01Player/Interaction/ItemCarrier.cs">ItemCarrier.cs</a>, 38~226행</td>
+<td>집기, 선반에서 꺼내기, 벽에 막히는 이동, 손 놓기와 물리 복구</td>
+<td>키보드/마우스 읽기, 인벤토리</td>
+</tr>
+<tr>
+<td>F05/F07</td>
+<td><a href="../Assets/02Scripts/01Player/Interaction/CatInteractionItem.cs">CatInteractionItem.cs</a>, 12~140행</td>
+<td>아이템 ID, 종류, <code>Visual</code> 외형, 루트 충돌 크기, 사용 가능 상태</td>
+<td>F 저장소와 라운드 보상</td>
+</tr>
+<tr>
+<td>F05/F08</td>
+<td><a href="../Assets/02Scripts/01Player/Domain/HandPolicy.cs">HandPolicy.cs</a>, 18~52행</td>
+<td>손 상태에 따라 집기/놓기/장착/해제 결정. F의 저장·포획 결정도 포함</td>
+<td>Unity 물리, 모델 표시</td>
+</tr>
+<tr>
+<td>F05</td>
+<td><a href="../Assets/02Scripts/01Player/Input/InteractionInput.cs">InteractionInput.cs</a>, 16~25행</td>
+<td>좌클릭 새 누름/유지, 숫자 1을 값으로 변환</td>
+<td>무엇을 집을지 결정</td>
+</tr>
+<tr>
+<td>F06</td>
+<td><a href="../Assets/02Scripts/04Systems/ItemInteractor.cs">ItemInteractor.cs</a>, 53~285행</td>
+<td>F 대상 등록·자동 발견, 저장 요청, Enemy 포획 연결</td>
+<td>이동·총 발사·인벤토리 UI 그리기</td>
+</tr>
+<tr>
+<td>F06</td>
+<td><a href="../Assets/02Scripts/04Systems/ItemPickup.cs">ItemPickup.cs</a>, 4~18행</td>
+<td>월드 물건에 아이템 데이터와 획득 조건 연결</td>
+<td>F키 직접 처리</td>
+</tr>
+<tr>
+<td>F07</td>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/CenterCursor.cs">CenterCursor.cs</a>, 11~23행</td>
+<td>중앙 구체의 화면상 크기와 위치, 커서 잠금 시 표시</td>
+<td>대상 찾기·아이템 저장</td>
+</tr>
+<tr>
+<td>F07</td>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/IHighlightSource.cs">IHighlightSource.cs</a>, 4~10행</td>
+<td>강조할 모델과 사용 가능 상태를 제공하는 공통 약속</td>
+<td>실제 노란색 그리기</td>
+</tr>
+<tr>
+<td>F07</td>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/HighlightTarget.cs">HighlightTarget.cs</a>, 8~32행</td>
+<td>일반 오브젝트를 강조 대상으로 제공, Renderer 목록 갱신</td>
+<td>집기·획득 권한 부여</td>
+</tr>
+<tr>
+<td>F07</td>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/ItemHighlight.cs">ItemHighlight.cs</a>, 25~132행</td>
+<td>원본 재질 위에 강조용 면·후광·테두리를 추가로 그림</td>
+<td>원본 공유 재질 변경</td>
+</tr>
+<tr>
+<td>F07</td>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/InventoryPickupEffect.cs">InventoryPickupEffect.cs</a>, 13~224행</td>
+<td>UI 목적지 확인, 아이콘 이동, 완료 이벤트</td>
+<td>5칸 저장소 관리</td>
+</tr>
+<tr>
+<td>F07</td>
+<td>위 파일의 <code>PickupReservation</code>, 228~349행</td>
+<td>연출 동안 월드 모델/충돌/물리 상태 예약, 완료·취소 정리</td>
+<td>UI 이동 경로 계산</td>
+</tr>
+<tr>
+<td>F07</td>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/ItemIconCapture.cs">ItemIconCapture.cs</a>, 11~173행</td>
+<td>실제 메시를 한 번 촬영하고 임시 카메라/메시/텍스처 정리</td>
+<td>아이템 수량과 슬롯</td>
+</tr>
+<tr>
+<td>F08</td>
+<td><a href="../Assets/02Scripts/01Player/Equipment/ShotgunEquipment.cs">ShotgunEquipment.cs</a>, 7~159행</td>
+<td>샷건 표시, 몸통 기준 위치, 양손을 잡는 지점에 맞춤</td>
+<td>사격 허용 판단·명중 계산</td>
+</tr>
+<tr>
+<td>F08</td>
+<td><a href="../Assets/02Scripts/01Player/Equipment/ShotgunCombat.cs">ShotgunCombat.cs</a>, 8~138행</td>
+<td>입력·장비·자세·히트스캔을 순서대로 연결, 명중 이벤트</td>
+<td>적 체력·기절 시간·인벤토리</td>
+</tr>
+<tr>
+<td>F08</td>
+<td><a href="../Assets/02Scripts/01Player/Equipment/HitscanQuery.cs">HitscanQuery.cs</a>, 31~199행</td>
+<td>조준점, 총구 벽 막힘, 산탄별 충돌 결과</td>
+<td>난수 분포·반동·입력</td>
+</tr>
+<tr>
+<td>F08</td>
+<td><a href="../Assets/02Scripts/01Player/Domain/CombatPolicy.cs">CombatPolicy.cs</a>, 16~43행</td>
+<td>단발 발사 간격, 조준 중 달리기 금지</td>
+<td>카메라 시야각 변경</td>
+</tr>
+<tr>
+<td>F08</td>
+<td><a href="../Assets/02Scripts/01Player/Input/CombatInput.cs">CombatInput.cs</a>, 25~68행</td>
+<td>우클릭 유지, 좌클릭 새 누름, 입력 복귀 프레임 차단</td>
+<td>피해 판정</td>
+</tr>
+<tr>
+<td>F08</td>
+<td><a href="../Assets/02Scripts/01Player/Equipment/Presentation/ShotSpreadRing.cs">ShotSpreadRing.cs</a>, 42~81행</td>
+<td>현재 산탄 각도를 화면 중앙의 속 빈 원으로 표시</td>
+<td>총알 위치 결정</td>
+</tr>
+<tr>
+<td>공통</td>
+<td><a href="../Assets/02Scripts/01Player/Domain/IPrimaryAction.cs">IPrimaryAction.cs</a>, 1~17행</td>
+<td>설치가 좌클릭/F를 쓰는지, F 대상이 있는지 알려 주는 작은 약속</td>
+<td>덫 설치 자체</td>
+</tr>
+</tbody></table>
+<p>F08이 읽는 다른 기능의 파일은 <a href="../Assets/02Scripts/01Player/Animation/ShotgunPose.cs">ShotgunPose.cs</a>, <a href="../Assets/02Scripts/01Player/Camera/AimZoom.cs">AimZoom.cs</a>, <a href="../Assets/02Scripts/01Player/Movement/PlayerMovement.cs">PlayerMovement.cs</a>입니다. 이들은 각각 자세/애니메이션, 카메라 렌즈, 이동을 담당합니다. <code>HotbarManager</code>, <code>ThiefController</code>, <code>ThiefShotReceiver</code>는 기존 팀 기능과의 연결 지점입니다. 연결을 사용한다는 사실을 해당 기능 전체를 이번 Player 작업에서 제작했다는 뜻으로 해석하지 않습니다.</p>
+<h2 id="c3-s3">3. 현재 입력 우선순위</h2>
+<p>입력 중복은 “같은 클릭으로 총도 쏘고 물건도 집는 문제”입니다. 이를 막기 위해 한 입력을 먼저 사용하는 기능이 다른 기능에 사용 중임을 알려 줍니다.</p>
+<table>
+<thead>
+<tr>
+<th>상황</th>
+<th>허용하는 동작</th>
+<th>중복을 막는 코드</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>메뉴/결과창/포커스 상실 등 공통 입력 차단</td>
+<td>플레이 입력을 막음</td>
+<td><code>GameplayInput.IsEnabled</code>와 각 입력 공급자</td>
+</tr>
+<tr>
+<td>게임 조작이 다시 켜진 첫 프레임</td>
+<td>복귀용 클릭을 집기/발사로 사용하지 않음</td>
+<td><code>InputActivationGate.AllowsPress</code>, <code>CombatInput.cs</code> 30~41행</td>
+</tr>
+<tr>
+<td>덫 선택 동작이 좌클릭을 사용 중</td>
+<td>설치가 우선. 집기/사격 새 요청 차단</td>
+<td><code>IPrimaryAction.ClaimsPrimaryInput</code>; <code>InteractionController</code> 95<del>97행, <code>ShotgunCombat</code> 68</del>69행</td>
+</tr>
+<tr>
+<td>F 유지 설치가 입력을 사용 중</td>
+<td>F 즉시 획득 중복 차단</td>
+<td><code>ItemInteractor</code> 142~145행의 <code>IInteractionAction</code></td>
+</tr>
+<tr>
+<td>기존 대상을 F로 상호작용한 프레임</td>
+<td>손 집기/장착을 같은 프레임에 추가 실행하지 않음</td>
+<td><code>ConsumesHandInput</code>, <code>InteractionController</code> 113~114행</td>
+</tr>
+<tr>
+<td>총을 든 상태</td>
+<td>좌클릭은 단발, 우클릭 유지는 조준</td>
+<td><code>HandPolicy</code>와 <code>CombatInput</code></td>
+</tr>
+<tr>
+<td>물건을 들고 숫자 1</td>
+<td>현재 위치에 놓고 샷건 장착 요청</td>
+<td><code>TryToggleEquipment</code> 223~226행</td>
+</tr>
+<tr>
+<td>물건을 들고 좌클릭 해제 또는 입력 불가</td>
+<td>물건 놓기</td>
+<td><code>LateUpdate</code> 105~106행, <code>HandPolicy</code> 22·25행</td>
+</tr>
+</tbody></table>
+<p><code>IPrimaryAction</code>은 “모든 입력을 막아라”가 아닙니다. 사격 쪽은 <code>FirePressed</code>만 false로 바꿉니다. 따라서 덫을 선택해도 총 표시를 자동으로 숨기지 않고, 조준 입력 값도 별도로 유지할 수 있습니다. F를 새로 누를 때 대상 획득이 우선인지, 유지 설치가 시작됐는지는 덫 설치 장의 입력 중재 규칙과 함께 읽어야 합니다.</p>
+<h2 id="c3-s4">4. F05 — 좌클릭 물건 운반</h2>
+<h3 id="c3-s5">4.1 목적과 데이터 흐름</h3>
+<p>목적은 빈손으로 집을 수 있는 물체를 중앙 포인터에 가까이 들고, 버튼을 떼면 자연스럽게 놓는 것입니다. 인벤토리에 저장하는 기능과 다릅니다.</p>
+<pre><code class="language-text">마우스 좌클릭 → InteractionInput → HandInput
+→ InteractionController가 현재 손 상태 구성
+→ HandPolicy가 Pickup/Release 결정
+→ ItemCarrier가 물리 상태 변경 및 위치 이동
+→ 놓을 때 Collider 복구 + Rigidbody 중력 재개
+</code></pre>
+<p>현재 손에 총이 있거나, 이미 물건을 들었거나, UI 획득 연출 중이면 <code>HasFreeHands</code>가 false입니다. 조준 대상은 카메라 중앙에서 가장 가까운 물체를 찾은 다음 플레이어 몸통의 기준점에서 다시 벽에 가려지는지 확인합니다. 카메라가 벽 너머 물체를 보더라도 플레이어 손이 벽을 뚫고 집지 않도록 두 번 검사하는 것입니다.</p>
+<p>근거: <code>InteractionController.cs</code> 36<del>43행, 134</del>150행.</p>
+<h3 id="c3-s6">4.2 핵심 코드 읽기: 언제 집을 수 있는가</h3>
+<p><code>HandPolicy.cs</code> 22~28행 중 발췌:</p>
+<pre><code class="language-csharp">if (!input.Enabled) return state.Carrying ? HandCommand.Release : HandCommand.None;
+if (input.ToggleEquipment &amp;&amp; state.Equipped) return HandCommand.Unequip;
+if (state.Carrying &amp;&amp; !input.GrabHeld) return HandCommand.Release;
+if (input.GrabPressed &amp;&amp; input.GrabHeld &amp;&amp; !state.Carrying &amp;&amp; !state.Equipped &amp;&amp; !state.PickupBusy)
+    return HandCommand.Pickup;
+</code></pre>
+<ol>
+<li>첫 줄은 조작할 수 없게 되면 손에 든 물건을 놓으라는 뜻입니다. 이미 빈손이면 아무것도 하지 않습니다.</li>
+<li>둘째 줄은 총을 든 채 숫자 1을 누르면 총을 해제하라는 뜻입니다.</li>
+<li>셋째 줄은 물건을 들고 있더라도 버튼을 계속 누르지 않으면 놓으라는 뜻입니다.</li>
+<li>마지막 조건은 “이번 프레임에 새로 눌렀고, 아직 누르고 있고, 손이 비어 있고, 연출 중이 아니다”를 모두 요구합니다. 버튼을 누른 채 새 물체를 지나간다고 자동으로 계속 집지 않습니다.</li>
+</ol>
+<p>이 함수는 Unity 오브젝트를 움직이지 않습니다. 명령만 고르므로 작은 단위 검사를 하기 쉽고 다른 입력 장치에서도 재사용할 수 있습니다.</p>
+<h3 id="c3-s7">4.3 집은 물건이 이동하는 과정</h3>
+<p><code>ItemCarrier.TryGrab</code>은 먼저 기존 속도, 충돌 상태 및 표시 크기를 확인합니다. 보유 중에는 <code>isKinematic=true</code>, <code>useGravity=false</code>로 바꾸고 물건의 Collider들을 일시 비활성화합니다. 그래서 물리 엔진이 손의 이동과 서로 경쟁하지 않습니다. 대신 이 운반 코드는 <code>BoxCastNonAlloc</code>과 <code>OverlapBoxNonAlloc</code>으로 길과 도착 공간을 직접 검사합니다.</p>
+<p>선반의 턱에 걸리지 않게 이동은 세 단계입니다.</p>
+<ol>
+<li>현재 위치에서 0.08만큼 위로 들어 올립니다.</li>
+<li>들어 올린 높이를 유지하며 선반에서 수평으로 꺼냅니다.</li>
+<li>중앙 조준선의 보유 지점을 따라갑니다.</li>
+</ol>
+<p>중앙점의 위치는 화면 좌표를 임의로 옮기는 방식이 아닙니다. 카메라 중앙의 선 위에서 플레이어 깊이와 보유 거리를 더한 지점을 구합니다. 기본 <code>holdDistance</code>는 0.8입니다. 장애물이 있으면 포인터 위치보다 물리 충돌을 우선하여 물건이 더 멀리 가지 못합니다.</p>
+<p>근거: <code>ItemCarrier.cs</code> 46<del>79행, 93</del>109행, 122<del>127행, 162</del>188행.</p>
+<h3 id="c3-s8">4.4 놓을 때의 코드</h3>
+<p><code>ItemCarrier.Restore</code>, 217~223행:</p>
+<pre><code class="language-csharp">body.isKinematic = false;
+body.useGravity = true;
+body.collisionDetectionMode = collisionMode;
+body.linearVelocity = Vector3.zero;
+body.angularVelocity = Vector3.zero;
+body.WakeUp();
+</code></pre>
+<ol>
+<li>직접 위치를 붙잡던 상태를 끝내고 Unity 물리 계산에 넘깁니다.</li>
+<li>Unity 중력을 켭니다.</li>
+<li>집기 전에 사용하던 충돌 감지 방식을 되돌립니다.</li>
+<li>과거 속도를 되살리지 않고 현재 지점에서 정지 상태로 출발하게 합니다.</li>
+<li>회전 속도도 정리합니다.</li>
+<li>잠들어 있던 물리 계산을 깨웁니다.</li>
+</ol>
+<p>이 코드는 바닥 좌표로 순간 이동시키지 않습니다. 실제 떨어지는 시간과 충돌은 Rigidbody가 계산합니다. 파일의 과거 <code>ReleaseRecovery</code> 저장 형식은 호환 때문에 남아 있지만, 예전의 공중 대기/바닥 찾기를 현재 운반 규칙으로 설명하면 안 됩니다.</p>
+<h3 id="c3-s9">4.5 Inspector 설정과 외형 교체</h3>
+<p>운반 대상에는 <code>CatInteractionItem</code>이 필요하고, 이 컴포넌트는 루트의 <code>BoxCollider</code>와 <code>Rigidbody</code>를 요구합니다. <code>Kind</code>를 <code>CarryOnly</code>로 설정하고 <code>Visual Root</code>에 실제 모델이 들어 있는 자식을 지정합니다. <code>Visual Root</code>로 자기 자신이나 다른 계층의 모델을 연결하면 <code>RefreshVisual</code>이 유효한 외형으로 취급하지 않습니다.</p>
+<p>외형을 교체할 때는 루트의 식별자와 물리 컴포넌트를 유지하고 <code>Visual</code> 아래의 모델을 교체합니다. 그 다음 컴포넌트 메뉴의 <strong>Visual 크기에 맞춰 충돌 갱신</strong>을 실행합니다. 이 함수가 렌더러들의 경계 크기를 루트 좌표로 바꿔 BoxCollider의 중심과 크기를 계산합니다. 손에 들고 있는 동안 바꾸지 말고 내려놓은 상태에서 갱신하세요.</p>
+<p><code>InteractionController</code>의 <code>Reach</code>는 선택 거리, <code>Hold Distance</code>는 든 위치입니다. 둘은 목적이 다르므로 “더 멀리 있는 물건을 집고 싶다”면 Reach를, “들었을 때 얼굴과 겹친다”면 Hold Distance를 조정합니다. <code>Solid Layers</code>는 벽을 포함한 충돌 검사 범위이므로 특정 아이템 레이어만 넣으면 벽 가림 검사가 약해질 수 있습니다.</p>
+<h3 id="c3-s10">4.6 수정 후 확인할 일</h3>
+<ul>
+<li>빈손에서 좌클릭 유지/해제가 각각 한 번의 집기/놓기로 이어지는지 확인합니다.</li>
+<li>선반에서 꺼낼 때 위→수평→보유 순서가 자연스러운지 확인합니다.</li>
+<li>벽에 가까이 다가가도 물건이 벽을 통과하지 않는지 확인합니다.</li>
+<li>들고 있던 중 ESC 또는 창 포커스 상실 시 물건이 공중에 고정되지 않는지 확인합니다.</li>
+<li>놓은 물체가 현재 위치에서 떨어지는지, 예전 위치나 바닥으로 순간 이동하지 않는지 확인합니다.</li>
+</ul>
+<h2 id="c3-s11">5. F06 — F 아이템 저장과 Enemy 포획</h2>
+<h3 id="c3-s12">5.1 현재 코드는 레이어 이름만으로 등록하지 않습니다</h3>
+<p>현재 <code>ItemInteractor.cs</code>에는 <code>Item</code>/<code>Enemy</code> 이름을 읽는 <code>LayerMask</code>, <code>NameToLayer</code>, <code>itemLayers</code>, <code>enemyLayers</code> 판정 코드가 없습니다. 과거 요청이나 작업 설명에 레이어 사용이 적혀 있더라도, <strong>현재 읽은 소스만 기준으로는 레이어를 붙이기만 하면 F 대상이 되는 구조가 아닙니다.</strong></p>
+<p>현재 대상 발견 경로는 다음 세 가지입니다.</p>
+<ol>
+<li><code>Targets</code> 목록이나 실행 중 <code>Register</code>로 명시적으로 등록한 대상.</li>
+<li>충돌체에서 부모 방향으로 찾은 <code>ItemPickup</code>에 유효한 아이템 데이터가 있고, <code>CanPickup=true</code>인 대상. <code>Use Item Pickup Registration</code>이 켜져 있어야 합니다.</li>
+<li>충돌체 또는 그 부모에 <code>ThiefController</code>가 있는 대상. 발견하면 Enemy 종류로 등록합니다.</li>
+</ol>
+<p>코드는 충돌체에서 위쪽으로만 올라갑니다. 부모에 큰 Collider가 있고 아래 자식에만 <code>ItemPickup</code>이 있으면 자동 발견 경로가 그 자식으로 내려가지는 않습니다. 또한 <code>useItemPickupRegistration</code>이 꺼졌을 때 Enemy의 <strong>비트리거 선택</strong>과 <strong>트리거 허용</strong> 코드 조건이 서로 다릅니다. 비트리거는 <code>ThiefController</code>를 찾지만 트리거 허용은 해당 옵션을 확인합니다. 이 차이는 Inspector 옵션을 바꿀 때 검사해야 할 현재 구조의 경계입니다.</p>
+<p>근거: <code>ItemInteractor.cs</code> 118<del>138행, 162</del>201행. 일반 Raycast가 어떤 레이어를 통과하는지는 <code>InteractionController.solidLayers</code>에서 별도로 제한됩니다.</p>
+<h3 id="c3-s13">5.2 일반 아이템의 저장 흐름</h3>
+<pre><code class="language-text">F 새 누름 → 입력 권한 및 설치의 F 점유 확인
+→ 중앙 조준선/거리/벽 검사
+→ 등록 대상 또는 ItemPickup 데이터 발견
+→ RegisteredInteractionPolicy가 저장 가능 판단
+→ IItemInventory.TryAdd
+→ 성공한 새 물체만 숨김/소비형 실행 인스턴스 제거
+</code></pre>
+<p>기존 <code>HotbarManager</code>는 <code>HotbarStore</code>라는 작은 연결부를 통해 <code>IItemInventory</code> 계약으로 사용합니다. <code>ItemInteractor</code>가 필요한 기능은 빈칸 조회와 추가 요청뿐입니다. UI 선택 강조, 마우스 휠, 전체 슬롯 그림을 직접 관리하지 않습니다. 다른 저장소를 연결하려면 <code>TrySetInventory</code>를 사용하되 획득을 처리하는 중에는 교체가 거부됩니다.</p>
+<h3 id="c3-s14">5.3 핵심 코드 읽기: 손 상태를 바꾸지 않는 F</h3>
+<p><code>ItemInteractor.Collect</code>, 227~239행 중 발췌:</p>
+<pre><code class="language-csharp">entry.reserved = true;
+var data = entry.Data();
+if (!store.TryAdd(data, out int index)) { entry.reserved = false; return false; }
+var collected = entry.target;
+bool consumeInstance = collected.TryGetComponent&lt;ItemPickup&gt;(out var pickup) &amp;&amp; pickup.ConsumeWorldInstance;
+collected.SetActive(false);
+</code></pre>
+<ol>
+<li>처리 중인 물체에 “다른 획득이 끼어들지 말라”는 예약 표시를 합니다.</li>
+<li>저장할 아이템 데이터를 얻습니다.</li>
+<li>빈칸이 없거나 저장이 실패하면 예약을 취소하고 물체를 그대로 둡니다.</li>
+<li>성공한 물체만 별도로 잡아 둡니다.</li>
+<li>재설치 때 새로 생성하는 물건인지 확인합니다.</li>
+<li>지금 획득한 월드 물체를 숨깁니다.</li>
+</ol>
+<p>이 함수에는 총을 집어넣거나 손에 든 다른 물체를 놓는 호출이 없습니다. 따라서 F로 새 아이템을 저장해도 기존 손 상태를 유지합니다. 소비형 아이템일 때는 이어지는 조건에서 실행 중이며 실제 씬 인스턴스인 경우에만 <code>Destroy</code>합니다. 프리팹 에셋을 파괴하는 경로로 사용하면 안 됩니다.</p>
+<p>등록 항목의 <code>Item</code>을 비워 두면 <code>Data()</code>가 이름 기반의 실행 중 <code>HotbarItemData</code>를 만듭니다. 여기에는 월드 오브젝트를 프리팹으로 억지 연결하지 않습니다. 그러므로 “저장은 되었지만 나중에 설치할 모델 데이터가 없다”는 문제가 생길 수 있습니다. 설치·사용까지 필요한 아이템은 실제 데이터 에셋을 <code>ItemPickup</code> 또는 등록 항목에 연결해야 합니다.</p>
+<h3 id="c3-s15">5.4 Enemy는 현재 기절 조건과 라운드 카운트에 연결됩니다</h3>
+<p>현재 <code>Capture</code>는 <code>ThiefController.IsCapturable</code>이 false이면 예약을 풀고 실패합니다. 팀 Enemy 코드에서 <code>IsCapturable</code>은 <code>blackboard.IsStunned</code>를 반환합니다. 즉 <strong>현재는 기절한 쥐만 F로 포획할 수 있습니다.</strong> 노란 강조만 보고 포획 가능하다고 단정할 수는 없습니다. 강조 가용성에는 기절 조건이 직접 포함되어 있지 않기 때문입니다.</p>
+<p><code>ItemInteractor.cs</code> 253~260행:</p>
+<pre><code class="language-csharp">if (thief != null &amp;&amp; !thief.IsCapturable)
+{
+    captured.Remove(target);
+    entry.reserved = false;
+    return false;
+}
+if (thief) thief.GetCaptured();
+</code></pre>
+<ol>
+<li>쥐 담당 컴포넌트가 존재하지만 잡을 수 없는 상태인지 묻습니다.</li>
+<li>실패한 대상을 “이미 잡았다”는 목록에서 빼 줍니다.</li>
+<li>다시 시도할 수 있도록 예약을 풉니다.</li>
+<li>이번 시도는 실패로 끝납니다.</li>
+<li>잡을 수 있다면 팀 Enemy 코드가 가진 포획 절차를 호출합니다.</li>
+</ol>
+<p>현재 팀 코드 <a href="../Assets/02Scripts/02Enemy/ThiefController.cs">ThiefController.cs</a> 84~94행의 <code>GetCaptured</code>는 보물 정리 뒤 <code>GameManager.Instance?.OnRatCaught()</code>를 호출하고 쥐의 실행 인스턴스를 제거합니다. 따라서 현재 <code>ItemInteractor</code>의 주석과 <code>LastResult</code>에 남아 있는 “카운트 미구현”은 실제 연결과 맞지 않습니다. 이 장에서는 실행되는 코드가 우선이며, 이 문서 작성 중 해당 문자열을 고치지는 않았습니다.</p>
+<p><code>ItemInteractor.EnemyCaptured</code> 이벤트는 그 후에도 발생합니다. 새 수신자에서 다시 <code>OnRatCaught()</code>를 부르면 한 마리를 두 번 센 것으로 처리할 위험이 있습니다. 카운트는 한 경로에만 맡겨야 합니다. 등록 항목을 Enemy로 만들었지만 <code>ThiefController</code>가 없다면 현재 코드는 성공 메시지/이벤트를 보낼 수 있어도 물체를 자동으로 숨기지는 않습니다. Enemy 확장 시 놓치기 쉬운 경계입니다.</p>
+<h3 id="c3-s16">5.5 자주 생길 수 있는 오류와 확인 순서</h3>
+<table>
+<thead>
+<tr>
+<th>증상</th>
+<th>코드에서 확인할 지점</th>
+<th>확인 방법</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>F가 먹지 않음</td>
+<td>입력 차단/설치 점유/거리/대상 등록</td>
+<td><code>GameplayInput</code>, <code>ClaimsInteractionInput</code>, <code>Pickup Range</code>, Collider의 부모 경로 순으로 확인</td>
+</tr>
+<tr>
+<td>Item 레이어인데 못 줍는 물건</td>
+<td>현재 자동 발견은 <code>ItemPickup</code> 중심</td>
+<td>ItemPickup의 데이터 연결 또는 Targets 등록 확인</td>
+</tr>
+<tr>
+<td>노란 쥐를 F로 못 잡음</td>
+<td><code>IsCapturable</code> 기절 조건</td>
+<td>Enemy의 기절 상태 확인. 강조와 포획 권한은 같지 않음</td>
+</tr>
+<tr>
+<td>보관 후 사용할 수 없음</td>
+<td>임시 데이터 또는 prefab 없는 데이터</td>
+<td>실행 중 이름만 만든 데이터인지, 정상 <code>HotbarItemData</code> 에셋인지 확인</td>
+</tr>
+<tr>
+<td>손에 든 물건/총이 사라짐</td>
+<td>F 외의 경로가 손 상태를 변경하는지</td>
+<td>F 자체는 손 상태 변경을 요청하지 않으므로 추가 이벤트 수신자와 비활성화 경로 점검</td>
+</tr>
+<tr>
+<td>포획 카운트가 두 번 증가</td>
+<td><code>EnemyCaptured</code> 구독자가 다시 카운트하는지</td>
+<td>GetCaptured와 수신자를 함께 검색</td>
+</tr>
+</tbody></table>
+<p>F 경로 수정 뒤에는 빈손/물건 보유/총 장착의 세 상태에서 각각 일반 아이템과 기절한 Enemy를 검사해야 합니다. 인벤토리 빈칸이 없는 경우에는 아이템이 사라지지 않는지, Enemy 포획에는 저장소 빈칸이 필요하지 않은지 함께 확인합니다.</p>
+<h2 id="c3-s17">6. F07 — 중앙 커서, 노란 강조, UI 획득 연출</h2>
+<h3 id="c3-s18">6.1 중앙 구체와 산탄 원의 차이</h3>
+<p><code>CenterCursor</code>의 기본 지름은 6픽셀입니다. 카메라 바로 앞에 구체를 놓고, 시야각과 화면 높이로 실제 크기를 역산합니다. 그래서 화면 해상도나 카메라 거리와 관계없이 화면 가운데의 작은 표시로 보이게 합니다. 커서 잠금이 풀리면 구체도 숨깁니다.</p>
+<p><code>CatCursorSphere.shader</code>는 반투명 흰색과 얇은 테두리를 그립니다. 실제 벽의 깊이에 가려지지 않도록 표시용 셰이더로 동작합니다. 이 구체 자체에 아이템 선택 Collider를 붙이는 방식이 아닙니다. 산탄 원은 이와 별도의 <code>ShotSpreadRing</code>입니다.</p>
+<h3 id="c3-s19">6.2 노란 강조는 원본 재질을 바꾸지 않습니다</h3>
+<p><code>ItemHighlight</code>는 <code>IHighlightSource</code>가 제공한 Renderer와 메시를 사용해 면, 후광, 테두리를 추가로 그립니다. <code>InteractionController</code>가 만든 이 보조 객체가 담당하며, 모든 물체에 같은 무거운 상호작용 컴포넌트를 붙여야 하는 구조는 아닙니다.</p>
+<p>일반 모델에는 <code>HighlightTarget</code>만 붙여도 강조 대상으로 사용할 수 있습니다. 단, 조준용 활성 Collider가 필요합니다. 이 컴포넌트는 <strong>강조 권한만</strong> 주므로 물건 집기나 F 저장까지 자동 허용하지 않습니다. 들 수 있는 물건은 <code>CatInteractionItem</code>, F 데이터 아이템은 <code>ItemPickup</code>이나 등록 목록을 별도로 갖춰야 합니다.</p>
+<p>렌더링 과정은 다음과 같습니다.</p>
+<ol>
+<li>대상을 바꾸면 그 모델의 메시 목록을 준비합니다.</li>
+<li>일반 메시의 읽기가 허용되면 같은 위치 정점의 법선을 모아 테두리가 갈라지는 현상을 줄입니다.</li>
+<li>움직이는 스킨 메시라면 <code>BakeMesh</code>로 현재 본 자세를 메시 모양에 반영합니다.</li>
+<li><code>Draw</code>에서 면, 후광, 테두리를 그립니다.</li>
+<li>최근 대상 하나는 캐시해서 조준이 잠깐 벗어났다 돌아와도 매번 다시 만들지 않습니다.</li>
+<li>모델 교체/비활성화/폐기 때 직접 만든 임시 메시를 정리합니다.</li>
+</ol>
+<p>근거: <code>ItemHighlight.cs</code> 25<del>81행, 84</del>132행. 강조 셰이더 <a href="../Assets/02Scripts/01Player/Interaction/Presentation/CatInteractionOverlay.shader">CatInteractionOverlay.shader</a>의 <code>_Color</code>, <code>_Extrusion</code>, <code>_Cull</code>로 색과 바깥 확장량을 정합니다. <code>_Extrusion</code>은 월드 공간 두께이므로 화면 픽셀 고정 두께와 다릅니다.</p>
+<p>스킨 강조의 크기는 특별히 검사해야 합니다. 현재 45·109행은 <code>BakeMesh(..., true)</code>를 사용하고 120행은 <code>localToWorldMatrix</code>로 그립니다. 베이크 시 스케일을 포함시키는 설정과 그릴 때의 변환 행렬이 함께 적용되므로, 모델/부모 스케일이 1이 아닌 경우의 실제 결과를 비교해야 합니다. 이는 현재 코드에서 발견한 <strong>검증 지점</strong>이며, 이 문서 작업만으로 특정 RAt 크기 문제를 재현·수정했다고 주장하지 않습니다.</p>
+<h3 id="c3-s20">6.3 UI 획득 연출은 저장소가 아닙니다</h3>
+<p><code>InventoryPickupEffect</code>는 등록된 <code>inventoryTarget</code>이 존재하고 활성 Canvas 위에 보일 때만 시작합니다. 연결이 없으면 임의의 화면 모서리로 보내지 않고 실패합니다. <code>RegisterTarget(null)</code>로 해제하거나 연출 중 UI가 사라지면 예약된 월드 물체 상태를 복구합니다.</p>
+<p>기본 연출 값은 시간 0.55초, 화면 위로 휘는 높이 100, 마지막 크기 0.12배, 촬영 해상도 256입니다. 실제 Inspector 저장값은 별도입니다. 연출은 <code>Time.unscaledDeltaTime</code>을 쓰므로 <code>timeScale=0</code>만으로 자동 정지되지 않습니다. UI를 닫거나 연출 담당을 비활성화하면 취소 경로가 실행됩니다.</p>
+<p>핵심 순서는 다음과 같습니다.</p>
+<pre><code class="language-text">UI 목적지 유효성 확인
+→ 실제 외형을 임시 카메라로 한 번 촬영
+→ PickupReservation이 월드 표시·충돌·물리 상태를 저장하고 숨김
+→ 아이콘이 UI로 이동
+→ 도착하면 예약 완료 + Collected(itemId)
+→ 취소하면 원래 표시·충돌·물리 상태 복구
+</code></pre>
+<p><code>InventoryPickupEffect.cs</code> 188~197행 중 발췌:</p>
+<pre><code class="language-csharp">PickupReservation completed = reservation;
+reservation = null;
+activeTarget = null;
+bool committed = completed != null &amp;&amp; completed.TryCommit(out itemId);
+ClearPresentation();
+if (committed) collected?.Invoke(itemId);
+</code></pre>
+<ol>
+<li>끝낼 예약을 임시 변수로 보관합니다.</li>
+<li>현재 예약부터 비웁니다. 완료 이벤트 안에서 다시 호출해도 같은 물체를 두 번 완료하지 않기 위함입니다.</li>
+<li>현재 목적지 연결도 비웁니다.</li>
+<li>물체가 아직 유효한 경우에만 예약을 완료합니다.</li>
+<li>아이콘과 촬영 텍스처를 정리합니다.</li>
+<li>성공했을 때만 아이템 ID를 알립니다.</li>
+</ol>
+<p>이 발췌는 읽기 쉽게 중간의 <code>string itemId = null;</code> 선언을 생략한 것입니다. 그대로 복사하여 독립 함수로 실행할 코드가 아니라 원래 함수의 핵심 순서를 설명한 코드입니다.</p>
+<p>완료 알림은 저장 성공을 보장하지 않습니다. <code>Collected</code> 수신자가 연결되지 않았으면 아이콘 연출은 끝나도 Hotbar에 저장되지 않을 수 있습니다. F 획득은 별도의 직접 저장 경로이므로 F로 넣는 모든 아이템에 이 비행 연출이 자동 붙는다고 설명하면 안 됩니다.</p>
+<h3 id="c3-s21">6.4 촬영용 객체와 리소스의 정리</h3>
+<p><code>ItemIconCapture</code>는 임시 카메라와 Light, 표시용 메시를 월드의 먼 위치에 만들고 전용 레이어 31만 찍습니다. 원본 Renderer나 공유 Material은 바꾸지 않고 필요한 PropertyBlock 값을 복사합니다. URP에서는 지원되는 <code>RenderPipeline.StandardRequest</code>로 촬영합니다. 지원하지 않거나 실패하면 false를 반환합니다.</p>
+<p>성공/실패 여부와 관계없이 <code>finally</code>에서 임시 루트를 먼저 비활성화하고 생성한 메시를 파괴합니다. 촬영한 RenderTexture는 연출이 끝날 때 <code>Release</code>합니다. “한번 생성한 아이콘을 영구 에셋으로 저장”하는 기능은 아닙니다.</p>
+<h3 id="c3-s22">6.5 수정 후 확인할 일</h3>
+<ul>
+<li>화면 비율을 바꿔도 중앙 구체가 가운데에 있고 크기가 과도하게 커지지 않는지 확인합니다.</li>
+<li>일반 메시와 움직이는 스킨 메시를 각각 강조하고, 오브젝트 스케일을 작게/크게 한 경우도 비교합니다.</li>
+<li>원본 Material 색이 바뀌지 않는지, 조준을 벗어나면 추가 강조만 없어지는지 확인합니다.</li>
+<li>UI 목적지 미등록/비활성 상태에서 물체가 사라지지 않는지 확인합니다.</li>
+<li>정상 도착에서 이벤트가 1회인지, 연출 도중 UI 제거 시 이벤트 없이 물체가 복구되는지 확인합니다.</li>
+<li>여러 번 획득한 뒤 임시 <code>CatItemIconPreview</code>나 RenderTexture가 계속 쌓이지 않는지 확인합니다.</li>
+</ul>
+<h2 id="c3-s23">7. F08 — 샷건 장착·조준·발사</h2>
+<h3 id="c3-s24">7.1 장착과 손 자세</h3>
+<p>숫자 1의 의미는 기존 총을 보이게 하거나 숨기는 토글입니다. 소환 연출을 재생하는 방식이 아닙니다. <code>ShotgunEquipment</code>는 씬에 준비된 <code>weaponRoot</code>와 몸통 본 <code>motionRoot</code>를 연결받습니다. 총 루트는 손 본 아래가 아니라 플레이어 아래에 두고, 손의 변형 본을 총의 <code>leftGrip</code>과 <code>rightGrip</code> 위치로 맞춥니다.</p>
+<p>매 프레임 이전 손 보정을 먼저 복구하고, Animator가 기본 자세를 계산한 뒤 <code>LateUpdate</code>에서 총 위치와 양손 잡는 위치를 다시 적용합니다. 이 순서가 필요한 이유는 손 위치를 계속 더하기만 하면 조금씩 틀어지기 때문입니다.</p>
+<p>근거: <code>ShotgunEquipment.cs</code> 75<del>79행, 104</del>117행. 잘못 연결된 루트가 Player 자신이나 부모인 경우 모델을 끄다 Player 전체가 꺼지지 않도록 <code>HasValidBindings</code> 및 <code>SetWeaponVisible</code>에 방어 조건이 있습니다.</p>
+<h3 id="c3-s25">7.2 조준과 걷기 고정</h3>
+<p>장착이 준비된 상태에서 우클릭을 유지하면 <code>ShotgunCombat.IsAiming=true</code>가 됩니다. <code>AimZoom</code>은 이 값만 읽고 Cinemachine 렌즈의 시야각을 줄입니다. 기본 목표 시야각은 40도, 전환 시간은 0.16초입니다. Main Camera의 Transform을 사격 코드가 직접 움직이는 방식이 아닙니다.</p>
+<p><code>CombatPolicy.RestrictMovement</code>는 조준 중 이동 의도에서 달리기 플래그만 제거합니다. 따라서 우클릭 중 Shift를 눌러도 걷고, 이동키를 누르지 않으면 대기합니다. 조준했다고 자동으로 걷기 애니메이션을 재생하는 것은 아닙니다.</p>
+<p><code>IAimState</code>는 조준 여부와 카메라 방향으로 몸을 돌릴 필요만 알립니다. 이동과 카메라가 샷건 내부의 발사 횟수나 총구 계산을 알아야 할 필요가 줄어듭니다.</p>
+<h3 id="c3-s26">7.3 단발과 산탄의 기본값</h3>
+<table>
+<thead>
+<tr>
+<th>설정</th>
+<th>코드 기본값</th>
+<th>바꾸는 위치와 의미</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>shotInterval</code></td>
+<td>0.55초</td>
+<td>ShotgunCombat. 새 발사 요청 사이 최소 간격</td>
+</tr>
+<tr>
+<td><code>range</code></td>
+<td>75</td>
+<td>ShotgunCombat. 광선 판정 거리</td>
+</tr>
+<tr>
+<td><code>pelletCount</code></td>
+<td>4</td>
+<td>ShotgunCombat. 한 발의 산탄 수. 코드상 1~16으로 제한</td>
+</tr>
+<tr>
+<td><code>spreadDegrees</code></td>
+<td>4도</td>
+<td>ShotgunCombat. 비조준 산탄 원뿔의 반각</td>
+</tr>
+<tr>
+<td><code>aimedSpreadDegrees</code></td>
+<td>1.5도</td>
+<td>ShotgunCombat. 조준 산탄 반각. 실제값은 비조준 각도보다 커지지 않게 제한</td>
+</tr>
+<tr>
+<td><code>muzzleRadius</code></td>
+<td>0.025</td>
+<td>ShotgunCombat. 총구/몸통 벽 겹침 확인 반경</td>
+</tr>
+<tr>
+<td><code>fireMoment</code></td>
+<td>0.12초</td>
+<td>ShotgunPose. 준비 자세에서 실제 명중 판정을 할 시각</td>
+</tr>
+<tr>
+<td><code>lineWidthPixels</code></td>
+<td>1.4픽셀</td>
+<td>ShotSpreadRing. 산탄 범위 원의 선 두께</td>
+</tr>
+<tr>
+<td><code>outlineWidthPixels</code></td>
+<td>0.6픽셀</td>
+<td>ShotSpreadRing. 범위 원 바깥 어두운 선 두께</td>
+</tr>
+</tbody></table>
+<p>좌클릭 유지 자동 발사는 없습니다. <code>CombatInput</code>이 <code>wasPressedThisFrame</code>만 전달하고 <code>CombatPolicy.TryRequest</code>가 간격을 확인합니다. 너무 빠르게 여러 번 누른 입력을 나중에 모아서 모두 발사하는 발사 버퍼도 없습니다.</p>
+<h3 id="c3-s27">7.4 클릭부터 명중까지</h3>
+<pre><code class="language-text">좌클릭 새 누름
+→ 장비/클립/카메라/총구 연결이 준비되었는가?
+→ 덫이 좌클릭을 쓰지 않는가?
+→ 발사 간격이 지났는가?
+→ ShotgunPose.BeginShot
+→ Animator가 총 올리기/반동 곡선 계산
+→ 장비가 총과 양손 최종 자세 적용
+→ 몸이 카메라 쪽으로 돌아왔고 fireMoment가 되었는가?
+→ 총구 벽 검사 + 산탄 4개의 히트스캔
+→ PelletResolved / IShotReceiver / ShotFired 알림
+</code></pre>
+<p>총구 판정은 손의 최종 자세가 적용된 뒤 <code>PoseApplied</code> 이벤트에서 실행합니다. 준비 자세를 시작하자마자 이전 프레임 총구 위치로 쏘는 문제를 피하기 위한 순서입니다. 발사 전에 몸 방향이 카메라 수평 방향과 충분히 가까운지 내적 0.94 기준으로 기다립니다. 이후 <code>AcknowledgeShot</code>으로 실제 발사를 인정한 뒤 반동을 진행합니다.</p>
+<p>근거: <code>ShotgunCombat.cs</code> 44<del>59행, 63</del>120행. 자세의 <code>ReadyToFire</code>, <code>SampleTime</code>은 <code>ShotgunPose.cs</code> 23행 및 68~69행.</p>
+<h3 id="c3-s28">7.5 카메라 조준선과 총구 광선은 다릅니다</h3>
+<p>카메라에서 쏜 선은 <strong>어디를 겨냥할지</strong> 고릅니다. 실제 산탄은 <strong>총구 앞쪽 +Z</strong>에서 출발합니다. 이 두 위치가 다르기 때문에 총구가 벽 안에 있는데 카메라만 벽 너머를 보는 경우를 따로 검사해야 합니다.</p>
+<p><code>HitscanQuery.Cast</code>는 다음 순서로 검사합니다.</p>
+<ol>
+<li>몸통 기준점이 벽 안에 겹쳤는지 확인합니다.</li>
+<li>몸통에서 총구까지 굵기가 있는 선을 쏘아 중간 벽을 찾습니다.</li>
+<li>총구 자체가 벽 안에 겹쳤는지 확인합니다.</li>
+<li>문제가 없으면 총구의 실제 앞 방향에 산탄 각도를 더해 광선을 쏩니다.</li>
+<li>플레이어 자신과 자식 충돌체는 제외하고 가장 가까운 외부 충돌체를 고릅니다.</li>
+</ol>
+<p>결과는 <code>Miss</code>(빗나감), <code>Hit</code>(명중), <code>Blocked</code>(총구 쪽이 막힘), <code>QueryOverflow</code>(검사 배열이 꽉 차 정확하게 판단할 수 없음)로 나뉩니다. 배열이 꽉 찼을 때 멀리 있는 적을 맞았다고 추측하지 않고 안전하게 막습니다. 기본 검사 배열은 64칸이고 매 프레임 새 배열을 만들지 않고 재사용합니다.</p>
+<p>핵심 발췌, <code>ShotgunCombat.cs</code> 111~117행:</p>
+<pre><code class="language-csharp">LastHit = query.Cast(guardOrigin.position, muzzle, range, hitLayers.value, spread, muzzleRadius);
+PelletResolved?.Invoke(LastHit);
+if (LastHit.Collider &amp;&amp; LastHit.Kind == ShotHitKind.Hit)
+{
+    var receiver = LastHit.Collider.GetComponentInParent&lt;IShotReceiver&gt;();
+    receiver?.ReceiveShot(LastHit);
+}
+</code></pre>
+<ol>
+<li>한 산탄의 실제 충돌 결과를 계산합니다.</li>
+<li>결과가 빗나감/막힘이어도 관심 있는 코드에 알립니다.</li>
+<li>실제 명중한 경우에만 맞은 대상에게 알립니다.</li>
+<li>충돌체 또는 부모에서 <code>IShotReceiver</code> 약속을 구현한 코드를 찾습니다.</li>
+<li>그 코드가 있다면 해당 대상의 처리 방법을 실행합니다.</li>
+</ol>
+<p>현재 팀 <a href="../Assets/02Scripts/02Enemy/PlaceHolder00/ThiefShotReceiver.cs">ThiefShotReceiver.cs</a> 10~12행은 이 알림을 받아 <code>TakeStun(stunDuration)</code>을 호출합니다. 기본값은 1.5초입니다. 산탄 하나마다 수신될 수 있으므로 “한 번의 클릭은 정확히 한 번만 대상 효과를 호출한다”고 가정하면 안 됩니다. 새로운 체력·피해량을 추가할 때는 산탄별 피해인지 샷건 한 발당 피해인지 먼저 결정해야 합니다.</p>
+<h3 id="c3-s29">7.6 산탄 원과 모델 축</h3>
+<p><code>ShotSpreadRing</code>은 현재 퍼짐 각도와 카메라 시야각을 읽어 화면 반지름을 계산합니다. 원이 산탄 방향을 결정하는 것이 아니라, 전투 코드가 결정한 각도를 따라 표시합니다. 조준 시 시야각도 줄어들므로 원의 화면 크기는 퍼짐 각도와 시야각 두 값의 영향을 받습니다.</p>
+<p>현재 산탄은 완전한 난수 방식이 아닙니다. 네 방향을 균등하게 배치하고 <code>ShotsFired</code>에 따라 회전각과 반지름이 바뀌는 결정적인 패턴입니다. 따라서 “확률적으로 매번 독립 무작위 산탄”으로 문서화하면 실제 코드와 다릅니다. <code>ShotgunCombat.cs</code> 105~110행이 분포를 바꾸는 위치입니다.</p>
+<p>현재 샷건 원본 모델의 총열은 로컬 -X 방향이고, 별도 <code>muzzle</code> 표시점은 +Z가 발사 방향입니다. <code>ShotgunPose.Apply</code> 107~117행은 이 모델 축을 보정합니다. 다른 무기 모델을 넣었는데 총이 옆으로 돌아가면 입력 코드보다 모델 축/총구 표시점/이 회전 보정을 먼저 확인해야 합니다.</p>
+<h3 id="c3-s30">7.7 추가 기능을 붙일 위치</h3>
+<table>
+<thead>
+<tr>
+<th>원하는 변경</th>
+<th>우선 수정할 지점</th>
+<th>함께 확인할 것</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>손잡이 위치 변경</td>
+<td>ShotgunEquipment의 Grip Transform, 로컬 자세 값</td>
+<td>좌우 손 본 스케일은 함부로 변경하지 않음</td>
+</tr>
+<tr>
+<td>반동 세기/총 올리기 모양</td>
+<td>Shotgun_Fire 클립의 기존 바인딩, ShotgunPose</td>
+<td><code>raiseWeight/recoilDistance/recoilPitch</code> 필드명을 바꾸면 클립 연결 영향</td>
+</tr>
+<tr>
+<td>줌 배율/속도 변경</td>
+<td>AimZoom Inspector</td>
+<td>실제 Cinemachine 카메라에 연결되어 있는지</td>
+</tr>
+<tr>
+<td>산탄 수/퍼짐 변경</td>
+<td>ShotgunCombat Inspector</td>
+<td>산탄 원, 적 수신 횟수, 벽 가까이 발사 모두 검사</td>
+</tr>
+<tr>
+<td>피격 대상 추가</td>
+<td>대상 코드에 IShotReceiver 구현</td>
+<td>플레이어가 상대 체력 구현을 직접 참조하지 않게 유지</td>
+</tr>
+<tr>
+<td>게임패드 입력</td>
+<td>ICombatInputSource 구현 후 SetInputSource</td>
+<td>메뉴 복귀/포커스 상실 때 Reset 계약도 확인</td>
+</tr>
+<tr>
+<td>효과음/탄흔 추가</td>
+<td>ShotFired/PelletResolved 수신자</td>
+<td>각 이벤트가 샷건 한 발 기준인지 산탄 기준인지 구분</td>
+</tr>
+</tbody></table>
+<p>지금 코드만으로 탄약, 재장전, 저장 가능한 총 아이템, 데미지 수치, 네트워크 판정까지 구현되어 있다고 할 수 없습니다. 실제 대상 효과는 수신자 코드와 씬 연결에 달려 있습니다.</p>
+<h3 id="c3-s31">7.8 수정 후 확인할 일</h3>
+<ul>
+<li>숫자 1 두 번으로 장착→해제가 되고 손 자세가 원래 애니메이션으로 돌아오는지 확인합니다.</li>
+<li>우클릭 유지 중 Shift 이동은 걷기, 해제 후 Shift 이동은 달리기인지 확인합니다.</li>
+<li>좌클릭 유지로 연속 발사되지 않는지, 새 클릭당 산탄 수가 설정값과 같은지 확인합니다.</li>
+<li>벽 바로 앞/총구가 벽 안/카메라만 적을 보는 위치에서 관통하지 않는지 확인합니다.</li>
+<li>샷건 발사 뒤 이동·점프·대기 본이 계속 움직이는지 확인합니다. Animator 상태 이름만 바뀌는 것은 충분한 증거가 아닙니다.</li>
+<li>덫 선택 중 같은 좌클릭으로 총도 발사되지 않는지 확인합니다.</li>
+<li>메뉴 진입/복귀 클릭으로 오발하지 않는지 확인합니다.</li>
+</ul>
+<h2 id="c3-s32">8. SOLID 관점의 코드리뷰</h2>
+<p>이 표의 “확인된 구조”는 실제 소스에서 확인한 사실입니다. “검토 지점”은 지금 당장 재현한 오류가 아니라 향후 변경 시 주의할 위험입니다. 권장 구조가 있다고 해서 이번 문서 작성에서 자동으로 리팩터링하지 않습니다.</p>
+<table>
+<thead>
+<tr>
+<th>원칙</th>
+<th>확인된 장점</th>
+<th>현재 한계와 검토 지점</th>
+<th>필요할 때의 개선 방향</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S: 한 클래스의 책임을 좁힘</td>
+<td>HandPolicy는 결정, ItemCarrier는 운반, HitscanQuery는 물리 조회, ItemHighlight는 표시, PickupReservation은 예약 복구</td>
+<td>InteractionController는 대상 조회·손 조정·강조 연결을 함께 맡고 ItemInteractor는 등록/발견/저장/Enemy 연결을 함께 담당</td>
+<td>대상 종류가 크게 늘어날 때만 대상 조회와 실행 연결을 별도 서비스로 나눔. 지금부터 빈 추상화만 늘리지 않음</td>
+</tr>
+<tr>
+<td>O: 기존 코드를 덜 고치며 확장</td>
+<td>IHighlightSource, IItemInventory, IPickupPort, IShotReceiver로 다른 구현을 연결 가능</td>
+<td>ShotgunCombat은 구체적인 ShotgunEquipment/ShotgunPose에 의존. ShotgunPose는 현재 모델의 -X 축을 가정</td>
+<td>다른 무기가 실제로 추가될 때 모델별 자세 어댑터나 작은 장비 계약 검토</td>
+</tr>
+<tr>
+<td>L: 약속을 지키면 대체 가능</td>
+<td>입력 공급자와 저장소를 주입할 수 있고 실패는 bool로 알림</td>
+<td>사용자 저장소가 성공 반환 전에 저장하지 않거나 예외를 던지면 예약과 월드 상태가 어긋날 수 있음</td>
+<td><code>TryAdd=false</code>면 아무 변화 없음, <code>true</code>면 한 번 저장 완료라는 계약을 테스트로 고정</td>
+</tr>
+<tr>
+<td>I: 필요한 기능만 요청</td>
+<td>IPrimaryAction/IInteractionAction/IShotSpreadState/IAimState가 서로 작음</td>
+<td>IItemInventory는 HotbarItemData에, IPickupPort는 CatInteractionItem/Camera에 의존</td>
+<td>이 계약은 이 프로젝트 내부의 분리에는 도움이 되지만 완전 엔진 독립은 아님. 다른 엔진 이식 시 데이터/표시 연결부 교체</td>
+</tr>
+<tr>
+<td>D: 규칙이 세부 구현에 덜 의존</td>
+<td>HandPolicy/CombatPolicy는 Unity 타입 없이 판단. 손과 저장은 작은 계약 사용</td>
+<td>ItemInteractor가 ThiefController를 직접 찾고 호출. 표시·물리 클래스는 Unity API 의존</td>
+<td>Enemy 종류가 늘면 포획 가능 여부/실행을 제공하는 작은 공통 계약 검토. 팀 Enemy 코드 협의 전 임의 변경 금지</td>
+</tr>
+</tbody></table>
+<h3 id="c3-s33">8.1 현재 코드에서 문서와 실행이 다른 부분</h3>
+<ol>
+<li><strong>레이어 기반 F 자동 획득:</strong> 현재 ItemInteractor는 레이어 이름이 아니라 등록/ItemPickup/ThiefController로 대상을 찾습니다. 과거 설명을 그대로 믿고 Layer만 바꾸면 작동하지 않을 수 있습니다.</li>
+<li><strong>쥐 카운트 미구현이라는 주석:</strong> 현재 GetCaptured는 GameManager.OnRatCaught를 호출합니다. 실행 결과 설명은 “기절한 쥐 포획이 팀 라운드 카운트로 연결됨”이 맞습니다.</li>
+<li><strong>UI 획득과 F 저장의 관계:</strong> UI 비행 연출 자체는 Hotbar 저장소가 아니며, F의 직접 저장과 별개입니다.</li>
+<li><strong>미사용으로 보이는 선언:</strong> RegisteredCommand에는 현재 정책이 내보내지 않는 Hold/Drop 값이 남아 있습니다. 코드에서 사용하지 않는 열거값과 파일 전체 미사용은 다른 문제입니다. 지우기 전 직렬화/외부 코드 참조까지 조사해야 하므로 이 문서에서 삭제하지 않습니다.</li>
+</ol>
+<h3 id="c3-s34">8.2 오류 재현 없이 단정하면 안 되는 부분</h3>
+<ul>
+<li>스킨 강조의 이중 스케일 가능성은 현재 <code>BakeMesh(true)</code>와 변환 행렬의 조합에서 확인할 검토 지점입니다. 대상별 크기 비교가 필요합니다.</li>
+<li><code>EnemyCaptured</code> 수신자가 카운트를 다시 늘리는지 확인하지 않고 이중 카운트 버그가 있다고 단정하지 않습니다.</li>
+<li><code>TryAdd</code>나 피격 이벤트 수신자가 예외를 던졌을 때 중간 상태가 남을 수 있지만, 실제 수신자와 Console을 확인하기 전 현재 오류 원인으로 단정하지 않습니다.</li>
+<li><code>ItemHighlight</code>는 최근 대상의 Renderer 목록을 캐시합니다. 외형 교체 시 갱신 계약을 지켜야 합니다. 모든 동적 교체 사례가 새로 검증된 것은 아닙니다.</li>
+</ul>
+<h2 id="c3-s35">9. 추적 가능한 변경·검증 기록 남기는 방법</h2>
+<p>수정할 때는 “상호작용 수정” 한 줄보다 아래처럼 기능 ID와 실제 영향을 적어 두면 다음 사람이 빠르게 찾을 수 있습니다.</p>
+<pre><code class="language-text">기능: F06 F 획득
+요청: 새로 만든 덫을 F로 저장한다.
+원인/근거: ItemPickup.Item 연결 여부와 부모 Collider 경로를 확인했다.
+변경: 어떤 코드/씬 연결을 바꿨는지 정확한 경로를 기록한다.
+보존: 기존 GUID, 팀 Enemy, 다른 씬 등 실제 보존을 검사한 범위를 적는다.
+검증: 빈손/총/물건 보유 + 빈칸 있음/없음 + 벽 가림을 각각 기록한다.
+결과: 통과, 실패, 미검증을 나누고 실패 로그 위치를 연결한다.
+</code></pre>
+<p>과거 작업 로그의 PASS는 당시 버전과 당시 검사 조건에 대한 기록입니다. 현재 코드가 바뀌었다면 이전 PASS를 현재 통과 결과로 복사하지 않습니다. 특히 이 장의 F06은 과거 단순 비활성화 설명보다 현재 Enemy 포획/라운드 연결을 우선하여 읽어야 합니다.</p>
+<footer><a href="#chapter-0" data-chapter="0">목차로 돌아가기</a><span>기준 2026.10.14 · 6b8bafde</span></footer></article><article data-index="4" data-file="04_INVENTORY_TRAPS.md" hidden><div class="article-tools"><a href="04_INVENTORY_TRAPS.md">Markdown 원본</a><button onclick="window.print()">인쇄</button></div><h1 id="c4-s0">인벤토리와 덫</h1>
+<h2 id="c4-s1">F09 인벤토리 데이터와 화면</h2>
+<p>인벤토리는 <strong>아이템을 기억하는 보관함</strong>, 핫바 UI는 <strong>그 보관함을 그리는 화면</strong>입니다. 화면에 그림이 없다고 곧바로 데이터가 사라진 것은 아닙니다. 반대로 덫 미리보기가 보인다고 실제 덫이 설치된 것도 아닙니다. 이 세 가지를 나누어 확인해야 합니다.</p>
+<h3 id="c4-s2">현재 연결</h3>
+<table>
+<thead>
+<tr>
+<th>구성</th>
+<th>실제 담당</th>
+<th>하는 일</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>아이템 설명서</td>
+<td><a href="../Assets/02Scripts/04Systems/HotbarItemData.cs">HotbarItemData.cs</a></td>
+<td>이름, 아이콘, 설치할 프리팹을 보관하는 ScriptableObject</td>
+</tr>
+<tr>
+<td>5칸 보관함</td>
+<td><a href="../Assets/02Scripts/04Systems/HotbarManager.cs">HotbarManager.cs</a></td>
+<td>각 칸의 데이터와 선택 칸 관리, 빈칸 추가·사용, 휠 입력</td>
+</tr>
+<tr>
+<td>보관함 화면</td>
+<td><a href="../Assets/02Scripts/04Systems/HotbarUI.cs">HotbarUI.cs</a></td>
+<td>아이콘·이름·선택 테두리를 갱신</td>
+</tr>
+<tr>
+<td>월드에서 줍기</td>
+<td><a href="../Assets/02Scripts/04Systems/ItemInteractor.cs">ItemInteractor.cs</a>, <a href="../Assets/02Scripts/04Systems/ItemPickup.cs">ItemPickup.cs</a></td>
+<td>F 대상과 거리 등을 검사하고 저장 성공 후 월드 물건 처리</td>
+</tr>
+<tr>
+<td>덫 아이템 자료</td>
+<td><a href="../Assets/04Prefabs/Player/Inventory/TrapItem.asset">TrapItem.asset</a></td>
+<td><code>itemId=jaw_trap</code>, 표시 이름 덫, TrapIcon, Trap_Inventory 연결</td>
+</tr>
+<tr>
+<td>설치할 실물</td>
+<td><a href="../Assets/04Prefabs/Player/Inventory/Trap_Inventory.prefab">Trap_Inventory.prefab</a></td>
+<td>기존 덫의 변형 프리팹. ItemPickup과 TrapPickup을 추가한 구성</td>
+</tr>
+</tbody></table>
+<p><code>HotbarManager</code>, <code>HotbarUI</code>, <code>HotbarItemData</code>는 GameUI 쪽 기존 구현을 재사용·연결한 경로입니다. 플레이어 기능을 위해 만든 별도 두 번째 인벤토리가 아닙니다. 팀원의 보물 HUD와도 별개입니다. 보물 5개와 인벤토리 5칸은 숫자만 같고 서로 다른 자료입니다.</p>
+<p>저장된 <code>PlaytestScene01.unity</code>의 Player 인스턴스는 <code>readSelectionInput=1</code>, <code>readNumberKeys=0</code>으로 덮어씁니다. 첫 슬롯의 데이터는 TrapItem입니다. 즉 <strong>첫 칸에 덫 1개를 들고 시작하고, 휠로 칸을 고르며, 숫자 1은 샷건에 남겨 둡니다.</strong> 코드 기본값 <code>readNumberKeys=true</code>만 보고 현재 씬도 숫자키로 선택한다고 설명하면 틀립니다. <code>HotBar</code>의 화면에는 아이콘·테두리·이름 연결 5묶음이 있고 <code>buttons</code> 배열은 비어 있습니다. 코드에는 버튼 선택 지원이 있어도 현재 저장된 화면에 클릭 버튼이 연결됐다고 볼 수는 없습니다.</p>
+<h3 id="c4-s3">보관함 코드 읽기</h3>
+<p><a href="../Assets/02Scripts/04Systems/HotbarManager.cs">HotbarManager.TryAdd</a>는 다음 순서로 동작합니다. 아래는 메서드 본문에서 가져온 실제 코드입니다.</p>
+<pre><code class="language-csharp">slotIndex = -1;
+if (item == null) return false;
+slotIndex = FirstEmptySlot;
+if (slotIndex &lt; 0) return false;
+
+slots[slotIndex] = item;
+OnSlotChanged?.Invoke(slotIndex);
+return true;
+</code></pre>
+<ol>
+<li><code>-1</code>은 아직 물건을 넣은 칸이 없다는 표시입니다.</li>
+<li>넣을 데이터가 없거나 빈칸이 없으면 실패합니다. 기존 물건을 지우지 않습니다.</li>
+<li>가장 왼쪽 빈칸에 같은 아이템 자료를 저장합니다. 같은 종류라도 한 칸에 여러 개 쌓는 구조는 아닙니다.</li>
+<li><code>OnSlotChanged</code>는 “이 칸이 바뀌었어요”라는 알림입니다. UI가 이를 듣고 아이콘을 다시 그립니다. <code>?.</code>는 듣는 쪽이 없어도 오류를 내지 않고 지나간다는 뜻입니다.</li>
+</ol>
+<p><code>TryRemove(slotIndex, expected)</code>는 칸 번호뿐 아니라 예상 아이템도 검사합니다. 설치를 누르는 동안 칸이 바뀌었는데 엉뚱한 물건을 소모하는 일을 막는 장치입니다. <code>ConsumeSelected()</code>는 선택 칸을 사용 처리하는 편의 함수입니다. 설치 쪽은 더 엄격한 <code>TryRemove</code> 경로를 사용합니다.</p>
+<p>UI는 <code>Start</code>에서 <code>HotbarManager.Instance</code>를 찾아 알림을 구독합니다. <code>RefreshSlot</code>은 슬롯 데이터가 있으면 이름을 표시하고, 아이콘도 있으면 이미지를 켭니다. 테두리는 <code>SelectedIndex</code>에 맞춰 한 칸만 켭니다. 매 프레임 모든 아이콘을 다시 그리는 방식이 아닙니다.</p>
+<h3 id="c4-s4">F 획득과 손 상태</h3>
+<p>F 저장은 손에 총·다른 물건을 들고 있어도 <strong>그 손 상태를 유지</strong>합니다. 새 물건을 빈 인벤토리 칸에 넣는 행동입니다. 좌클릭 유지로 눈앞에 들고 다니는 기능과 다릅니다. 일반 대상의 발견·거리·벽 가림과 Enemy 조건은 <a href="03_INTERACTION_COMBAT.md">상호작용 문서</a>의 F06을 참고합니다.</p>
+<p>덫에는 <code>TrapPickup</code>이 <code>IItemPickupRule</code>과 <code>IItemPickupConsumption</code>을 구현합니다. 인터페이스는 “이 물건에게 물어볼 수 있는 질문 목록”입니다.</p>
+<pre><code class="language-csharp">public bool CanPickup =&gt; trap &amp;&amp; !trap.IsUsed;
+public bool ConsumeWorldInstance =&gt; true;
+</code></pre>
+<p>첫 줄은 덫 컴포넌트가 있고 아직 사용되지 않은 덫만 주울 수 있다는 뜻입니다. 두 번째 줄은 저장 성공 후 월드의 복제본을 없애야 한다는 뜻입니다. 사용된 덫을 다시 주워 무한 재사용하는 것을 막습니다. 프리팹 에셋 원본을 지우는 뜻은 아닙니다.</p>
+<h3 id="c4-s5">인벤토리를 수정할 때</h3>
+<ul>
+<li>슬롯 수를 바꾸려면 HotbarManager의 배열뿐 아니라 HotbarUI의 슬롯 연결 수도 함께 맞춥니다. 현재 UI는 두 배열 길이가 같다는 전제로 값을 읽습니다.</li>
+<li>첫 아이템을 바꾸려면 해당 씬 Player 인스턴스의 HotbarManager <code>slots[0]</code> 연결을 바꿉니다. 원본 프리팹과 씬 덮어쓰기 중 어느 쪽을 편집하는지 먼저 확인합니다.</li>
+<li>아이콘이나 이름은 TrapItem 같은 HotbarItemData에서 수정합니다. 모델 자체를 바꾸는 곳은 <code>placePrefab</code>입니다.</li>
+<li>UI만 교체할 때는 보관 데이터와 저장 메서드를 다시 만들지 말고 <code>OnSlotChanged</code>, <code>OnSelectedChanged</code> 알림을 새 UI가 듣게 연결합니다.</li>
+<li>이 구조에는 파일 저장·불러오기 기능이 없습니다. 게임을 껐다 켜도 재고를 기억하는 기능으로 설명하면 안 됩니다.</li>
+</ul>
+<h2 id="c4-s6">F10 덫 설치</h2>
+<h3 id="c4-s7">한 번의 설치가 처리되는 순서</h3>
+<pre><code class="language-text">휠로 TrapItem 선택
+  → 화면 중앙에서 가상의 광선 발사
+  → 실제 바닥을 찾고 월드 격자 중심으로 맞춤
+  → 바닥 지지·거리·벽·빈 공간·기존 덫 검사
+  → 초록/빨강 외형과 진행률 표시
+  → 좌클릭 또는 F를 같은 칸에서 1초 유지
+  → 완료 직전 같은 검사 재실행
+  → 덫 복제본 생성 + 예상 슬롯 1개 소비
+  → 라운드가 끝날 때 지울 설치물 목록에 등록
+</code></pre>
+<p>바닥에 격자 선을 그리거나 새 지면을 만드는 기능은 없습니다. “보이지 않는 모눈종이에 자리를 맞춘다”고 이해하면 됩니다. 게임 축은 Unity의 월드 X/Z 평면, 높이는 Y를 사용합니다. 과거 모델 작업에서 사용자가 정한 축 이름과 구별합니다.</p>
+<h3 id="c4-s8">나누어 맡은 스크립트</h3>
+<table>
+<thead>
+<tr>
+<th>파일</th>
+<th>책임</th>
+<th>직접 맡지 않는 일</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="../Assets/02Scripts/01Player/Domain/PlacementInput.cs">PlacementInput.cs</a></td>
+<td>좌클릭/F 중 어느 누름을 설치에 쓰는지 결정</td>
+<td>키보드 장치 읽기·콜라이더 검사</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Domain/PlacementHold.cs">PlacementHold.cs</a></td>
+<td>같은 칸·슬롯에서 시간 누적, 취소, 버튼 해제 대기</td>
+<td>프리팹 생성·UI 표시</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Placement/PlacementSurface.cs">PlacementSurface.cs</a></td>
+<td>설치 위치·지지면·공간 검사</td>
+<td>재고 소비·진행률 그리기</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Placement/PlacementFeedback.cs">PlacementFeedback.cs</a></td>
+<td>외형 미리보기·색·문구·진행률</td>
+<td>실제 덫 기능 실행</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Placement/TrapPlacement.cs">TrapPlacement.cs</a></td>
+<td>위 담당자와 인벤토리를 연결하고 설치 확정</td>
+<td>보상 조건 계산</td>
+</tr>
+<tr>
+<td>같은 파일의 <code>PlacedTrapLifetime</code></td>
+<td>이 설치기가 만든 복제본만 라운드 종료 때 정리</td>
+<td>보관함·원본 프리팹 삭제</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Placement/TrapPickup.cs">TrapPickup.cs</a></td>
+<td>덫 회수 가능 여부, 발동 시 기존 쥐 기절 API 연결</td>
+<td>적 행동트리·점수 시스템 구현</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Placement/TrapRoundReward.cs">TrapRoundReward.cs</a></td>
+<td>완벽 방어 라운드의 덫 1회 지급</td>
+<td>치즈 아이콘 애니메이션</td>
+</tr>
+</tbody></table>
+<p><code>TrapPlacement</code>가 <code>IPrimaryAction</code>과 <code>IInteractionAction</code>을 구현하므로 기존 발사·운반·F 상호작용이 설치 입력의 사용 여부를 물을 수 있습니다. 큰 새 플레이어 매니저를 하나 더 만드는 방식이 아닙니다.</p>
+<h3 id="c4-s9">입력 우선순위</h3>
+<table>
+<thead>
+<tr>
+<th>상황</th>
+<th>처리</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>덫 선택 + 손에 운반 중 물건 없음</td>
+<td>좌클릭을 설치가 사용하며 총 발사·빈손 집기와 중복 실행하지 않음</td>
+</tr>
+<tr>
+<td>샷건을 들고 덫 선택</td>
+<td>총을 자동 해제하지 않고 덫 미리보기·설치 사용</td>
+</tr>
+<tr>
+<td>물건을 좌클릭으로 운반 중</td>
+<td>설치하지 않음</td>
+</tr>
+<tr>
+<td>F를 새로 누르는 순간 상호작용 대상으로 조회되는 대상 존재</td>
+<td>기존 F 상호작용 우선. 최종 획득·포획 성공 여부와 관계없이 같은 누름을 설치에 재사용하지 않음</td>
+</tr>
+<tr>
+<td>대상 없이 덫 선택 후 F 유지</td>
+<td>설치 시작 가능</td>
+</tr>
+<tr>
+<td>좌클릭과 F를 동시에 누름</td>
+<td>F 판단 우선</td>
+</tr>
+<tr>
+<td>좌클릭 설치 중 F를 새로 누름</td>
+<td>설치 취소, 새 F 상호작용에 입력 양보</td>
+</tr>
+<tr>
+<td>설치 성공 후 계속 누름</td>
+<td>두 버튼을 모두 뗄 때까지 다음 설치 시작 안 함</td>
+</tr>
+<tr>
+<td>칸·슬롯 변경, 장애물, Esc, 메뉴·포커스 차단</td>
+<td>진행 취소. 누른 채 복귀해도 즉시 설치하지 않음</td>
+</tr>
+</tbody></table>
+<p>입력 경계 처리는 <code>PlacementInput.Read</code>의 <code>Source</code> 상태에 있습니다. <code>None</code>은 시작 전, <code>Mouse/F</code>는 설치 중, <code>Collection</code>은 수집에 넘긴 누름, <code>Blocked</code>는 해제를 기다리는 상태입니다. 한 번의 클릭으로 집기·발사·설치가 동시에 실행되지 않도록 “이번 누름의 담당자”를 기억합니다. <code>HasInteractionTarget()</code>은 대상 존재를 확인하며 빈 인벤토리와 Enemy 포획 가능 여부는 실제 상호작용에서 나중에 검사합니다. 따라서 꽉 찬 보관함 앞의 물건이나 포획할 수 없는 쥐도 대상 조회에 잡히면 그 F 누름은 설치로 전환하지 않습니다.</p>
+<h3 id="c4-s10">1초 유지 코드 읽기</h3>
+<p><a href="../Assets/02Scripts/01Player/Domain/PlacementHold.cs">PlacementHold.Tick</a>의 핵심입니다.</p>
+<pre><code class="language-csharp">if (!valid || x != cellX || z != cellZ || slot != selectedSlot)
+{ Cancel(true); return false; }
+Elapsed = Math.Min(Math.Max(.01f, duration), Elapsed + Math.Max(0f, deltaTime));
+if (Elapsed &lt; Math.Max(.01f, duration)) return false;
+IsHolding = false;
+return true;
+</code></pre>
+<p>첫 줄은 유효하지 않은 위치, 다른 칸, 다른 슬롯으로 바뀌면 시간을 취소합니다. 다음 줄은 프레임 사이에 지난 시간을 누적하되 목표 시간보다 커지지 않게 합니다. 마지막은 시간이 찼을 때 딱 한 번 성공을 알립니다. 새 누름을 받은 프레임에는 시작 위치를 기록하며, 그 다음 유지 프레임부터 누적합니다. 그래서 표시상 1초를 기준으로 동작하되 프레임 단위의 작은 차이는 생깁니다.</p>
+<h3 id="c4-s11">격자와 장애물 판정</h3>
+<p><code>PlacementSurface.Failed</code>는 다음 계산으로 위치를 고정합니다. 함수 이름은 실패 후보를 먼저 만드는 단계라는 뜻이며, 이후 검사를 통과하면 유효 후보가 됩니다.</p>
+<pre><code class="language-csharp">var cell = new Vector2Int(Mathf.RoundToInt(point.x / cellSize),
+                         Mathf.RoundToInt(point.z / cellSize));
+</code></pre>
+<p>격자 크기가 1이면 X=2.2, Z=4.7인 바닥 점은 대략 X=2, Z=5 칸 중심으로 맞춰집니다. 격자의 원점은 월드 (0,0,0)이고 설치 회전은 <code>Quaternion.identity</code>입니다. 맵의 회전이나 사용자 회전 입력에 따라 격자를 돌리는 기능은 없습니다.</p>
+<p>검사는 아래 순서로 겹쳐 적용됩니다.</p>
+<ol>
+<li><strong>첫 충돌 확인:</strong> 카메라 광선에서 플레이어 자신과 일반 Trigger를 제외하고 가까운 충돌을 찾습니다. 벽을 맞았으면 그 뒤의 바닥을 유효 위치로 통과시키지 않습니다.</li>
+<li><strong>허용 바닥 확인:</strong> <code>floors</code>에 등록한 실제 Collider만 바닥으로 인정합니다. Item/Enemy 레이어를 붙이는 것과는 다른 목록입니다.</li>
+<li><strong>지지면 확인:</strong> 중앙과 네 모서리 아래에 바닥이 있어야 합니다. 최대 경사 약 15도, 다섯 지점 높이 차이는 0.08 이하입니다. 가장자리에서 덫 절반만 허공에 놓이지 않게 합니다.</li>
+<li><strong>거리·도달 경로:</strong> 플레이어 위치에서 Y 방향 0.65 올린 점을 기준으로 거리와 가림을 확인합니다. 화면에 보여도 멀거나 벽 뒤면 안 됩니다.</li>
+<li><strong>공간 확인:</strong> <code>OverlapBoxNonAlloc</code>으로 덫 폭과 높이의 공간을 확인합니다. 벽·기둥·기름통·매대처럼 Collider가 있는 장애물은 설치를 막습니다.</li>
+<li><strong>중복 덫 확인:</strong> Trigger뿐 아니라 기존 덫 Renderer의 bounds도 검사합니다. 발동 후 Trigger가 꺼졌더라도 보이는 덫에 겹쳐 설치하지 않도록 합니다.</li>
+</ol>
+<p><code>NonAlloc</code>은 검사 결과를 매번 새 배열로 만들지 않고 준비한 배열에 담는다는 뜻입니다. 현재 배열 용량은 128입니다. 꽉 찬 경우 “어쩌면 안전할 것”이라고 진행하지 않고 설치 불가로 처리합니다. Collider가 없는 장애물, Ignore Raycast 레이어로 제외한 물체까지 자동으로 감지하는 기능은 아닙니다.</p>
+<h3 id="c4-s12">현재 씬 설정과 수정 위치</h3>
+<p>아래는 <strong>코드 기본값이 아니라 저장된 PlaytestScene01의 TrapPlacement 값</strong>입니다.</p>
+<table>
+<thead>
+<tr>
+<th>인스펙터 필드</th>
+<th align="right">저장값</th>
+<th>바꾸면 달라지는 것</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>floors</code></td>
+<td align="right">Collider 참조 12개</td>
+<td>설치를 허용하는 실제 바닥</td>
+</tr>
+<tr>
+<td><code>cellSize</code></td>
+<td align="right">1</td>
+<td>보이지 않는 격자 간격</td>
+</tr>
+<tr>
+<td><code>reach</code></td>
+<td align="right">2.2</td>
+<td>플레이어에서 설치 지점까지 허용 거리</td>
+</tr>
+<tr>
+<td><code>holdSeconds</code></td>
+<td align="right">1</td>
+<td>설치 완료에 필요한 유지 시간</td>
+</tr>
+<tr>
+<td><code>footprintHalfSize</code></td>
+<td align="right">X 0.45475003, Y 0.26500002</td>
+<td>덫의 월드 X/Z 방향 반폭. 전체 폭은 두 배</td>
+</tr>
+<tr>
+<td><code>modelGroundOffset</code></td>
+<td align="right">(0.087250024, -0.008000001, 0)</td>
+<td>모델 원점과 실제 바닥 면적 중심의 차이 보정</td>
+</tr>
+<tr>
+<td><code>clearanceHeight</code></td>
+<td align="right">1.4</td>
+<td>덫 위에 확보할 빈 공간 높이</td>
+</tr>
+<tr>
+<td><code>previewMaterial</code></td>
+<td align="right">TrapPreview.mat</td>
+<td>임시 외형 표현용 원본 재질</td>
+</tr>
+<tr>
+<td><code>progressFill</code>, <code>statusText</code></td>
+<td align="right">각각 Image, TMP_Text 연결</td>
+<td>진행률과 설치 불가 사유 표시</td>
+</tr>
+</tbody></table>
+<p>모델을 교체할 때는 격자만 키우지 말고 <code>footprintHalfSize</code>와 <code>modelGroundOffset</code>을 함께 확인해야 합니다. 전자는 충돌 여유 공간이고 후자는 위치 맞춤 값입니다. <code>PlacementSurface</code>는 생성 시 설정을 보관합니다. 실행 중 인스펙터 값을 바꾼다고 이미 만들어진 검사기가 모두 즉시 갱신되는 구조는 아닙니다. 수정 후 재생을 다시 시작해 확인하는 편이 정확합니다.</p>
+<h3 id="c4-s13">미리보기와 실제 생성</h3>
+<p><code>PlacementFeedback</code>은 원본 프리팹 전체를 생성하지 않습니다. Transform·MeshFilter·MeshRenderer를 복사해 외형만 표시합니다. Collider·덫 발동 스크립트가 없는 임시 오브젝트이므로 미리보기가 쥐를 잡지 않습니다. 임시 재질을 사용해 공유 재질의 색을 바꾸지 않으며 종료 때 해제합니다.</p>
+<p>설치 가능은 반투명 초록, 불가능은 반투명 빨강입니다. 바닥 자체를 찾지 못하면 외형 대신 안내 문구만 남을 수 있습니다. 진행률은 유효한 바닥 후보에서 표시합니다. 현재 안내 문구의 “1초”는 문자열에 직접 쓰여 있으므로 <code>holdSeconds</code>를 바꾸면 안내도 함께 조정해야 합니다. 이것은 설정 확장 시 주의할 점이지 이번 문서 작업에서 수정한 내용은 아닙니다.</p>
+<p><code>CompletePlacement</code>는 시간이 찼다고 바로 재고를 지우지 않습니다. 카메라 위치, 같은 격자, 같은 슬롯, 같은 아이템을 다시 확인합니다. 복제본을 만든 뒤 <code>TryRemove</code>가 실패하면 방금 만든 복제본을 비활성화하고 제거합니다. 슬롯 변경 경쟁으로 물건만 잃거나 무료 덫이 남는 일을 줄입니다.</p>
+<h2 id="c4-s14">덫 발동과 라운드 수명</h2>
+<p>설치 프리팹은 기존 <code>ConsumableJawTrap</code>을 재사용합니다. <code>TrapPickup.HandleTriggered</code>는 전달받은 actor에 <code>ThiefController</code>가 있으면 <code>TakeStun(Mathf.Max(.01f, trap.removeDelay))</code>를 호출합니다. 덫을 밟았다고 이 연결부가 곧바로 쥐를 포획하거나 점수를 올리는 것은 아닙니다. 기절 뒤 F 포획은 기존 Enemy 경로가 처리합니다.</p>
+<p><code>PlacedTrapLifetime</code>은 이 <code>TrapPlacement</code>가 등록한 월드 복제본만 기억합니다. <code>RoundClear</code>, <code>RoundResult</code>, <code>Win</code>, <code>Lose</code> 및 다음 라운드 시작 시 남아 있는 설치물을 정리합니다. 시간 정지 상태에서도 표시와 충돌을 먼저 끄고 지연 없는 <code>Destroy</code>를 요청합니다. 시작부터 맵에 있던 덫, 인벤토리의 미사용 덫, Project 창의 프리팹 에셋을 지우는 목록이 아닙니다.</p>
+<p>일반 게임 입력은 결과창 전 <code>RoundClear</code> 동안 일부 허용하지만 <strong>새 덫 설치는 Playing에서만 허용</strong>합니다. 설치물을 지운 뒤 결과 대기 중 다시 깔아서 남겨 버리는 일을 막습니다. GameManager 없는 독립 검사 환경에서는 설치를 허용하는 별도 경로가 있습니다.</p>
+<h2 id="c4-s15">3치즈 보상</h2>
+<h3 id="c4-s16">정확한 조건</h3>
+<p>3치즈는 치즈 아이템 세 개를 인벤토리에 넣었다는 뜻이 아니라 <strong>라운드 방어 성적</strong>입니다. <a href="../Assets/02Scripts/04Systems/RoundResultUI.cs">RoundResultUI.GetCheeseCount</a>는 모든 보물을 지켰으면 3, 현재 기본 기준으로 3개 이상 남겼으면 2, 그보다 적으면 1을 표시합니다. 현재 씬은 보물 총 5개입니다.</p>
+<table>
+<thead>
+<tr>
+<th>라운드 종료 결과</th>
+<th align="right">치즈 표시</th>
+<th>덫 보상</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>5개 중 5개 지킴 + 빈 인벤토리 있음</td>
+<td align="right">3</td>
+<td>1개</td>
+</tr>
+<tr>
+<td>5개 중 5개 지킴 + 5칸 모두 참</td>
+<td align="right">3</td>
+<td>지급하지 않음. 나중에 재지급하지 않음</td>
+</tr>
+<tr>
+<td>5개 중 3~4개 지킴</td>
+<td align="right">2</td>
+<td>없음</td>
+</tr>
+<tr>
+<td>5개 중 1~2개 지키고 클리어</td>
+<td align="right">1</td>
+<td>없음</td>
+</tr>
+<tr>
+<td>보물이 모두 사라져 패배</td>
+<td align="right">패배 경로</td>
+<td>없음</td>
+</tr>
+</tbody></table>
+<p>보상 코드의 실제 조건은 <code>result.treasuresTotal &gt; 0 &amp;&amp; result.IsPerfect</code>이고, <code>IsPerfect</code>는 <code>treasuresLost == 0</code>입니다. 라운드 총 보물이 바뀌어도 “모두 지켰는가”가 기준입니다.</p>
+<h3 id="c4-s17">지급 시점과 중복 방지 코드</h3>
+<pre><code class="language-csharp">if (round &lt;= lastProcessedRound) return;
+lastProcessedRound = round;
+if (perfect &amp;&amp; inventory &amp;&amp; trapItem)
+    inventory.TryAdd(trapItem);
+</code></pre>
+<p>출처: <a href="../Assets/02Scripts/01Player/Interaction/Placement/TrapRoundReward.cs">TrapRoundReward.GrantOnce</a>.</p>
+<p>첫 줄은 같은 라운드 알림을 여러 번 받아도 중복 보상을 막습니다. 두 번째 줄은 이번 라운드를 처리했다고 표시합니다. 그 뒤 조건과 연결이 유효하면 가장 왼쪽 빈칸에 덫을 넣습니다. 처리 표시를 먼저 하기 때문에 가득 찬 경우, 연결이 없는 경우 모두 해당 라운드 보상을 나중에 자동 재시도하지 않습니다.</p>
+<p>일반 라운드는 마지막 쥐 포획 → RoundClear → 현재 설정 1.5초 대기 → RoundResult/결과 알림 순서입니다. 보상은 그 결과 알림을 듣고 들어갑니다. 치즈 그림이 하나씩 나타나는 연출과는 별도로 진행합니다. 마지막 라운드는 GameManager가 곧바로 Win으로 가므로 <code>TrapRoundReward</code>가 Win 알림에서 결과 자료를 만들어 같은 조건으로 판단합니다.</p>
+<h3 id="c4-s18">보상이 안 보일 때 확인 순서</h3>
+<ol>
+<li>결과의 <code>treasuresLost</code>가 정말 0인지 봅니다. 화면의 치즈 연출 완료와 데이터 지급 시점은 다릅니다.</li>
+<li>HotbarManager의 5칸을 전부 확인합니다. 덫은 선택 칸이 아니라 <strong>가장 왼쪽 빈칸</strong>에 들어가며 선택은 자동으로 바꾸지 않습니다.</li>
+<li>Player의 TrapRoundReward가 활성 상태이고 <code>inventory</code>, <code>trapItem</code> 참조가 실제 사용 중인 보관함·TrapItem인지 확인합니다.</li>
+<li>데이터는 추가됐는데 그림이 안 보이면 HotbarUI의 <code>icon</code>, <code>label</code>, <code>border</code>와 TrapItem.icon을 봅니다.</li>
+<li>GameManager/HotbarManager를 실행 중 교체하는 기능을 추가했다면 이벤트 연결을 확인합니다. 보상 연결은 OnEnable/Start에서 확인하며 매 Update 재연결하는 구조는 아닙니다. HotbarUI도 Start에서 한 번 연결합니다.</li>
+</ol>
+<p>2026-10-14의 기존 재현 검사 기록에서는 첫 칸 덫 1개로 시작해 쥐 3마리를 공개 API로 포획한 뒤, 보물 5/5와 RoundResult에서 두 번째 칸에 덫이 추가되고 두 아이콘 및 치즈 3개가 표시됐습니다. <strong>실제 키보드 F 입력을 사용한 그 증상 재현 검사는 아니며, 사용자가 겪은 미지급 문제의 원인이 확정되거나 수정됐다는 뜻도 아닙니다.</strong> 원본 검사 기록은 <a href="08_REVIEW_AND_VALIDATION.md">근거 목록</a>에 연결합니다.</p>
+<h2 id="c4-s19">설계 검토와 확장 방법</h2>
+<p>SRP 관점에서 입력 해석, 유지 시간, 공간 검사, 표시, 재고 연결, 라운드 수명을 나눈 점이 좋습니다. <code>PlacementHold</code>와 <code>PlacementInput</code>은 Unity 타입 없이 일반 값만 받으므로 별도로 검사하거나 다른 엔진에 옮기기 쉽습니다. 반면 <code>TrapPlacement</code>는 HotbarManager와 ConsumableJawTrap 구체 구현에, <code>TrapRoundReward</code>는 GameManager 단일 인스턴스에 직접 의존합니다. 모든 엔진 의존성이 사라진 구조는 아닙니다.</p>
+<p>여러 종류의 설치물을 추가할 때는 우선 새 아이템마다 외형 크기·회전·설치 조건이 다른지 확인합니다. 현재 <code>HasSelectedTrap</code>은 같은 <code>trapItem</code> 자료인지 직접 비교합니다. 단순히 <code>itemId</code>를 똑같이 쓰거나 레이어만 붙인다고 모든 아이템이 설치되지 않습니다. 종류가 실제로 늘어날 때 아이템별 설치 설정과 보상 규칙의 작은 계약을 분리하는 것이 확장 방향입니다. 사용하지 않는 거대한 범용 프레임워크를 미리 만들 필요는 없습니다.</p>
+<h2 id="c4-s20">수정 후 확인할 사례</h2>
+<table>
+<thead>
+<tr>
+<th>검사</th>
+<th>기대 결과</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>덫 선택, 빈 바닥, 좌클릭/F 각각 1초</td>
+<td>재고 1개만 줄고 위치 예고와 같은 곳에 1개 설치</td>
+</tr>
+<tr>
+<td>0.5초에 키 해제 또는 다른 격자로 이동</td>
+<td>설치 0개, 재고 그대로</td>
+</tr>
+<tr>
+<td>3초 이상 계속 누름</td>
+<td>처음 1개만 설치</td>
+</tr>
+<tr>
+<td>F 획득 대상과 덫 설치가 겹침</td>
+<td>획득 우선, 같은 누름으로 설치되지 않음</td>
+</tr>
+<tr>
+<td>샷건 장착 후 덫 선택</td>
+<td>총 유지, 설치와 사격 중복 없음</td>
+</tr>
+<tr>
+<td>벽·선반·기름통·기둥·기존 덫·바닥 끝</td>
+<td>설치 불가 표시와 재고 보존</td>
+</tr>
+<tr>
+<td>설치 중 Esc 또는 포커스 상실</td>
+<td>취소, 복귀 후 새 누름부터 시작</td>
+</tr>
+<tr>
+<td>RoundClear/Win/Lose</td>
+<td>설치한 복제본 제거, 인벤토리 재고 보존</td>
+</tr>
+<tr>
+<td>완벽 방어·빈칸 있음/없음</td>
+<td>한 개 지급/지급 안 함</td>
+</tr>
+<tr>
+<td>결과 이벤트 중복</td>
+<td>같은 라운드 보상 중복 없음</td>
+</tr>
+</tbody></table>
+<p>이 표는 앞으로 수정한 뒤 실행할 체크리스트입니다. 이번 문서 작성에서 게임을 새로 실행해 모두 통과했다는 기록이 아닙니다.</p>
+<footer><a href="#chapter-0" data-chapter="0">목차로 돌아가기</a><span>기준 2026.10.14 · 6b8bafde</span></footer></article><article data-index="5" data-file="05_EDITOR_ASSETS.md" hidden><div class="article-tools"><a href="05_EDITOR_ASSETS.md">Markdown 원본</a><button onclick="window.print()">인쇄</button></div><h1 id="c5-s0">에디터 도구, 에셋, 협업 연결</h1>
+<p>검토 기준: 2026-10-14의 실제 프로젝트 파일과 작업 로그입니다. 이 문서는 코드를 읽고 정리한 기술문서이며, 문서를 작성하면서 설치 메뉴나 Play 검증을 새로 실행하지 않았습니다. 이전 시험 결과와 현재 파일에서 확인한 사실을 구분합니다.</p>
+<h2 id="c5-s1">F11. 에디터 구성·검증 도구</h2>
+<h3 id="c5-s2">왜 게임에서 안 쓰는 스크립트가 있나요?</h3>
+<p><code>Editor</code> 폴더의 코드는 개발자가 Unity에서 연결을 확인하고 시험할 때 사용하는 공구입니다. 예를 들어 드라이버를 게임 캐릭터가 사용하는 것이 아니라 개발자가 조립할 때 쓰는 것과 같습니다. 게임 중 붙어 있는 컴포넌트가 없다고 미사용 파일로 판단하면 안 됩니다. 아래 파일들은 수동 메뉴, 다른 검증기, 외부 검사 명령에서 사용됩니다.</p>
+<p>현재 <code>Assets/02Scripts/01Player/Editor</code>에는 Setup 4개와 Validation 7개, 합계 <strong>C# 파일 11개</strong>가 있습니다. 이 폴더 밖 팀원 Editor 코드는 여기의 플레이어 공구와 구분합니다.</p>
+<h3 id="c5-s3">설치 도구 4개: 누르면 씬이 바뀝니다</h3>
+<p>공통 메뉴 시작점은 <code>Tools &gt; Cat Player</code>입니다. 이 표의 메뉴는 단순 보기 버튼이 아닙니다. 기존 연결을 검사한 뒤 컴포넌트·참조를 연결하고 <code>PlaytestScene01</code>을 저장합니다. 현재 씬에 다른 미저장 편집이 있으면 그것도 함께 저장될 수 있습니다. 따라서 작업 중인 씬에 무작정 실행하지 않습니다.</p>
+<table>
+<thead>
+<tr>
+<th>파일·진입점</th>
+<th>메뉴와 책임</th>
+<th>실제로 바뀔 수 있는 것</th>
+<th>보존·거부 조건</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Setup/InteractionSetup.cs">InteractionSetup.cs</a>, <code>Configure()</code></td>
+<td>상호작용 연결 확인 및 설치</td>
+<td>상호작용/획득 연출/중앙 커서 연결. 기존 샘플 루트가 없으면 실린더 4개·큐브 2개 배치. 커서가 없으면 구체 생성</td>
+<td>기존 GUID로 에셋 조회. 잘못된 연결을 새 에셋으로 대신하지 않음</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Setup/EquipmentSetup.cs">EquipmentSetup.cs</a>, <code>Configure()</code></td>
+<td>샷건 연결 확인 및 설치</td>
+<td>기존 총과 <code>LeftGrip</code>/<code>RightGrip</code>, 손 본, 몸통 추적 본 연결. 총이 없으면 기존 <code>Shotgun_Ready</code> 인스턴스 생성</td>
+<td>총 후보가 여러 개이면 중단. 이미 조절한 위치·회전·크기는 보존</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Setup/InteractionSettings.cs">InteractionSettings.cs</a>, <code>Apply()</code></td>
+<td>무마찰·정지 카메라 설정 연결</td>
+<td>플레이어 Rigidbody 감쇠 0, 해당 Rigidbody의 충돌체 재질 연결, 정지 회전 제한의 이동 상태 연결</td>
+<td>기존 무마찰 재질이 0/Multiply인지 검사. 기존 회전 각도와 장비 설정은 덮지 않음</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Setup/CombatSetup.cs">CombatSetup.cs</a>, <code>Configure()</code></td>
+<td>조준과 샷건 발사 연결</td>
+<td>샷건 자세·발사·줌·산탄 원 연결. 없을 때 <code>Muzzle</code>/<code>ShotGuardOrigin</code> 기준점 생성</td>
+<td>총과 양손 연결을 먼저 요구. 기존 클립·재질·산탄/자세 설정을 사용</td>
+</tr>
+</tbody></table>
+<p><code>InteractionSetup.Inspect()</code>는 루트·매대·Canvas·Camera 정보를 Console에 출력합니다. 이 함수에는 메뉴 특성이 없으므로 같은 이름의 메뉴가 자동 생성되지는 않습니다. <code>Configure()</code>와 달리 설치·씬 저장을 하지 않습니다.</p>
+<h4 id="c5-s4">코드리뷰: 연결 검사부터 하는 이유</h4>
+<p><code>EquipmentSetup.Configure()</code>의 일부입니다.</p>
+<pre><code class="language-csharp">var candidates = bones.Where(bone =&gt; bone != player.transform &amp;&amp;
+    bone.Find(&quot;LeftGrip&quot;) != null &amp;&amp; bone.Find(&quot;RightGrip&quot;) != null).ToArray();
+if (candidates.Length &gt; 1)
+    throw new InvalidOperationException(&quot;기존 샷건 후보가 여러 개입니다. 자동 선택하거나 새 총을 추가하지 않습니다.&quot;);
+</code></pre>
+<p>손잡이 두 개를 가진 물체를 찾고 후보가 하나일 때만 사용합니다. 총이 이미 있는데 참조 하나가 끊어졌다고 새 총을 또 만들지 않으려는 검사입니다. 다만 <code>DEF_Hand.L</code>, <code>DEF_Hand.R</code>, <code>CTRL_Squash</code> 같은 <strong>현재 리그의 이름</strong>에 의존합니다. 모델을 교체하면 본 이름과 연결을 확인해야 합니다. 후보 0개나 이름 변경은 정상적인 자동 수리 범위를 벗어날 수 있습니다.</p>
+<p><code>CombatSetup</code>은 총구 기준점이 없을 때 기존 메시의 정점 중 로컬 X가 가장 작은 끝을 찾습니다. 이는 <strong>현재 샷건의 총열 축이 -X인 구조</strong>를 전제로 합니다. 다른 방향으로 만든 총에 그대로 적용하면 총구가 반대쪽에 생길 수 있으므로, 새 모델에서는 <code>Muzzle</code>을 먼저 올바른 위치에 준비하는 편이 명확합니다.</p>
+<p>설치 도구가 공통으로 수행하는 저장 부분입니다.</p>
+<pre><code class="language-csharp">EditorSceneManager.MarkSceneDirty(scene);
+if (!EditorSceneManager.SaveScene(scene))
+    throw new InvalidOperationException(&quot;PlaytestScene01 저장에 실패했습니다. 변경 내용은 Undo로 확인할 수 있습니다.&quot;);
+</code></pre>
+<p><code>Dirty</code>는 “아직 저장되지 않은 변경이 있음”이라는 뜻입니다. 저장 대상 씬을 제한하지만, 한 씬의 변경 중 특정 컴포넌트만 골라 저장하는 것은 아닙니다. <code>Undo</code> 기록은 실수를 되돌리는 보조 장치이며 사전 백업과 저장 범위 검사를 대신하지 않습니다.</p>
+<h3 id="c5-s5">검증 도구 7개: 어떤 시험인지 구분하기</h3>
+<table>
+<thead>
+<tr>
+<th>파일</th>
+<th>주요 함수·역할</th>
+<th>시험 전제와 산출물</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/PlayerValidation.cs">PlayerValidation.cs</a></td>
+<td><code>Inspect()</code> 필수 연결 확인, <code>InspectSharedAssets()</code> 협업 참조 검사, <code>Start()</code>/<code>Tick()</code>/<code>Finish()</code> 이동 회귀 시험. 같은 파일의 <code>PlayerEditorScope</code>는 범위·동시 실행 통제</td>
+<td>허용 씬 하나. 연결 검사는 저장하지 않음. Play 시험은 입력·위치 등을 잠시 바꾸고 종료 시 Play도 끝냄</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/PlayerValidationCases.cs">PlayerValidationCases.cs</a></td>
+<td><code>All</code> 시험 목록 19개, <code>HasExpectedMap()</code> 지형 전제, <code>Observe()</code> 관측, <code>Evaluate()</code> 판정</td>
+<td>옛 Texas 맵의 이름·높이·좌표에 의존. 전제가 다르면 검증불가</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/InteractionValidation.cs">InteractionValidation.cs</a></td>
+<td><code>Start()</code>/<code>Cases()</code>로 집기·해제·장비·UI 연출·강조·회전 검사. <code>ObserveEquipmentPose()</code>는 실제 렌더 시점 손 위치 관측</td>
+<td>샘플 실린더/큐브 등 연결 필요. 시험 중 해당 물건을 이동·비활성화하고 임시 UI/벽을 만듦. 종료 정리 후 Play 종료</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/CombatValidation.cs">CombatValidation.cs</a></td>
+<td>교체 가능한 입력 공급자로 발사 준비·4산탄·줌·벽 차단·양손·표시 원 검사. <code>OnPellet()</code>/<code>OnShot()</code>/<code>OnPose()</code>로 이벤트 관측</td>
+<td>실제 Unity 실행 루프와 물리 사용. 실제 키보드 입력 시험과는 구분. 위치·카메라·입력을 잠시 바꾸고 종료 복구</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/CombatInputValidation.cs">CombatInputValidation.cs</a></td>
+<td><code>QueueDevices()</code> → 기본 입력 공급자 → 장착·사격·줌·ESC 검사</td>
+<td>InputSystem 가상 Keyboard/Mouse 이벤트를 사용. Game 창 포커스와 진행 상태 필요. 사람이 하드웨어로 누른 시험은 아님</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/HitscanValidation.cs">HitscanValidation.cs</a></td>
+<td><code>Run()</code>에서 실제 PhysX 질의 18개 검사. <code>Box()</code>/<code>NewObject()</code> 시험물체 생성</td>
+<td>Play에서 먼 임시 공간을 사용. 메뉴 특성 없음. 결과 문자열 반환. 자기 임시 루트만 <code>finally</code>에서 제거</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/PolicyValidation.cs">PolicyValidation.cs</a></td>
+<td><code>RunMovement()</code>/<code>RunHands()</code>/<code>RunOrbit()</code>/<code>RunCombat()</code>의 일반 C# 규칙 검사</td>
+<td><code>순수 규칙 검증</code> 메뉴. Unity 없는 실행 파일로도 빌드할 수 있음. 캐릭터 화면·물리·UI의 정상 여부까지 증명하지 않음</td>
+</tr>
+</tbody></table>
+<p>최근 작업 로그의 “35개 순수 규칙 통과”는 <code>PolicyValidation</code>에서 이동 6·손 13·회전 8·전투 8 항목을 합한 기록입니다. 점프·입력 권한·덫 보상 전체가 이 35개에 들어 있다는 뜻은 아닙니다. 다른 기능의 별도 시험 기록을 함께 봐야 합니다.</p>
+<h4 id="c5-s6">코드리뷰: 잘못된 씬에서 실행을 막기</h4>
+<p><code>PlayerValidation.cs</code> 안의 <code>PlayerEditorScope.RequireScene()</code>입니다.</p>
+<pre><code class="language-csharp">if (SceneManager.sceneCount != 1 || !scene.IsValid() || !scene.isLoaded || scene.path != ScenePath)
+    throw new InvalidOperationException(&quot;PlaytestScene01 하나만 열려 있어야 합니다. 다른 씬은 자동으로 열거나 변경하지 않습니다.&quot;);
+</code></pre>
+<p><code>ScenePath</code>는 <code>Assets/01Scenes/PlaytestScene01.unity</code>입니다. “현재 화면에 플레이어가 보인다”만으로 작업 대상을 정하지 않고, 열린 씬 수와 정확한 경로를 검사합니다. <code>FindSingle&lt;T&gt;()</code>도 대상이 정확히 하나가 아니면 중단합니다. 여러 플레이어가 있는 다른 씬에 맞추려면 이 도구의 범위 규칙부터 별도로 설계해야 합니다.</p>
+<p><code>BeginValidation()</code>은 검사 중인 도구 이름을 기록하고, 다른 검증기가 동시에 키보드·카메라·씬을 조작하지 못하게 막습니다. <code>EndValidation()</code>은 시작한 도구와 같은 이름일 때만 점유를 풉니다. 게임플레이의 멀티플레이 권한 기능이 아니라 <strong>개발 도구끼리 충돌하지 않게 하는 잠금</strong>입니다.</p>
+<h4 id="c5-s7">코드리뷰: 덫 때문에 사격 검사가 실패하는 것을 구분하기</h4>
+<p><code>PlayerEditorScope.UseNonTrapSelection()</code>은 사격/운반 시험 동안 덫이 아닌 슬롯을 잠깐 선택합니다. 덫이 선택되어 있으면 좌클릭이 설치 입력으로 먼저 사용되므로, 사격 코드가 정상이어도 시험이 실패할 수 있기 때문입니다.</p>
+<pre><code class="language-csharp">if (index &lt; 0)
+    throw new InvalidOperationException(&quot;검증불가: &quot; + inventory.name + &quot;의 모든 슬롯이 덫입니다. &quot; +
+        &quot;사격·운반 검증에는 빈 칸 또는 덫이 아닌 칸이 필요합니다. 아이템은 삭제하지 않았습니다.&quot;);
+</code></pre>
+<p>이 도구는 아이템을 지워 시험 환경을 만들지 않습니다. 슬롯 <strong>내용</strong>은 유지하고, 선택 번호와 휠 선택 입력 사용 여부만 빌려 씁니다. <code>IDisposable.Dispose()</code>에서 원래 선택을 돌려줍니다. 쉽게 말하면 “책갈피를 잠깐 다른 페이지에 옮겼다가 돌려놓는 것”입니다.</p>
+<h4 id="c5-s8">코드리뷰: 실제 버튼 경로를 시험하기</h4>
+<p><code>CombatInputValidation.QueueDevices()</code> 일부입니다.</p>
+<pre><code class="language-csharp">InputSystem.QueueStateEvent(keyboard, keys);
+InputSystem.QueueStateEvent(mouse, new MouseState
+{ position = mousePosition, buttons = (ushort)((left ? 1 : 0) | (right ? 2 : 0)) });
+</code></pre>
+<p>발사 함수를 바로 호출하지 않고, 가상 장치에서 키가 눌렸다는 이벤트를 넣습니다. 그래서 “버튼 읽기 → 입력 차단 → 장비 상태 → 발사” 연결도 검사합니다. 하지만 창 포커스를 잃으면 게임이 정상적으로 입력을 막으므로 시험의 전제가 깨집니다. <code>runInBackground=true</code>가 게임 권한 차단을 무효화하지는 않습니다.</p>
+<p>설정창 시험의 <code>PassiveMenuPoint()</code>는 화면 네 모서리를 Raycast해 버튼·슬라이더를 실제로 누르지 않는 위치를 찾습니다. 여기서 통과하는 것은 <strong>설정창 클릭이 총 발사나 커서 잠금으로 새지 않음</strong>입니다. 슬라이더 값 변경 시험은 2026-10-12 외부 UI 검증 기록으로 별도 구분합니다.</p>
+<h4 id="c5-s9">코드리뷰: 시험 뒤 정리와 남은 한계</h4>
+<p>Play 검증기는 이벤트 구독을 해제하고 임시 물체·장치를 제거하며 선택·입력·커서를 복구합니다. <code>Finish()</code>에는 Play를 종료하는 코드도 있습니다. 따라서 <strong>진행 중인 라운드에서 검사 메뉴를 누르면 그 Play 세션이 끝날 수 있습니다.</strong> 에디터에서 변경된 재고를 파일로 저장하는 도구가 아닙니다.</p>
+<p><code>InteractionValidation</code>은 재컴파일 상황을 재현하기 위해 테스트 안에서 <code>PlayerController</code>의 비공개 필드 <code>inputSource</code>, <code>locomotion</code>, <code>animationPresenter</code>를 Reflection으로 비우는 부분이 있습니다. 실제 게임 입력 코드의 일반 처리 방식은 아닙니다. 이 필드 이름을 바꾸면 이 시험도 함께 갱신해야 합니다.</p>
+<p>현재 이동 시험에는 <code>ClickRelocks</code>처럼 클릭으로 재잠금을 기대하는 옛 사례가 남아 있습니다. 설정창이 붙은 씬의 최신 규칙은 “ESC로 닫은 뒤 잠금 복귀”이므로, 이 사례를 어떤 상황에 실행하는지 구분해야 합니다. 옛 고정 맵 19개 사례도 복구된 맵에서는 전제 불일치로 검증불가 기록이 있습니다. <strong>검사 파일이 존재함과 현재 씬에서 전부 통과함은 다릅니다.</strong> 이번 문서 작업에서 게임 코드나 시험 기대값을 바꾸지 않았습니다.</p>
+<h3 id="c5-s10">검증 결과를 읽는 순서</h3>
+<ol>
+<li>편집 상태에서 <code>협업 에셋 연결 검사</code>로 Missing Script·메시·재질·본·클립 경로를 확인합니다. <code>None</code>이 모두 오류인 것은 아닙니다. 저장된 식별자는 있는데 객체가 없을 때 Missing으로 구분합니다.</li>
+<li><code>순수 규칙 검증</code>은 판단 규칙만 빠르게 확인합니다.</li>
+<li>별도의 새 Play 세션에서 필요한 통합 시험 하나만 실행합니다. 설치 메뉴와 시험 메뉴를 동시에 실행하지 않습니다.</li>
+<li>결과의 <code>failures</code>, <code>unavailable</code>, <code>interrupted</code>를 모두 읽습니다. “일부 PASS 출력”만 보고 전체 통과로 판단하지 않습니다.</li>
+<li>끝난 뒤 가상 입력장치·임시 물체 잔존, 원래 씬 미저장 상태, 기존 메타·GUID 보존을 확인합니다.</li>
+</ol>
+<p>현재 공통 결과 폴더는 <code>%TEMP%/PlayerValidation</code>입니다. <code>SharedAssets.txt</code>와 <code>PlayerValidation.txt</code>는 같은 이름으로 기록되고, 여러 상호작용·전투 기록은 시간 이름을 사용합니다. 과거 <code>Logs/</code> 기록과 외부 검증 폴더는 당시 기록 위치이며 현재 메뉴 출력 위치와 혼동하지 않습니다.</p>
+<h3 id="c5-s11">SOLID 관점에서 본 도구 구조</h3>
+<table>
+<thead>
+<tr>
+<th>원칙</th>
+<th>잘 나뉜 부분</th>
+<th>현재 결합과 수정할 때 볼 부분</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>단일 책임</td>
+<td>설치, 이동 사례, 입력 시험, 물리 질의 시험을 분리</td>
+<td><code>PlayerValidation.cs</code>는 실행기와 공통 범위 도우미를 함께 포함. 같은 파일이라고 곧바로 위반은 아니지만 읽기 범위가 큼</td>
+</tr>
+<tr>
+<td>개방·폐쇄</td>
+<td>입력 공급자를 대체해 게임 코드를 고치지 않고 시험</td>
+<td>고정 맵 사례는 맵 변경 시 데이터/전제 수정 필요</td>
+</tr>
+<tr>
+<td>치환</td>
+<td>실제 입력과 시험 입력이 같은 입력 계약을 사용</td>
+<td>입력 공급자만 통과해도 실제 UI/장치 연결까지 통과했다고 판단하면 안 됨</td>
+</tr>
+<tr>
+<td>인터페이스 분리</td>
+<td>시험에 필요한 이동·손·전투 입력 계약을 별도로 사용</td>
+<td>설치 도구는 실제 컴포넌트와 에디터 API를 직접 알아야 하므로 엔진 독립 코드는 아님</td>
+</tr>
+<tr>
+<td>의존 역전</td>
+<td>순수 규칙은 Unity 없이 검사 가능</td>
+<td>본 이름, 씬 경로, 기존 GUID는 프로젝트 구성에 묶임. 다른 모델/엔진에서는 연결 도구를 교체해야 함</td>
+</tr>
+</tbody></table>
+<h2 id="c5-s12">F12. GUID와 협업 에셋 보존</h2>
+<p>GUID는 파일의 “주민번호”에 가깝습니다. <code>Cat_Player00.fbx</code>라는 이름 자체보다 <code>.meta</code> 안의 GUID를 통해 씬·프리팹이 모델을 찾습니다. 파일만 복사하고 <code>.meta</code>를 빼거나, 삭제 후 새 파일로 만들면 같은 이름이어도 다른 에셋으로 인식될 수 있습니다. 이는 Unity의 <a href="https://docs.unity3d.com/6000.0/Documentation/Manual/AssetMetadata.html">에셋 메타데이터 설명</a>에 따른 구조입니다.</p>
+<p><code>ExistingPlayerAsset&lt;T&gt;()</code>는 파일 위치를 추측하지 않고 <code>AssetDatabase.GUIDToAssetPath(guid)</code>로 기존 에셋을 찾습니다. 결과가 허용된 Player 폴더가 아니거나 필요한 타입이 아니면 중단합니다. GUID가 맞아도 다른 타입의 객체를 Material 칸에 연결하면 정상 연결이 아닙니다. 2026-10-14 왼손 외곽선 오류는 재질 칸이 <code>Cylinder_1</code> GameObject를 가리킨 사례였습니다.</p>
+<p>협업에서 보존할 묶음은 <strong>에셋 파일 + 기존 .meta + 참조하는 씬/프리팹</strong>입니다. 코드명 변경도 <code>.cs</code>와 <code>.cs.meta</code>를 함께 이동하고 기존 GUID를 유지해야 합니다. 2026-10-07의 이름 변경은 승인된 40쌍에 한해 수행된 이력이며, 앞으로 모든 이름 변경을 허용한다는 뜻은 아닙니다.</p>
+<h3 id="c5-s13">PR #49의 확인된 결과</h3>
+<p>로컬 병합 커밋은 <code>6b8bafde9f16129d6c6a9a7c7127aaca5582a63a</code>입니다. 부모는 기존 Player <code>a5cb901988583f948c9aefeb7798afc67efab6a7</code>과 main <code>2992b05a5fa9e2c95c7cf906a544072d8ffdbbdb</code>입니다. 기존 Player 추적 파일 2,049개가 모두 같은 Git blob이며, 기존 메타 1,074개를 보존했습니다. 승인된 다음 4개 파일만 main 원본과 같은 내용으로 추가했습니다.</p>
+<table>
+<thead>
+<tr>
+<th>추가된 에셋 쌍</th>
+<th>보존한 GUID</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Assets/04Prefabs/Object/Trap/Prefabs/JawTrap_Consumable 1.prefab</code> 및 <code>.meta</code></td>
+<td><code>0abe8137d1c0aa94ea75d70628763a78</code></td>
+</tr>
+<tr>
+<td><code>Assets/04Prefabs/Station/Prefab/Texas_Station_Unity.prefab</code> 및 <code>.meta</code></td>
+<td><code>a2be60dfb0236ee439771e7fb1c18283</code></td>
+</tr>
+</tbody></table>
+<p>기존 <code>Trap_Inventory.prefab</code>은 원래 덫 GUID <code>ff9d9f1ec73eea3a0ddef1892fb9d29a</code>를 사용하므로 원본 덫과 메타도 남겼습니다. 새 프리팹이 추가되었다고 현재 씬의 덫·맵이 자동 교체된 것은 아닙니다. <strong>원격 푸시는 인증 403으로 완료되지 않았습니다.</strong> 로컬 병합 완료와 GitHub 반영 완료를 구분해야 합니다. 이 문서 작업에서는 인증정보를 조회하거나 로그인을 시도하지 않습니다.</p>
+<p>근거: <a href="file:///C:/Users/307/Documents/Codex/PR49Conflict20261014/CONFLICT_RESOLUTION_REVIEW.md">충돌 해결 검토안</a>, <a href="file:///C:/Users/307/Documents/Codex/PR49Conflict20261014/validation_final.json">후보 검증</a>. 독립 Git 트리 대조에서 같은 결과를 확인했습니다. 새 프리팹의 실제 Play 사용성 검증은 별개입니다.</p>
+<h2 id="c5-s14">F13. 모델·리깅·재질·Unity 전달</h2>
+<h3 id="c5-s15">과거 제작 요청과 현재 확인 사실</h3>
+<p>대화에서는 4방향 레퍼런스 일치, 매끈한 원형, 쿼드 리토폴로지, 귀·눈구멍·볼·주둥이 교정, 꼬리 형태·모션, 색 경계와 직접 그린 그림자, 단일 메시 등을 여러 차례 요청했습니다. 폴리곤 한도도 초기 2,000삼각형 → 900폴리곤 → 1,800쿼드 허용 → 눈·손·발·꼬리를 제외한 900 이하처럼 범위가 달라졌습니다. <strong>서로 다른 시점의 요구를 하나의 최종 달성 수치로 합칠 수 없습니다.</strong></p>
+<p>현재 확인한 Unity 자료는 다음과 같습니다.</p>
+<table>
+<thead>
+<tr>
+<th>분류</th>
+<th>실제 파일·구조</th>
+<th>확인할 수 있는 내용과 한계</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>모델</td>
+<td><a href="../Assets/04Prefabs/Player/Models/Cat_Player00.fbx">Cat_Player00.fbx</a></td>
+<td>FBX와 기존 importer 메타 존재. Blender 고밀도 원형이나 모든 제작 버전의 완료를 증명하지 않음</td>
+</tr>
+<tr>
+<td>플레이어 프리팹</td>
+<td><a href="../Assets/04Prefabs/Player/Prefabs/Cat_Player%20%281%29.prefab">Cat_Player (1).prefab</a></td>
+<td>저장 텍스트에 SkinnedMeshRenderer 10개. 현재 Unity 구조를 단일 메시라고 설명하면 부정확함</td>
+</tr>
+<tr>
+<td>리그</td>
+<td>프리팹의 <code>Cat51_Rig</code>, <code>CTRL_Root</code>, <code>CTRL_Squash</code>, <code>DEF_Hips/Spine/Chest/Neck/Head</code>, 양손·발·귀·눈, 꼬리 <code>DEF_Tail_01</code>~`05`</td>
+<td>본과 스킨 연결이 저장됨. 본 회전·이동·크기를 클립이 바꾸는 구조. 비어 있는 BlendShapeWeights만으로 FBX 내부 모든 형상 정보를 단정하지 않음</td>
+</tr>
+<tr>
+<td>색</td>
+<td><code>Assets/04Prefabs/Player/Palette</code>의 부위별 PNG 10개</td>
+<td>몸·귀·꼬리, 양눈·검은자위·손·발·코의 팔레트. 빛에 따라 색이 자동 음영 처리되는 재질과 직접 칠한 음영을 구분</td>
+</tr>
+<tr>
+<td>외곽선</td>
+<td><a href="../Assets/04Prefabs/Player/Materials/CatOutline.shader">CatOutline.shader</a>, <code>Cat_Outline.mat</code>, <code>Cat_EyeOutline.mat</code></td>
+<td>법선 방향으로 넓힌 뒤 앞면을 숨겨 테두리를 그리는 패스. 본체 메시와 별도 그리기 비용이 있음</td>
+</tr>
+<tr>
+<td>눈</td>
+<td><a href="../Assets/04Prefabs/Player/Materials/CatEye.shader">CatEye.shader</a>, Eye/Pupil 재질</td>
+<td>URP Unlit 텍스처 표시. Transparent, ZWrite Off, ZTest LEqual. 렌더 순서가 겹침 표현에 영향</td>
+</tr>
+<tr>
+<td>샷건</td>
+<td><a href="../Assets/04Prefabs/Player/Weapons/Shotgun/Shotgun01_RedBlue.fbx">Shotgun01_RedBlue.fbx</a>, <code>Shotgun_Ready.prefab</code></td>
+<td>총열 빨강·손잡이 파랑 등 재질 4개, 손 기준점. 소환 모션 대신 장착 기능에 연결</td>
+</tr>
+<tr>
+<td>물리</td>
+<td><a href="../Assets/04Prefabs/Player/Physics/Player_NoFriction.physicMaterial">Player_NoFriction.physicMaterial</a></td>
+<td>렌더용 팔레트와 다른 물리 재질. 마찰 조합용</td>
+</tr>
+<tr>
+<td>상호작용/덫</td>
+<td><code>Interaction/Prefabs</code> 및 <code>Inventory</code></td>
+<td>CarryCylinder, InventoryCube, TrapItem, Trap_Inventory, 미리보기 재질·아이콘</td>
+</tr>
+</tbody></table>
+<h3 id="c5-s16">애니메이션 파일을 읽는 법</h3>
+<table>
+<thead>
+<tr>
+<th>현재 파일</th>
+<th>저장된 길이·반복</th>
+<th>역할</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="../Assets/04Prefabs/Player/Animations/Idle.anim">Idle.anim</a></td>
+<td>2초, 반복</td>
+<td>대기 본 움직임</td>
+</tr>
+<tr>
+<td><a href="../Assets/04Prefabs/Player/Animations/Walk.anim">Walk.anim</a></td>
+<td>약 0.6857143초, 반복</td>
+<td>걷기 본 움직임</td>
+</tr>
+<tr>
+<td><a href="../Assets/04Prefabs/Player/Animations/Run.anim">Run.anim</a></td>
+<td>0.4초, 반복</td>
+<td>달리기 본 움직임</td>
+</tr>
+<tr>
+<td><a href="../Assets/04Prefabs/Player/Animations/Jump.anim">Jump.anim</a></td>
+<td>1.2초, 비반복</td>
+<td>눌림·늘어남·귀/손/꼬리 반응의 제자리 자세</td>
+</tr>
+<tr>
+<td><a href="../Assets/03Sprites/Player/Animations/Shotgun_Fire.anim">Shotgun_Fire.anim</a></td>
+<td>0.5초, 비반복</td>
+<td><code>ShotgunPose</code>의 준비·반동 값 연결</td>
+</tr>
+</tbody></table>
+<p>이 길이는 파일의 <code>m_StopTime</code> 값입니다. Animator 상태 속도, 코드의 점프 진행도·정지 유지에 따라 실제 화면 시간이 달라질 수 있으므로 “점프 물리 시간이 항상 1.2초”라는 뜻은 아닙니다. 실제 높이 이동은 Rigidbody가 담당하고 모양의 눌림은 본 애니메이션이 담당합니다.</p>
+<p><code>Animations</code>에는 <code>Idle/Walk/Run/PlayerJump.controller</code> 4개가 있습니다. <code>PlayerJump</code>는 최신 점프·사격 레이어 연결용이고 구형 <code>Idle.controller</code> 호환 경로도 남아 있습니다. <code>Models/Idle.anim</code>, <code>naim/idle.anim</code> 같은 별도 파일은 이름이 비슷하다는 이유만으로 중복 삭제하지 않습니다. 참조·내용·재생 속도가 같다는 확인이 필요합니다.</p>
+<p>현재 파일 인벤토리에서 <code>Assets/04Prefabs/Player</code>는 메타를 제외한 57파일(FBX 2, 프리팹 5, 재질 25, PNG 11, 애니메이션 6, 컨트롤러 4, 셰이더 2, 물리재질 1, 아이템 데이터 1), <code>Assets/03Sprites/Player</code>는 2파일(발사 클립과 산탄 원 재질)입니다. 파일 개수는 사용 중인 Renderer 개수나 폴리곤 수가 아닙니다.</p>
+<h3 id="c5-s17">색과 외곽선을 수정할 때</h3>
+<p>눈 셰이더는 <code>SAMPLE_TEXTURE2D(_BaseMap, ...)</code>의 색을 직접 반환합니다. 스크립트로 눈을 각도별로 숨기는 기능이라고 해석하면 안 됩니다. 2026-10-07의 수정 기록은 모델을 깎은 작업이 아니라 눈과 검은자위의 재질 렌더 순서를 분리한 것입니다. 사선에서 안 보이면 활성 상태 → 메시/재질 참조 → 렌더 순서 → 깊이 검사 순으로 확인합니다.</p>
+<p>외곽선 셰이더는 <code>Cull Front</code>로 앞면을 숨기고, 정점 법선 방향으로 <code>_Width</code>만큼 넓힙니다. 값이 커지면 윤곽이 굵어지지만 귀·눈 근처가 겹쳐 보일 수 있습니다. 현재 재질을 여러 부위가 공유하므로 재질의 값을 바꾸면 연결된 여러 부위가 함께 바뀝니다. 연결만 고치는 것과 공유 재질의 값을 바꾸는 것을 구분합니다.</p>
+<p><strong>현재 문서 검토에서는 FBX의 최종 삼각형 수, 쿼드 비율, 전 관절 가중치, 4방향 50% 겹침, Blender 원형 22의 정확한 보존 여부를 새로 검사하지 않았습니다.</strong> 초기 요청의 숫자나 “원형 22” 이름을 현재 완료 인증으로 쓰지 않습니다. URP에서 실시간 SSAO·SDF 툰 셰이딩이 모두 적용되었다고도 주장하지 않습니다. 현재 확인된 눈/외곽선 셰이더 구조와 과거 렌더 검증만 기록합니다.</p>
+<p>후속 모델 교체의 확인 순서는 기존 FBX·메타 보존 → 새 모델의 본/메시/팔레트 구조 확인 → Animator 곡선 경로 확인 → 양손 기준점·총구축 확인 → 사선 눈·손발 외곽선 확인 → 동작 검증입니다. 이 순서는 수정 안내이며 이번 문서 작성 중 모델 교체를 수행한 것은 아닙니다.</p>
+<footer><a href="#chapter-0" data-chapter="0">목차로 돌아가기</a><span>기준 2026.10.14 · 6b8bafde</span></footer></article><article data-index="6" data-file="06_HISTORY.md" hidden><div class="article-tools"><a href="06_HISTORY.md">Markdown 원본</a><button onclick="window.print()">인쇄</button></div><h1 id="c6-s0">구현 이력과 검증 근거 추적표</h1>
+<p>작성 기준: 2026-10-14. 이 문서는 기존 <a href="../PLAYER_WORK_LOG.md">작업 로그</a>를 대체하거나 과거 기록을 고치지 않습니다. 요구사항이 어떻게 바뀌었는지와 현재 코드를 연결하는 안내판입니다. 문서 작성 중 게임 코드·씬·메타를 변경하거나 Play 시험을 새로 수행하지 않았습니다.</p>
+<h2 id="c6-s1">기록을 읽는 기준</h2>
+<ul>
+<li><strong>현재 파일 확인</strong>: 이번 문서 검토에서 실제 소스·에셋의 존재와 내용을 읽었습니다. 실행 성공과 같지 않습니다.</li>
+<li><strong>당시 검증 기록</strong>: 과거 로그가 검사 방법·결과·증거 위치를 남겼습니다. 오늘 전체 재시험했다는 뜻이 아닙니다.</li>
+<li><strong>대화 요청 이력</strong>: 사용자 요구는 확인되지만 현재 원본 파일이나 실행 증거를 연결하지 못한 부분입니다. 완료로 표시하지 않습니다.</li>
+<li><strong>미완료/미재현</strong>: 이전에 시험이 통과했더라도 새로 제보된 문제가 재현되지 않았거나 검증이 끝나지 않은 상태입니다.</li>
+</ul>
+<p>다른 날짜의 PASS 숫자를 더해 “모든 기능 완전 검증” 숫자로 만들지 않습니다. 같은 검사에 반복 항목이 있고, 이전에 놓친 문제가 나중에 확인된 사례도 있기 때문입니다. 로컬 절대경로 증거는 이 PC의 기록입니다. GitHub에 자동 업로드된 자료이거나 팀원 PC에도 존재하는 파일이라는 뜻은 아닙니다.</p>
+<h2 id="c6-s2">기능 번호와 현재 담당 위치</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>기능</th>
+<th>현재 대표 코드·에셋</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>F01</td>
+<td>입력과 조작 권한</td>
+<td><code>Input/GameplayInput.cs</code>, <code>Domain/InputPermission.cs</code>, <code>Input/PlayerInput.cs</code>, <code>Input/InteractionInput.cs</code>, <code>Input/CombatInput.cs</code></td>
+</tr>
+<tr>
+<td>F02</td>
+<td>이동·턱·물리</td>
+<td><code>Core/PlayerController.cs</code>, <code>Movement/PlayerMovement.cs</code>, <code>StepSolver.cs</code>, <code>StepSettings.cs</code>, <code>Player_NoFriction.physicMaterial</code></td>
+</tr>
+<tr>
+<td>F03</td>
+<td>카메라·커서 잠금</td>
+<td><code>Camera/CameraCursorLock.cs</code>, <code>CameraOrbitLimit.cs</code>, <code>AimZoom.cs</code>, <code>Domain/OrbitPolicy.cs</code></td>
+</tr>
+<tr>
+<td>F04</td>
+<td>애니메이션·점프</td>
+<td><code>Animation/PlayerAnimation.cs</code>, <code>ShotgunPose.cs</code>, <code>Domain/JumpPolicy.cs</code>, <code>Movement/PlayerJump.cs</code>, <code>PlayerJump.controller</code>, <code>Jump.anim</code></td>
+</tr>
+<tr>
+<td>F05</td>
+<td>좌클릭 운반</td>
+<td><code>Interaction/InteractionController.cs</code>, <code>ItemCarrier.cs</code>, <code>CatInteractionItem.cs</code>, <code>Domain/HandPolicy.cs</code></td>
+</tr>
+<tr>
+<td>F06</td>
+<td>F 획득·적 상호작용</td>
+<td><code>Assets/02Scripts/04Systems/ItemInteractor.cs</code>와 대상 탐색/입력 권한 연결</td>
+</tr>
+<tr>
+<td>F07</td>
+<td>커서·강조·획득 연출</td>
+<td><code>Interaction/Presentation/CenterCursor.cs</code>, <code>ItemHighlight.cs</code>, <code>HighlightTarget.cs</code>, <code>InventoryPickupEffect.cs</code></td>
+</tr>
+<tr>
+<td>F08</td>
+<td>샷건·조준·발사</td>
+<td><code>Equipment/ShotgunEquipment.cs</code>, <code>ShotgunCombat.cs</code>, <code>HitscanQuery.cs</code>, <code>Equipment/Presentation/ShotSpreadRing.cs</code></td>
+</tr>
+<tr>
+<td>F09</td>
+<td>인벤토리·UI</td>
+<td><code>Assets/02Scripts/04Systems/HotbarManager.cs</code>, <code>HotbarUI.cs</code>, <code>HotbarItemData.cs</code>, 설정/결과 UI와의 연결</td>
+</tr>
+<tr>
+<td>F10</td>
+<td>덫 설치·보상·수명</td>
+<td><code>Interaction/Placement/TrapPlacement.cs</code>, <code>TrapRoundReward.cs</code>와 같은 폴더의 설치/획득 연결, <code>Inventory/TrapItem.asset</code></td>
+</tr>
+<tr>
+<td>F11</td>
+<td>에디터 구성·검증</td>
+<td><code>Editor/Setup</code> 4파일, <code>Editor/Validation</code> 7파일</td>
+</tr>
+<tr>
+<td>F12</td>
+<td>Git·GUID·협업</td>
+<td><code>.meta</code> 보존, 기존 참조 검사, 승인된 Git 작업·범위 지문 기록</td>
+</tr>
+<tr>
+<td>F13</td>
+<td>모델·리깅·재질·에셋</td>
+<td><code>Assets/04Prefabs/Player</code>, <code>Assets/03Sprites/Player</code>의 현재 모델·팔레트·클립·재질</td>
+</tr>
+</tbody></table>
+<p>위에서 <code>Assets/...</code>로 시작하지 않는 C# 경로는 <code>Assets/02Scripts/01Player/</code> 아래입니다. 현재 파일 전체 역할은 각 기능 문서와 <a href="05_EDITOR_ASSETS.md">에디터·에셋 문서</a>를 함께 봅니다. 과거 Cat 접두사 파일명은 2026-10-07 이름 대응표를 통해 현재 이름으로 찾습니다.</p>
+<h2 id="c6-s3">초기 모델 제작 대화: 요청과 확인 가능 사실을 분리</h2>
+<p>다음은 날짜가 확정되지 않은 초기 대화 이력입니다. 기존 작업 로그는 2026-09-30부터 시작하므로, 그보다 앞선 모든 Blender 작업을 현재 로그의 완료 작업으로 소급 작성하지 않습니다.</p>
+<table>
+<thead>
+<tr>
+<th>대화에서 요청한 작업</th>
+<th>이후 결정·변경</th>
+<th>현재 연결되는 자료</th>
+<th>상태</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>앞치마 고양이 4방향 정사영·50% 겹침, 비율 실측, 고밀도 원형 후 저밀도화</td>
+<td>이후 기존 캐릭터 폐기와 새 참조 캐릭터 제작 요청</td>
+<td>현재 <code>Cat_Player00.fbx</code>의 존재만 확인</td>
+<td>초기 캐릭터 완료 여부/비교 이미지 전수검증 불명</td>
+</tr>
+<tr>
+<td>매끈한 원형, 모든 면 쿼드, 단일 메시, 폴리곤 축소</td>
+<td>900폴리곤, 이후 1,800쿼드 허용, 특정 부위를 제외한 900 이하로 여러 차례 범위 조정</td>
+<td>현재 프리팹 SkinnedMeshRenderer 10개</td>
+<td>모든 최종 예산·단일 메시 달성 확인 안 됨</td>
+</tr>
+<tr>
+<td>눈구멍·볼 연결, 측면 눈·코·턱선, 흰 털 경계 수정</td>
+<td>각도별 눈 숨김 취소, 눈 아래 움푹한 부위를 채우기</td>
+<td>Eye/Pupil/Body 메시·재질, 이후 Unity 렌더 순서 교정 로그</td>
+<td>당시 Blender 버전별 수정 결과는 현재 문서에서 인증하지 않음</td>
+</tr>
+<tr>
+<td>귀 앞면 유지·뒷면 곡선, 분홍 귀 테두리 제거·깊이</td>
+<td>형태 22를 기준으로 리토폴로지 요청</td>
+<td>Body_Ears_Tail, 이름에 Low22가 남은 부위</td>
+<td>이름만으로 원형22 완전 일치 증명 불가</td>
+</tr>
+<tr>
+<td>그림자 제거 후 필요한 부위에 단색 직접 그림자</td>
+<td>손 아래·몸통에 번진 그림자 제거, 턱 아래 위치 축소</td>
+<td>부위별 PNG 팔레트, URP Unlit 계열 재질</td>
+<td>모든 팔레트 수정 단계를 역추적할 원본 미확인</td>
+</tr>
+<tr>
+<td>외곽선 제거 후 다시 눈과 본체 굵기 조절·손발 추가</td>
+<td>Unity 손·발 외곽선 적용 및 왼손 참조 복구</td>
+<td>CatOutline.shader, Cat_Outline, 10-08/10-14 로그</td>
+<td>Unity 단계는 기록 존재, 초기 모든 렌더 방식 적용 여부 불명</td>
+</tr>
+<tr>
+<td>꼬리 위치·길이·S자·접합 곡선 수정, 다이내믹</td>
+<td>몇 차례 길이 변경 뒤 기존 동작에 적용</td>
+<td>꼬리 5본, Idle/Walk/Run 클립</td>
+<td>현행 본/클립은 존재. 실시간 물리 꼬리 솔버까지 적용됐다는 근거는 없음</td>
+</tr>
+<tr>
+<td>대기·걷기·달리기 제작, 달리기 압축·귀 지연, 정면 발 사선 제거</td>
+<td>기존 달리기를 걷기로 지정하고 새 달리기 요청</td>
+<td>현행 3개 이동 클립 및 본 변환 곡선</td>
+<td>Unity 클립 존재·후속 실행 기록 확인. 각 Blender 작업본의 일치 검사는 안 함</td>
+</tr>
+<tr>
+<td>총 꺼내기/넣기/발사/기절/놓기/집기 고려 리그</td>
+<td>손 모으기+펑 소환 요청 후 Unity 장착에서는 소환 제외</td>
+<td>샷건 FBX·손 기준점·Shotgun_Fire</td>
+<td>장착/발사는 후속 기록. 기절 등 모든 모션 제작 완료로 보지 않음</td>
+</tr>
+<tr>
+<td>Unity 전달 파일 하나에 캐릭터·팔레트·대기/걷기/달리기 포함</td>
+<td>실제 Unity에 모델/재질/팔레트/프리팹/클립으로 분리 배치</td>
+<td>현재 Player 에셋 목록</td>
+<td>전달용 단일 아카이브의 현재 위치·무결성 미확인</td>
+</tr>
+<tr>
+<td>PUBG식 WASD/Shift, 마우스 3인칭, 맵 충돌, Cinemachine</td>
+<td>정지 회전 ±60도, 이동360도, 턱 통과, SOLID 분리</td>
+<td>F01~F04 현재 코드 및 9-30 이후 회귀 로그</td>
+<td>현재 구현 및 과거 검증 기록 존재</td>
+</tr>
+<tr>
+<td>초기 큐브·실린더 운반/F 토글·획득 UI</td>
+<td>우클릭→좌클릭 유지 운반, F는 손 상태 유지 저장으로 변경</td>
+<td>F05~F10</td>
+<td>최신 규칙은 뒤의 날짜별 결정이 우선</td>
+</tr>
+</tbody></table>
+<p>삭제·복원·원형 일치 같은 표현은 대화의 <strong>요청</strong>과 실제 <strong>수행 증거</strong>가 모두 있는지 확인해야 합니다. 이번 문서는 원본 Blender 파일을 새로 열거나 재렌더하지 않았습니다.</p>
+<h2 id="c6-s4">날짜별 변경 추적</h2>
+<p>표의 줄 번호는 현재 <code>PLAYER_WORK_LOG.md</code> 기준입니다. 로그에 적힌 검증 결과는 당시 범위에 한정됩니다. 각 행의 기능 번호를 통해 현재 담당 코드와 연결할 수 있습니다.</p>
+<table>
+<thead>
+<tr>
+<th>로그 시작행·날짜</th>
+<th>변경 이유와 결정</th>
+<th>기능</th>
+<th>현재 담당 파일/연결</th>
+<th>검증 근거와 현재 해석</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>5 · 09-30</td>
+<td>빈손 우클릭 집기, 숫자1 기존 샷건 장착. 소환 제외</td>
+<td>F05/F08/F11/F13</td>
+<td>InteractionController, ShotgunEquipment, EquipmentSetup</td>
+<td><code>New_Cat_OverlayFit/interaction72_work</code>, 기존 Logs 장비33/상호작용22 검사. 우클릭 규칙은 10-07 변경으로 대체</td>
+</tr>
+<tr>
+<td>59 · 09-30</td>
+<td>누르는 동안 보유, 무마찰, 중앙 보유, 1번 토글, 정지 ±60도, 판단 규칙 분리</td>
+<td>F01/F02/F03/F05/F08</td>
+<td>HandPolicy, MovementPolicy, OrbitPolicy, ItemCarrier, InteractionSettings</td>
+<td><code>interaction73_work</code>, 당시 정책27+상호작용38+이동19. 해제 대기/안전 위치 탐색은 10-07 제거 결정으로 대체</td>
+</tr>
+<tr>
+<td>108 · 10-06</td>
+<td>manifest의 behavior 중복 키 제거</td>
+<td>F12</td>
+<td>Packages/manifest.json의 당시 복구</td>
+<td><code>Logs/PackageRepair20261006</code> 이전 단계. JSON 검사만 했던 단계이며 후속 실제 Unity 확인은 다음 행</td>
+</tr>
+<tr>
+<td>118 · 10-06</td>
+<td>lock의 Mathematics depth 중복, 누락 Cinemachine 복구</td>
+<td>F03/F12</td>
+<td>당시 manifest/lock, 기존 Cinemachine 연결</td>
+<td>패키지67개 오류0·컴파일·짧은 PlaySmoke 기록. 전체 게임 회귀/클린 빌드 아님</td>
+</tr>
+<tr>
+<td>135 · 10-06</td>
+<td>유지형 줌·줌 걷기·좌클릭4산탄·총구 벽 차단·준비/반동</td>
+<td>F01/F03/F04/F08</td>
+<td>CombatPolicy, ShotgunCombat, HitscanQuery, ShotgunPose, AimZoom, ShotSpreadRing</td>
+<td><code>Logs/Shotgun20261006</code>: 물리18·통합32·장치15·정책35 기록. 이후 Animator 연결 방식은 10-08 변경</td>
+</tr>
+<tr>
+<td>160 · 10-06</td>
+<td>GitHub Desktop 빨강/초록과 LF/CRLF 경고 설명</td>
+<td>F12</td>
+<td>문서 안내; 게임 코드 변경 없음</td>
+<td>읽기 전용 diff/속성 검사. 하위 .gitattributes 경고는 미수정</td>
+</tr>
+<tr>
+<td>170 · 10-06</td>
+<td>OneDrive 밖 이전 방법 안내</td>
+<td>F12</td>
+<td>문서 안내</td>
+<td>원인 확정 없이 복사·검증 절차 제시한 단계. 아직 실제 이전 아님</td>
+</tr>
+<tr>
+<td>181 · 10-06</td>
+<td>승인 후 원본 보존 복사와 연결</td>
+<td>F12</td>
+<td>당시 C:/UnityProjects 사본</td>
+<td>Robocopy/파일 대조/Unity 검증 기록. 현재 프로젝트는 이후 Desktop/unity 복구본이므로 이 옛 경로를 수정 대상으로 쓰지 않음</td>
+</tr>
+<tr>
+<td>202 · 10-06</td>
+<td>사용자가 복구한 현재 프로젝트에 빠진 Player 연결 재적용</td>
+<td>F08/F11/F12</td>
+<td>기존 15개 C#, PlaytestScene01 Player 참조</td>
+<td><code>PlayerRestore20261006</code>: 기존meta1046 보존, 전투/상호작용 등 검사. 옛맵19개 검증불가, 현재맵 별도7개 통과</td>
+</tr>
+<tr>
+<td>226 · 10-07</td>
+<td>좌클릭 집기와 40개 C#의 간단한 이름, 책임 정리</td>
+<td>F01/F05/F07/F11/F12</td>
+<td>InteractionInput, InputActivationGate, IPickupPort, 현행 이름</td>
+<td><code>PlayerRefactor20261007</code>: 40개 cs/meta쌍 GUID 보존, 대체 입력/연출 시험. CatInteractionItem은 직렬화 호환 위해 이름 유지</td>
+</tr>
+<tr>
+<td>252 · 10-07</td>
+<td>모델 그대로 두고 측면 검은자위 소실 수정</td>
+<td>F13</td>
+<td>Eye/Pupil 재질 Render Queue</td>
+<td>같은 조건14방향 렌더·측면 복구 기록. 모델 변경/각도별 눈 숨김으로 해결한 것이 아님</td>
+</tr>
+<tr>
+<td>268 · 10-07</td>
+<td>기존 ItemInteractor를 F 획득·5칸 보관으로 확장</td>
+<td>F06/F09</td>
+<td>ItemInteractor, HotbarManager, 등록 대상/저장 계약</td>
+<td>해당 절의 F·재고 검사 기록. 별도 InteractionController 빈 오브젝트 만들기 취소</td>
+</tr>
+<tr>
+<td>291 · 10-07</td>
+<td>F는 손 상태 유지 저장, 놓을 때 현재 위치에서 기본 중력</td>
+<td>F05/F06/F09</td>
+<td>ItemInteractor, ItemCarrier, CatInteractionItem</td>
+<td>바닥 스냅·공중 대기 제거, 동적 Rigidbody/중력 복구 기록. Collider 자체가 중력을 만드는 것은 아님</td>
+</tr>
+<tr>
+<td>314 · 10-08</td>
+<td>손발 외곽선 저장, 점프는 승인용 시안만 제작</td>
+<td>F04/F13</td>
+<td>Cat_Outline 슬롯, 외부 점프 초안</td>
+<td><code>PlayerJumpPreview20261008</code>: 32본/샘플121 비교·렌더. 이 단계는 Space 적용 전</td>
+</tr>
+<tr>
+<td>329 · 10-08</td>
+<td>미리보기의 색이 붉어진 원인 교정</td>
+<td>F13</td>
+<td>외부 PreviewCore의 SRGB RenderTexture</td>
+<td>원본68파일 동일, PNG 색 대조. 게임 팔레트가 변경된 문제로 처리하지 않음</td>
+</tr>
+<tr>
+<td>338 · 10-08</td>
+<td>승인받은 점프를 Space와 실제 물리에 연결</td>
+<td>F01/F02/F04</td>
+<td>JumpPolicy, PlayerJump, PlayerMovement, PlayerAnimation, Jump.anim/controller</td>
+<td><code>PlayerJumpApply20261008</code>: 정책61·입력16·환경23 등. 천장1개는 전제 부족 미실행</td>
+</tr>
+<tr>
+<td>359 · 10-08</td>
+<td>재생 연결을 Animator 상태/전환으로 이동</td>
+<td>F04/F08</td>
+<td>PlayerAnimation, ShotgunPose, PlayerController, PlayerJump.controller</td>
+<td><code>PlayerAnimatorNative20261008</code>. 구 Idle.controller 호환은 유지. 당시 상태 중심 검사가 뒤의 사격 후 정지를 놓쳤음</td>
+</tr>
+<tr>
+<td>379 · 10-08</td>
+<td>사격 뒤 본 정지 교정, 착지 직전 점프 0.15초 보관</td>
+<td>F01/F04/F08</td>
+<td>Shotgun Ready에 기존 Fire 0초 자세, JumpPolicy 버퍼</td>
+<td><code>PlayerAnimationFix20261008</code>: 실제 본 필수판정 추가, 사격76+버퍼28. 일반 점프 혼합 개선은 다음 승인 단계</td>
+</tr>
+<tr>
+<td>401 · 10-08</td>
+<td>점프 진입/복귀 혼합과 이동 중 긴 착지 회복 교정</td>
+<td>F04</td>
+<td>PlayerJump.controller 진입0.08/복귀0.15, JumpPolicy 이동회복</td>
+<td><code>PlayerJumpTransitions20261008</code>: 정책132, Play170 기록(공통 항목 반복 포함). 후기 재도약 경계도 별도 확인</td>
+</tr>
+<tr>
+<td>421 · 10-08</td>
+<td>저장/커밋 요청 중 카메라 충돌 두 곳 정리</td>
+<td>F03/F12</td>
+<td>PlaytestScene01 Main/Cinemachine 카메라</td>
+<td><code>PlayerCommit20261008</code>: Player 구도 높이1.3789881 선택. Reload 팝업으로 당시 병합 후 Unity 검증 미완료 명시</td>
+</tr>
+<tr>
+<td>431 · 10-12</td>
+<td>설정창에서 커서 숨김, 권한/설정 적용 책임 분리</td>
+<td>F01/F03/F06/F09</td>
+<td>GameplayInput, InputPermission, CameraCursorLock, GameSettingsApplier, 메뉴</td>
+<td>격리126조건·Play21 기록. 슬라이더 콜백 검사라 실제 UI 입력 누락을 놓쳤다는 한계가 다음 행에서 확인됨</td>
+</tr>
+<tr>
+<td>449 · 10-12</td>
+<td>ESC UI 실제 조작 불가와 복귀 잠금 후속 교정</td>
+<td>F01/F03/F09</td>
+<td>씬 EventSystem/InputSystemUIInputModule, CameraCursorLock</td>
+<td><code>PlayerMenuInputFix20261012</code>: 실제 UI Raycast·가상 마우스 드래그19조건. 설정값 복구; 하드웨어 수동검사와는 구분</td>
+</tr>
+<tr>
+<td>466 · 10-12</td>
+<td>RAt(1) 이름은 맞지만 실제 F 대상이 잘못 연결</td>
+<td>F06/F12</td>
+<td>ItemInteractor의 씬 target 참조</td>
+<td><code>PlayerRatInteractionFix20261012</code>: 실제 쥐 루트로 연결, Enemy 파일 미수정. 최종12조건; 숫자1 준비 실패 원인은 별도 미확정</td>
+</tr>
+<tr>
+<td>480 · 10-14</td>
+<td>왼손 재질 슬롯에 GameObject가 들어가 외곽선 누락</td>
+<td>F13/F12</td>
+<td>씬 Hand_L_Low22 Materials[1] → 기존 Cat_Outline</td>
+<td><code>LeftHandOutline20261014</code>: 한 참조 교정, 렌더 확인. 실제 게임 Play 검사는 안 함</td>
+</tr>
+<tr>
+<td>494 · 10-14</td>
+<td>로컬 작업 커밋 없이 PR47의 스포너/포획 변경만 반영</td>
+<td>F06/F12</td>
+<td>PR 원본 ThiefSpawner/RatBase, ItemInteractor, Player prefab·씬</td>
+<td><code>PR47Import20261014</code>: 8파일 범위, 기존GUID 유지, 생성 쥐 기절 전 거부/후 포획 검사. 당시 커밋/푸시 안 함</td>
+</tr>
+<tr>
+<td>509 · 10-14</td>
+<td>GameUI의 휠 인벤토리 재사용, 1초 덫 설치·미리보기</td>
+<td>F09/F10</td>
+<td>HotbarManager/UI, TrapPlacement와 설치 규칙/표시</td>
+<td><code>TrapInventory20261014</code>: 코드 단계. Unity 컴파일 응답 대기로 실제 연결 미완료였던 기록</td>
+</tr>
+<tr>
+<td>531 · 10-14</td>
+<td>MCP 재시도, 회수한 덫을 다시 놓는 데이터 보완</td>
+<td>F06/F10</td>
+<td>TrapWorldItem와 연결 경로</td>
+<td>같은 외부 폴더. 응답 문제가 이어져 재시작 요청; 성공한 단계로 덮어쓰지 않음</td>
+</tr>
+<tr>
+<td>540 · 10-14</td>
+<td>Unity 재시작 뒤 UI·덫 실제 연결/검증</td>
+<td>F09/F10</td>
+<td>PlaytestScene01 Hotbar/Trap 연결, Player Inventory 에셋</td>
+<td>동일 로그의 실제 입력/설치·장애물 검증 결과. GameUI 원본 씬을 수정한 것이 아님</td>
+</tr>
+<tr>
+<td>559 · 10-14</td>
+<td>F 유지1초 설치, 첫칸1개 시작, 3치즈 보상</td>
+<td>F06/F09/F10</td>
+<td>PlacementInput, TrapRoundReward, 씬 슬롯0</td>
+<td><code>TrapInventoryF20261014</code>: 순수81·실입력37·보상27. 만석 보상 생략 승인, 마지막Win 처리. URP 줄바꿈만 승인 복원</td>
+</tr>
+<tr>
+<td>578 · 10-14</td>
+<td>미사용 코드·겹치는 책임 정리</td>
+<td>F05/F06/F07/F10/F11</td>
+<td>기존11개 C#, PickupReservation, 검증 슬롯선택 범위</td>
+<td><code>PlayerSolidCleanup20261014</code>: 파일 삭제0/meta1074 보존. 입력40/18, 덫37, 보상27, 연출109 등. 미저장 씬 보존</td>
+</tr>
+<tr>
+<td>611 · 10-14</td>
+<td>라운드 뒤 설치 덫 잔존 제거, 3치즈 기준 명확화</td>
+<td>F10</td>
+<td>TrapPlacement 내부 PlacedTrapLifetime</td>
+<td><code>TrapRoundCleanup20261014</code>: 설치101·보상27·연결34. 자기 설치 인스턴스만 종료 시 제거. 미사용 재고/맵 원본 덫은 유지</td>
+</tr>
+</tbody></table>
+<h2 id="c6-s5">요구사항 변경으로 헷갈리기 쉬운 부분</h2>
+<h3 id="c6-s6">손으로 들기와 인벤토리에 저장하기</h3>
+<p>초기에는 F 토글이나 우클릭 집기를 요청했지만 현재 합의는 역할이 나뉩니다. <strong>좌클릭 유지</strong>는 손 운반이고, <strong>F</strong>는 손 상태를 유지한 채 인벤토리로 새 물건을 보냅니다. 빈손·총·기존 물건 보유 중 어느 상태인지가 F 저장 뒤에도 유지됩니다. “총을 넣고 집기”는 이전 결정이며 최신 F 규칙으로 대체됐습니다. 덫이 선택된 상태의 설치 입력은 별도로 우선순위를 확인합니다.</p>
+<p>놓을 때는 바닥으로 순간 이동하거나 바닥 위치를 직접 찾아 고정하지 않습니다. 현재 위치에서 운반을 끝내고 기존 Rigidbody의 중력과 충돌을 복구합니다. 예전 로그의 안전 위치 탐색·공중 복구 대기는 현재 구현 설명으로 그대로 복사하면 안 됩니다.</p>
+<h3 id="c6-s7">적 포획과 +1 카운트</h3>
+<p>초기에는 Enemy가 사라지는 것까지만 요청했고 카운트는 보류했습니다. 이후 프로젝트의 기존 <code>ThiefController.GetCaptured()</code>가 <code>GameManager.OnRatCaught()</code>로 연결되어 있는 것이 확인됐고 PR47의 기절 조건도 포함됐습니다. 현재 ItemInteractor의 오래된 “카운트 미구현” 주석보다 실제 호출 경로가 우선입니다. 다만 팀원 Enemy 전체 동작을 이번 문서에서 새로 테스트한 것은 아닙니다.</p>
+<h3 id="c6-s8">애니메이션 연결과 본 움직임</h3>
+<p>Animator 상태 이름이 Walk로 보인다고 몸과 발이 실제로 움직이는 것은 아닙니다. 10-08 사격 후 정지는 상태 이름 중심 검사가 놓친 사례입니다. 그래서 이후에는 몸통 스케일·발과 꼬리 회전의 변화까지 검사했습니다. 점프에서 각 이동 상태로 나가는 화살표는 있어도 들어오는 화살표가 각각 없는 이유는 <code>Any State → Jump</code>가 공통 입구이기 때문입니다.</p>
+<h3 id="c6-s9">메뉴 입력과 카메라 잠금</h3>
+<p>정지 중 카메라 ±60도 제한은 메뉴를 열었을 때 마우스를 숨기는 규칙이 아닙니다. 메뉴가 열리면 커서를 풀고 게임 입력을 막고, ESC로 닫고 키를 놓은 뒤 잠금을 복귀합니다. <code>Time.timeScale=0</code>만으로 마우스 입력이 사라지는 것은 아니므로 공통 권한 처리가 필요합니다. UI에 EventSystem이 빠지면 슬라이더 코드가 맞아도 화면 클릭이 전달되지 않습니다.</p>
+<h3 id="c6-s10">덫 재고, 설치된 덫, 보상을 구분하기</h3>
+<p>덫 아이콘은 인벤토리의 보관품이고, 바닥의 설치 덫은 월드 인스턴스입니다. 라운드가 끝날 때 제거하는 것은 <strong>현재 설치기가 성공적으로 놓은 월드 덫</strong>입니다. 시작 재고·미사용 재고·보상 재고·맵에 미리 있던 덫을 일괄 지우는 기능이 아닙니다. 재고 지급과 월드 수명 관리를 다른 책임으로 나눈 이유입니다.</p>
+<h2 id="c6-s11">최신 미해결 보고: 3치즈인데 덫이 안 들어옴</h2>
+<p>사용자의 후속 제보는 이전 27개 보상 시험 통과만으로 닫지 않았습니다. 별도 <a href="file:///C:/Users/307/Documents/Codex/TrapRewardAudit20261014/capture_path.txt">capture_path.txt</a>를 읽으면 다음 실행이 기록되어 있습니다.</p>
+<ol>
+<li>시작: 라운드1, 보물5/5, 쥐3, 슬롯0 덫1개·나머지 빈칸, 보상 컴포넌트 활성.</li>
+<li>실제 생성된 쥐의 포획 API 경로를 세 번 실행하여 쥐가 3→2→1→0으로 감소했습니다.</li>
+<li><code>RoundClear</code>에서는 슬롯0 한 개가 유지됐고, 약1.5초 후 <code>RoundResult</code>에 들어갔습니다.</li>
+<li>결과 이벤트에서 슬롯1이 <code>TrapItem</code>으로 바뀌었고 실제 UI의 슬롯0·1 모두 <code>TrapIcon</code>이 활성 상태였습니다. 치즈 아이콘3개도 활성 상태로 기록됐습니다.</li>
+</ol>
+<p>이 시험에서는 정상 지급이 확인됐지만 <strong>사용자가 겪은 미지급 상황은 재현하지 못했습니다.</strong> 자동 AI가 물건을 훔치는 자연 게임 전체를 완료한 시험이나 사용자의 실제 F 키 입력 재현은 아닙니다. 원인이 만석, 다른 인벤토리 연결, 비활성 보상 컴포넌트, UI 표시 지연 중 무엇이라고 확정하지 않습니다. 원인 수정 완료로 기록하지도 않습니다.</p>
+<p>현재 코드의 보상 규칙은 <code>RoundResult.IsPerfect</code>, 즉 <strong>보물 손실0</strong>입니다. 검사 당시 라운드 시작 보물이5개이므로 5개 모두 지키고 클리어해야3치즈입니다. 치즈 물체3개 획득이나3라운드 진입이 아닙니다. 일반 라운드는 결과 표시 시점, 마지막 라운드는 <code>Win</code> 전환 경로에서 한 번만 빈칸에1개를 추가합니다. 가득 차면 지급하지 않고, 나중에 빈칸을 만들어도 소급 지급하지 않는 것은 사용자 승인 규칙입니다.</p>
+<h2 id="c6-s12">최신 Git 작업: PR #49</h2>
+<p>PR47을 작업 파일로 가져왔던 이력과 PR49 충돌 해결은 서로 다른 작업입니다. PR49의 로컬 병합 커밋은 <code>6b8bafde9f16129d6c6a9a7c7127aaca5582a63a</code>입니다. 기존 Player 파일2,049개/meta1,074개는 같은 내용을 보존했고, main의 새 덫·맵 프리팹과 각 meta 총4파일만 추가했습니다. 기존 씬과 런타임 코드가 Player 원본과 동일한지 Git blob으로 비교했습니다.</p>
+<p>근거는 <a href="file:///C:/Users/307/Documents/Codex/PR49Conflict20261014/CONFLICT_RESOLUTION_REVIEW.md">충돌 해결 검토안</a>과 <a href="file:///C:/Users/307/Documents/Codex/PR49Conflict20261014/validation_final.json">validation_final.json</a>입니다. 후보 검사36개 통과는 문법·참조·보존 범위 검사이며 새 프리팹 실제 게임 배치의 완료 판정이 아닙니다. 원격 푸시는 <strong>403으로 실패하여 미완료</strong>입니다. 로컬에 커밋이 있다는 이유로 GitHub PR 충돌도 해결됐다고 말하면 안 됩니다.</p>
+<h2 id="c6-s13">후속 담당자가 근거를 찾는 방법</h2>
+<ol>
+<li>기능 번호로 현재 파일을 찾고 실제 Inspector 연결과 소스를 함께 확인합니다. 이름이 비슷한 사본만 보고 수정 대상을 정하지 않습니다.</li>
+<li>아래 로그 헤딩 색인의 줄 번호로 요청·수정·실패·재검증의 원문을 읽습니다. 과거 기록은 지우지 않습니다.</li>
+<li>시험 기록의 날짜, 파일 해시 기준, 입력 방식, 검사 대상 씬, 실제 검사한 수치를 확인합니다.</li>
+<li>고친 기능과 관련된 실패 사례를 다시 실행합니다. 과거 PASS를 새로운 코드의 PASS로 재사용하지 않습니다.</li>
+<li>종료 후 변경 파일과 <code>.meta</code>/GUID를 기준 사본과 비교합니다. 새 코드·에셋은 새 meta가 필요할 수 있지만 기존 에셋 GUID 재발급과 구분합니다.</li>
+</ol>
+<h3 id="c6-s14">시험 결과를 과장하지 않기 위한 실제 사례</h3>
+<table>
+<thead>
+<tr>
+<th>기록</th>
+<th>확인한 것</th>
+<th>확인하지 못한 것</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>10-12 최초 UI 21조건</td>
+<td>메뉴 상태·커서·콜백 경로</td>
+<td>화면 클릭을 전달할 EventSystem 부재. 후속 실제 입력19조건으로 보완</td>
+</tr>
+<tr>
+<td>10-08 초기 Animator 검사</td>
+<td>상태/사격 필드/손 연결</td>
+<td>사격 후 실제 본 정지. 후속 본변화 판정으로 보완</td>
+</tr>
+<tr>
+<td>옛맵 이동19개</td>
+<td>검사기가 요구하는 특정 이름·높이의 지형</td>
+<td>현재 맵에 다른 높이가 있으면 실행 불가. 별도7개 검사로 현재턱만 확인</td>
+</tr>
+<tr>
+<td>덫 보상27개</td>
+<td>공개 GameManager 이벤트 경로의 지급 규칙</td>
+<td>자연 AI 플레이 모든 흐름과 사용자 미지급 상황</td>
+</tr>
+<tr>
+<td>PR49 후보36개</td>
+<td>YAML·참조·파일보존·컴파일</td>
+<td>새 덫·맵 프리팹의 실제 게임 사용, 원격 푸시 성공</td>
+</tr>
+</tbody></table>
+<h2 id="c6-s15">작업 로그 모든 제목의 색인</h2>
+<p>아래 색인은 기존 로그의 <code>#</code>, <code>##</code>, <code>###</code> 제목을 모두 읽어 생성합니다. 제목을 정리하면서 실패 중간 기록이나 하위 검증 기록이 빠지는 것을 막기 위한 표입니다. 줄 번호는 이 문서 작성 시점 기준이며, 이후 원문 앞부분이 추가되면 달라질 수 있습니다. 같은 이름의 “검증” 제목도 소속 작업과 함께 구분합니다.</p>
+<table>
+<thead>
+<tr>
+<th>원문 행</th>
+<th>원문 제목</th>
+<th>소속 기능</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 1행</td>
+<td>플레이어 작업 로그</td>
+<td>전체</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 5행</td>
+<td>2026-09-30 — 우클릭 집기와 기존 샷건 장착 (완료)</td>
+<td>F05/F08/F11/F13</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 15행</td>
+<td>구현 및 연결</td>
+<td>F05/F08/F11/F13</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 25행</td>
+<td>첫 검증과 수정할 검사 조건</td>
+<td>F05/F08/F11/F13</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 34행</td>
+<td>재검증 준비와 외형 확인</td>
+<td>F05/F08/F11/F13</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 42행</td>
+<td>최종 기능 검증</td>
+<td>F05/F08/F11/F13</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 50행</td>
+<td>최종 파일 범위와 정리</td>
+<td>F05/F08/F11/F13</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 59행</td>
+<td>2026-09-30 — 무마찰·누르는 동안 들기·카메라 제한·의존성 분리 (완료)</td>
+<td>F01/F02/F03/F05/F08</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 72행</td>
+<td>중간 구현 및 검증</td>
+<td>F01/F02/F03/F05/F08</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 89행</td>
+<td>최종 상호작용 검증</td>
+<td>F01/F02/F03/F05/F08</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 96행</td>
+<td>최종 이동·범위 검사 및 인수인계</td>
+<td>F01/F02/F03/F05/F08</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 108행</td>
+<td>2026-10-06 — manifest.json 중복 키 오류 수정</td>
+<td>F12</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 118행</td>
+<td>2026-10-06 — 패키지 오류 정상화와 Unity 실행 검증</td>
+<td>F03/F12</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 135행</td>
+<td>2026-10-06 — 샷건 줌·걷기 제한·4발 산탄·발사 자세</td>
+<td>F01/F03/F04/F08</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 160행</td>
+<td>2026-10-06 — GitHub Desktop 표시와 커밋 전 경고 확인</td>
+<td>F12</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 170행</td>
+<td>2026-10-06 — OneDrive 밖 작업 경로로 옮기는 방법 안내</td>
+<td>F12</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 181행</td>
+<td>2026-10-06 — 승인된 OneDrive 밖 복사·연결·검증 완료</td>
+<td>F12</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 202행</td>
+<td>2026-10-06 — 사용자 복구본 위 Player 기능 재연결, GUID 보존</td>
+<td>F08/F11/F12</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 226행</td>
+<td>2026-10-07 — 좌클릭 집기와 Player 스크립트 이름·책임 정리</td>
+<td>F01/F05/F07/F11/F12</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 252행</td>
+<td>2026-10-07 — 모델 보존, 측면 검은자위 렌더 순서 수정</td>
+<td>F13</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 268행</td>
+<td>2026-10-07 — 기존 ItemInteractor의 F 획득·5칸 보관 확장</td>
+<td>F06/F09</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 291행</td>
+<td>2026-10-07 — F 저장 시 손 상태 유지, 해제 위치에서 기본 중력 낙하</td>
+<td>F05/F06/F09</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 314행</td>
+<td>2026-10-08 — 손·발 외곽선 저장, 점프 승인용 초안</td>
+<td>F04/F13</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 329행</td>
+<td>2026-10-08 — 점프 미리보기 색상 오류 교정</td>
+<td>F13</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 338행</td>
+<td>2026-10-08 — 승인된 점프를 Space와 실제 물리에 적용</td>
+<td>F01/F02/F04</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 359행</td>
+<td>2026-10-08 — Animator/Animation 기본 기능으로 재생 연결 정리</td>
+<td>F04/F08</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 379행</td>
+<td>2026-10-08 — 샷건 후 본 정지 교정, 점프 연결 진단, 점프 버퍼링</td>
+<td>F01/F04/F08</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 401행</td>
+<td>2026-10-08 점프 진입·복귀 연결 개선</td>
+<td>F04</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 421행</td>
+<td>2026-10-08 저장·커밋과 카메라 병합 충돌 정리</td>
+<td>F03/F12</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 431행</td>
+<td>2026-10-12 설정창 커서 충돌 수정과 승인된 SOLID 정리</td>
+<td>F01/F03/F06/F09</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 449행</td>
+<td>2026-10-12 ESC 설정창 조작 불가·복귀 잠금 후속 교정</td>
+<td>F01/F03/F09</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 466행</td>
+<td>2026-10-12 RAt (1) F 상호작용 불가 수정</td>
+<td>F06/F12</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 480행</td>
+<td>2026-10-14 — 왼손 외곽선 연결 복구</td>
+<td>F13/F12</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 494행</td>
+<td>2026-10-14 — PR #47 변경만 미커밋 상태로 반영</td>
+<td>F06/F12</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 509행</td>
+<td>2026-10-14 인벤토리·덫 설치 — 코드 단계 / Unity 연결 대기</td>
+<td>F09/F10</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 531행</td>
+<td>2026-10-14 MCP 확인 후 재시도와 덫 반복 획득 보완</td>
+<td>F06/F10</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 540행</td>
+<td>2026-10-14 Unity 재시작 후 인벤토리·덫 적용과 검증 완료</td>
+<td>F09/F10</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 559행</td>
+<td>2026-10-14 F 유지 설치·시작 덫·3치즈 보상 적용</td>
+<td>F06/F09/F10</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 578행</td>
+<td>2026-10-14 미사용 코드·중복 책임 정리와 실제 입력 재검증</td>
+<td>F05/F06/F07/F10/F11</td>
+</tr>
+<tr>
+<td><a href="../PLAYER_WORK_LOG.md">작업 로그</a> 611행</td>
+<td>2026-10-14 라운드 종료 시 설치 덫 제거 및 3치즈 조건 설명</td>
+<td>F10</td>
+</tr>
+</tbody></table>
+<p>색인 검증: 원문 제목 40개와 표 항목 40개가 일치합니다. 상세 날짜별 변경표는 <code>##</code> 작업 31개를 모두 포함합니다.</p>
+<h2 id="c6-s16">이번 기술문서 작성 작업</h2>
+<p>위 31개 작업·40개 제목은 문서를 만들기 직전 로그의 고정된 색인입니다. 이번 문서 작성은 그 뒤의 별도 작업으로 <a href="../PLAYER_WORK_LOG.md">작업 로그</a>의 “2026-10-14 구현 기술문서 작성”에 추가했습니다.</p>
+<ul>
+<li>대상: F01~F13, Player C# 53개와 직접 연계 Systems C# 10개.</li>
+<li>결과: 전체 구조, 기능별 코드 풀이·수정 방법, Editor 도구, 에셋/GUID 주의사항, 이력·소스 색인, SOLID 검토, 검증 근거와 검색 가능한 HTML.</li>
+<li>검증: <a href="evidence/document_validation.json">문서 검사 보고서</a>에서 링크·소스 해시·이력 포함·기존 파일 보존 결과를 확인합니다. 게임 Play를 새로 실행한 작업은 아닙니다.</li>
+<li>변경 범위: 새 PlayerDocumentation 폴더와 기존 작업 로그·구현 설명서의 끝에 추가한 안내뿐입니다. 게임 코드·씬·에셋·메타는 보존했습니다.</li>
+</ul>
+<footer><a href="#chapter-0" data-chapter="0">목차로 돌아가기</a><span>기준 2026.10.14 · 6b8bafde</span></footer></article><article data-index="7" data-file="07_SCRIPT_INDEX.md" hidden><div class="article-tools"><a href="07_SCRIPT_INDEX.md">Markdown 원본</a><button onclick="window.print()">인쇄</button></div><h1 id="c7-s0">스크립트와 구현 위치 색인</h1>
+<p>기준 커밋 <code>6b8bafde</code>, 2026-10-14. Player C# 53개와 직접 연결된 Systems C# 10개를 모두 포함합니다. 파일 이름을 누르면 프로젝트의 실제 소스로 이동합니다. 클래스 이름은 한 파일에 여러 개가 있을 수 있습니다. 행 번호는 문서 작성 시점이며 편집 후 바뀔 수 있습니다.</p>
+<p>표의 <strong>씬 직접참조</strong>는 저장된 PlaytestScene01 YAML에 해당 스크립트가 직접 나타난 수입니다. 프리팹 상속·일반 C# 생성·수동 메뉴는 이 숫자에 완전히 반영되지 않습니다. 사용 여부나 삭제 가능성을 이 숫자로 판정하지 않습니다.</p>
+<table>
+<thead>
+<tr>
+<th>파일</th>
+<th>책임</th>
+<th>타입과 선언 행</th>
+<th align="right">씬 직접참조</th>
+<th>상세 설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="../Assets/02Scripts/01Player/Animation/PlayerAnimation.cs">01Player/Animation/PlayerAnimation.cs</a></td>
+<td>이동·점프 상태를 Animator 매개변수에 전달하고 구형 컨트롤러 호환 처리</td>
+<td><code>PlayerAnimation</code> 5행, <code>Settings</code> 8행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Animation/ShotgunPose.cs">01Player/Animation/ShotgunPose.cs</a></td>
+<td>발사 클립 시각과 조준·반동 자세를 계산</td>
+<td><code>ShotgunPose</code> 6행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Camera/AimZoom.cs">01Player/Camera/AimZoom.cs</a></td>
+<td>조준 상태에 따라 Cinemachine 시야각을 보간</td>
+<td><code>AimZoom</code> 9행</td>
+<td align="right">1</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Camera/CameraCursorLock.cs">01Player/Camera/CameraCursorLock.cs</a></td>
+<td>메뉴·게임 상태에 맞춰 커서 잠금과 표시를 한 곳에서 관리</td>
+<td><code>CameraCursorLock</code> 9행</td>
+<td align="right">1</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Camera/CameraOrbitLimit.cs">01Player/Camera/CameraOrbitLimit.cs</a></td>
+<td>이동 의도에 따라 수평 카메라 회전 허용 범위를 제한</td>
+<td><code>CameraOrbitLimit</code> 9행</td>
+<td align="right">1</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Core/PlayerController.cs">01Player/Core/PlayerController.cs</a></td>
+<td>입력·물리·점프·애니메이션 담당자를 조립하고 Unity 실행 순서 연결</td>
+<td><code>PlayerController</code> 6행</td>
+<td align="right">1</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Domain/CombatPolicy.cs">01Player/Domain/CombatPolicy.cs</a></td>
+<td>조준 중 걷기와 사격 입력·시간 규칙 등 장비 정책</td>
+<td><code>IAimState</code> 2행, <code>IShotSpreadState</code> 9행, <code>CombatPolicy</code> 16행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Domain/HandPolicy.cs">01Player/Domain/HandPolicy.cs</a></td>
+<td>집기·놓기·장착 행동 판단</td>
+<td><code>HandInput</code> 2행, <code>HandState</code> 9행, <code>HandCommand</code> 16행, <code>HandPolicy</code> 18행, <code>IEquipmentPort</code> 33행, <code>RegisteredCommand</code> 41행, <code>RegisteredInteractionPolicy</code> 44행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Domain/IMotionState.cs">01Player/Domain/IMotionState.cs</a></td>
+<td>카메라가 필요한 이동 의도 조회 계약</td>
+<td><code>IMotionState</code> 2행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Domain/InputPermission.cs">01Player/Domain/InputPermission.cs</a></td>
+<td>메뉴별 차단 요청을 합산하는 일반 C# 규칙</td>
+<td><code>InputPermission</code> 4행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Domain/IPrimaryAction.cs">01Player/Domain/IPrimaryAction.cs</a></td>
+<td>좌클릭·F 점유와 대상 존재 조회의 작은 계약 모음</td>
+<td><code>IPrimaryAction</code> 2행, <code>IInteractionAction</code> 8행, <code>IInteractionTargetQuery</code> 14행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Domain/JumpPolicy.cs">01Player/Domain/JumpPolicy.cs</a></td>
+<td>점프 단계·자세 시간·입력 보관 판단</td>
+<td><code>JumpPhase</code> 4행, <code>JumpFrame</code> 13행, <code>JumpPolicy</code> 32행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Domain/MovementPolicy.cs">01Player/Domain/MovementPolicy.cs</a></td>
+<td>이동 입력 의도와 걷기·달리기 규칙</td>
+<td><code>MovementIntent</code> 2행, <code>MovementSettings</code> 19행, <code>MovementState</code> 36행, <code>MovementPolicy</code> 44행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Domain/OrbitPolicy.cs">01Player/Domain/OrbitPolicy.cs</a></td>
+<td>정지 기준 방향과 허용 회전 범위 계산</td>
+<td><code>OrbitPolicy</code> 4행, <code>Constraint</code> 10행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Domain/PlacementHold.cs">01Player/Domain/PlacementHold.cs</a></td>
+<td>같은 칸·슬롯의 유지 시간과 해제 대기 판단</td>
+<td><code>PlacementHold</code> 4행</td>
+<td align="right">0</td>
+<td><a href="04_INVENTORY_TRAPS.md">F10</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Domain/PlacementInput.cs">01Player/Domain/PlacementInput.cs</a></td>
+<td>F와 좌클릭의 설치 입력 소유·취소 정책</td>
+<td><code>PlacementInputFrame</code> 2행, <code>PlacementInput</code> 13행, <code>Source</code> 15행</td>
+<td align="right">0</td>
+<td><a href="04_INVENTORY_TRAPS.md">F10</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Setup/CombatSetup.cs">01Player/Editor/Setup/CombatSetup.cs</a></td>
+<td>기존 무기·자세·조준·총구·산탄 표시 연결 도구</td>
+<td><code>CombatSetup</code> 9행</td>
+<td align="right">0</td>
+<td><a href="05_EDITOR_ASSETS.md">F11</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Setup/EquipmentSetup.cs">01Player/Editor/Setup/EquipmentSetup.cs</a></td>
+<td>기존 샷건과 양손 그립 연결 도구</td>
+<td><code>EquipmentSetup</code> 8행</td>
+<td align="right">0</td>
+<td><a href="05_EDITOR_ASSETS.md">F11</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Setup/InteractionSettings.cs">01Player/Editor/Setup/InteractionSettings.cs</a></td>
+<td>기존 무마찰·카메라 제한 설정 연결 도구</td>
+<td><code>InteractionSettings</code> 9행</td>
+<td align="right">0</td>
+<td><a href="05_EDITOR_ASSETS.md">F11</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Setup/InteractionSetup.cs">01Player/Editor/Setup/InteractionSetup.cs</a></td>
+<td>상호작용·샘플 물체·표시 기능 연결 도구</td>
+<td><code>InteractionSetup</code> 8행</td>
+<td align="right">0</td>
+<td><a href="05_EDITOR_ASSETS.md">F11</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/CombatInputValidation.cs">01Player/Editor/Validation/CombatInputValidation.cs</a></td>
+<td>장착·발사·조준 입력 회귀 검사</td>
+<td><code>CombatInputValidation</code> 13행, <code>Pause</code> 41행</td>
+<td align="right">0</td>
+<td><a href="05_EDITOR_ASSETS.md">F11</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/CombatValidation.cs">01Player/Editor/Validation/CombatValidation.cs</a></td>
+<td>샷건 자세·애니메이션·설정 검사</td>
+<td><code>CombatValidation</code> 17행, <code>Pause</code> 56행, <code>ScriptedCombatInput</code> 64행, <code>MotionInput</code> 79행, <code>NeutralHandInput</code> 86행</td>
+<td align="right">0</td>
+<td><a href="05_EDITOR_ASSETS.md">F11</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/HitscanValidation.cs">01Player/Editor/Validation/HitscanValidation.cs</a></td>
+<td>명중·산탄·총구 가림 등 검사</td>
+<td><code>HitscanValidation</code> 8행</td>
+<td align="right">0</td>
+<td><a href="05_EDITOR_ASSETS.md">F11</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/InteractionValidation.cs">01Player/Editor/Validation/InteractionValidation.cs</a></td>
+<td>집기·놓기·UI 연출·메뉴 상호작용 검사</td>
+<td><code>InteractionValidation</code> 15행, <code>Pause</code> 55행, <code>MotionInput</code> 66행</td>
+<td align="right">0</td>
+<td><a href="05_EDITOR_ASSETS.md">F11</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/PlayerValidation.cs">01Player/Editor/Validation/PlayerValidation.cs</a></td>
+<td>플레이어 연결·이동 검사와 공통 에디터 범위 제어</td>
+<td><code>PlayerValidation</code> 13행, <code>PlayerEditorScope</code> 392행, <code>HotbarSelection</code> 447행, <code>HotbarSelectionScope</code> 470행</td>
+<td align="right">0</td>
+<td><a href="05_EDITOR_ASSETS.md">F11</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/PlayerValidationCases.cs">01Player/Editor/Validation/PlayerValidationCases.cs</a></td>
+<td>이동·턱·카메라 등 검사 시나리오</td>
+<td><code>PlayerValidationKind</code> 4행, <code>PlayerValidationCase</code> 6행, <code>PlayerValidationSample</code> 22행, <code>PlayerValidationCases</code> 55행</td>
+<td align="right">0</td>
+<td><a href="05_EDITOR_ASSETS.md">F11</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Editor/Validation/PolicyValidation.cs">01Player/Editor/Validation/PolicyValidation.cs</a></td>
+<td>Unity와 분리한 판단 규칙 검사</td>
+<td><code>PolicyValidation</code> 5행</td>
+<td align="right">0</td>
+<td><a href="05_EDITOR_ASSETS.md">F11</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Equipment/HitscanQuery.cs">01Player/Equipment/HitscanQuery.cs</a></td>
+<td>카메라 목표·총구 차단·실제 명중 물리 질의</td>
+<td><code>ShotHitKind</code> 3행, <code>ShotHit</code> 6행, <code>HitscanQuery</code> 31행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Equipment/Presentation/ShotSpreadRing.cs">01Player/Equipment/Presentation/ShotSpreadRing.cs</a></td>
+<td>산탄 범위의 화면 원 표시</td>
+<td><code>ShotSpreadRing</code> 8행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Equipment/ShotgunCombat.cs">01Player/Equipment/ShotgunCombat.cs</a></td>
+<td>장착 상태·발사 입력·자세·히트스캔 연결</td>
+<td><code>ShotgunCombat</code> 8행, <code>IShotReceiver</code> 138행</td>
+<td align="right">1</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Equipment/ShotgunEquipment.cs">01Player/Equipment/ShotgunEquipment.cs</a></td>
+<td>장착/해제와 총·양손 그립 위치 보정</td>
+<td><code>ShotgunEquipment</code> 7행, <code>HandPose</code> 45행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Input/CombatInput.cs">01Player/Input/CombatInput.cs</a></td>
+<td>실제 장치에서 사격·조준 입력 읽기</td>
+<td><code>CombatInputFrame</code> 5행, <code>ICombatInputSource</code> 13행, <code>IResettableInputSource</code> 19행, <code>InputActivationGate</code> 25행, <code>CombatInput</code> 52행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Input/GameplayInput.cs">01Player/Input/GameplayInput.cs</a></td>
+<td>게임 상태·메뉴·포커스·커서의 공통 입력 권한 진입점</td>
+<td><code>GameplayInput</code> 5행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Input/InteractionInput.cs">01Player/Input/InteractionInput.cs</a></td>
+<td>운반·장비 관련 입력 프레임과 확장 계약</td>
+<td><code>IInteractionInputSource</code> 4행, <code>InteractionInput</code> 10행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Input/PlayerInput.cs">01Player/Input/PlayerInput.cs</a></td>
+<td>이동·점프 장치 입력과 활성화 게이트</td>
+<td><code>PlayerInputFrame</code> 5행, <code>IPlayerInputSource</code> 25행, <code>KeyboardInput</code> 31행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/CatInteractionItem.cs">01Player/Interaction/CatInteractionItem.cs</a></td>
+<td>운반 물건의 식별·외형·물리 상태와 호환 상태 관리</td>
+<td><code>ItemKind</code> 4행, <code>CatInteractionItem</code> 12행, <code>ReleaseRecovery</code> 26행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/InteractionController.cs">01Player/Interaction/InteractionController.cs</a></td>
+<td>운반·등록 상호작용·획득 연출·강조의 연결</td>
+<td><code>IRegisteredInteraction</code> 4행, <code>InteractionController</code> 14행</td>
+<td align="right">1</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/ItemCarrier.cs">01Player/Interaction/ItemCarrier.cs</a></td>
+<td>물건 운반 위치·충돌·해제와 월드 예약 상태 처리</td>
+<td><code>ItemCarrier</code> 5행, <code>PickupStage</code> 26행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Placement/PlacementFeedback.cs">01Player/Interaction/Placement/PlacementFeedback.cs</a></td>
+<td>실제 기능 없는 외형 미리보기와 진행률 표시</td>
+<td><code>PlacementFeedback</code> 10행</td>
+<td align="right">0</td>
+<td><a href="04_INVENTORY_TRAPS.md">F10</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Placement/PlacementSurface.cs">01Player/Interaction/Placement/PlacementSurface.cs</a></td>
+<td>등록 바닥·격자·지지면·장애물·기존 덫 검사</td>
+<td><code>PlacementFailure</code> 5행, <code>PlacementCandidate</code> 7행, <code>PlacementSurface</code> 18행</td>
+<td align="right">0</td>
+<td><a href="04_INVENTORY_TRAPS.md">F10</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Placement/TrapPickup.cs">01Player/Interaction/Placement/TrapPickup.cs</a></td>
+<td>사용 전 덫 회수와 발동 시 기존 Enemy 기절 API 연결</td>
+<td><code>TrapPickup</code> 6행</td>
+<td align="right">0</td>
+<td><a href="04_INVENTORY_TRAPS.md">F10</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Placement/TrapPlacement.cs">01Player/Interaction/Placement/TrapPlacement.cs</a></td>
+<td>설치 규칙을 장치·카메라·재고·실물 생성에 연결하고 설치물 수명 관리</td>
+<td><code>TrapPlacement</code> 8행, <code>PlacedTrapLifetime</code> 150행</td>
+<td align="right">1</td>
+<td><a href="04_INVENTORY_TRAPS.md">F10</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Placement/TrapRoundReward.cs">01Player/Interaction/Placement/TrapRoundReward.cs</a></td>
+<td>라운드 완벽 방어 결과를 덫 1회 지급에 연결</td>
+<td><code>TrapRoundReward</code> 5행</td>
+<td align="right">1</td>
+<td><a href="04_INVENTORY_TRAPS.md">F10</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/CenterCursor.cs">01Player/Interaction/Presentation/CenterCursor.cs</a></td>
+<td>화면 중앙의 작은 반투명 조준 구체 표시</td>
+<td><code>CenterCursor</code> 6행</td>
+<td align="right">1</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/HighlightTarget.cs">01Player/Interaction/Presentation/HighlightTarget.cs</a></td>
+<td>다른 물체에도 제공할 수 있는 강조 대상 컴포넌트</td>
+<td><code>HighlightTarget</code> 8행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/IHighlightSource.cs">01Player/Interaction/Presentation/IHighlightSource.cs</a></td>
+<td>강조에 필요한 렌더러와 가용성 조회 계약</td>
+<td><code>IHighlightSource</code> 4행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/InventoryPickupEffect.cs">01Player/Interaction/Presentation/InventoryPickupEffect.cs</a></td>
+<td>등록된 UI 목적지까지 획득 외형을 이동시키는 연출</td>
+<td><code>IPickupPort</code> 5행, <code>InventoryPickupEffect</code> 13행, <code>PickupReservation</code> 228행, <code>RendererState</code> 238행, <code>ColliderState</code> 244행, <code>BodyState</code> 250행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/ItemHighlight.cs">01Player/Interaction/Presentation/ItemHighlight.cs</a></td>
+<td>현재 대상의 옅은 면·노란 외곽선 렌더</td>
+<td><code>ItemHighlight</code> 6행, <code>Part</code> 13행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/ItemIconCapture.cs">01Player/Interaction/Presentation/ItemIconCapture.cs</a></td>
+<td>아이템 외형을 일회 촬영해 획득 연출용 이미지 생성</td>
+<td><code>ItemIconCapture</code> 6행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Movement/PlayerJump.cs">01Player/Movement/PlayerJump.cs</a></td>
+<td>접지·중력과 점프 정책을 연결</td>
+<td><code>PlayerJump</code> 5행, <code>Settings</code> 8행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Movement/PlayerMovement.cs">01Player/Movement/PlayerMovement.cs</a></td>
+<td>이동 의도를 Rigidbody 속도·회전에 적용</td>
+<td><code>PlayerMovement</code> 4행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Movement/StepSettings.cs">01Player/Movement/StepSettings.cs</a></td>
+<td>작은 턱 넘기 설정 자료</td>
+<td><code>StepSettings</code> 5행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Movement/StepSolver.cs">01Player/Movement/StepSolver.cs</a></td>
+<td>턱·천장·지지면을 검사해 넘을 위치 계산</td>
+<td><code>IStepSolver</code> 3행, <code>StepSolver</code> 11행</td>
+<td align="right">0</td>
+<td><a href="02_MOTION_CAMERA.md">F01~F04</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/04Systems/GameManager.cs">04Systems/GameManager.cs</a></td>
+<td>기존 팀 시스템의 게임 상태·라운드·승패·결과 이벤트</td>
+<td><code>RoundResult</code> 7행, <code>GameManager</code> 26행, <code>GameState</code> 31행</td>
+<td align="right">1</td>
+<td><a href="04_INVENTORY_TRAPS.md">F09/F10 연계</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/04Systems/GameSettings.cs">04Systems/GameSettings.cs</a></td>
+<td>기존 일반 설정 저장값·범위·음량 변환</td>
+<td><code>GameSettings</code> 10행</td>
+<td align="right">0</td>
+<td><a href="01_ARCHITECTURE.md">F01/F03/F09 연계</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/04Systems/GameSettingsApplier.cs">04Systems/GameSettingsApplier.cs</a></td>
+<td>설정 UI 요청을 Unity 소리·해상도 API에 연결</td>
+<td><code>IGameSettingsApplier</code> 6행, <code>GameResolution</code> 16행, <code>GameSettingsApplier</code> 32행</td>
+<td align="right">0</td>
+<td><a href="01_ARCHITECTURE.md">F01/F03/F09 연계</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/04Systems/HotbarItemData.cs">04Systems/HotbarItemData.cs</a></td>
+<td>인벤토리 한 종류의 이름·아이콘·설치 프리팹 자료</td>
+<td><code>HotbarItemData</code> 9행</td>
+<td align="right">0</td>
+<td><a href="04_INVENTORY_TRAPS.md">F09</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/04Systems/HotbarManager.cs">04Systems/HotbarManager.cs</a></td>
+<td>5칸 재고·선택·휠·변경 이벤트</td>
+<td><code>HotbarManager</code> 19행</td>
+<td align="right">1</td>
+<td><a href="04_INVENTORY_TRAPS.md">F09</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/04Systems/HotbarUI.cs">04Systems/HotbarUI.cs</a></td>
+<td>보관함 이벤트에 따른 아이콘·이름·테두리 갱신</td>
+<td><code>HotbarUI</code> 20행, <code>SlotView</code> 23행</td>
+<td align="right">1</td>
+<td><a href="04_INVENTORY_TRAPS.md">F09</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/04Systems/ItemInteractor.cs">04Systems/ItemInteractor.cs</a></td>
+<td>F 대상 발견·등록·인벤토리 저장·기존 Enemy 호출</td>
+<td><code>IItemInventory</code> 9행, <code>RegisteredTargetKind</code> 15행, <code>InteractionRegistration</code> 19행, <code>ItemInteractor</code> 53행, <code>HotbarStore</code> 73행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/04Systems/ItemPickup.cs">04Systems/ItemPickup.cs</a></td>
+<td>월드 아이템 자료와 획득 규칙·소비 정책 조회</td>
+<td><code>ItemPickup</code> 4행, <code>IItemPickupRule</code> 15행, <code>IItemPickupConsumption</code> 18행</td>
+<td align="right">0</td>
+<td><a href="03_INTERACTION_COMBAT.md">F05~F08</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/04Systems/PauseMenuUI.cs">04Systems/PauseMenuUI.cs</a></td>
+<td>설정창 열고 닫기·입력 차단 요청·슬라이더 연결</td>
+<td><code>PauseMenuUI</code> 28행</td>
+<td align="right">1</td>
+<td><a href="01_ARCHITECTURE.md">F01/F03/F09 연계</a></td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/04Systems/RoundResultUI.cs">04Systems/RoundResultUI.cs</a></td>
+<td>기존 결과창·치즈 등급·다음 라운드 UI와 차단 요청</td>
+<td><code>RoundResultUI</code> 19행</td>
+<td align="right">1</td>
+<td><a href="01_ARCHITECTURE.md">F01/F03/F09 연계</a></td>
+</tr>
+</tbody></table>
+<h2 id="c7-s1">스크립트 외 연결 자료</h2>
+<table>
+<thead>
+<tr>
+<th>자료</th>
+<th>확인할 것</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="../Assets/04Prefabs/Player/Animations/PlayerJump.controller">PlayerJump.controller</a></td>
+<td>Base Layer와 Shotgun 레이어의 조건·시간·Write Defaults</td>
+</tr>
+<tr>
+<td><a href="../Assets/04Prefabs/Player/Animations/Jump.anim">Jump.anim</a></td>
+<td>실제 클립 길이1.2초와 본 곡선. 정책2초 기준과 구분</td>
+</tr>
+<tr>
+<td><a href="../Assets/03Sprites/Player/Animations/Shotgun_Fire.anim">Shotgun_Fire.anim</a></td>
+<td>ShotgunPose의 숫자3종류 바인딩</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Camera/CatCameraLook.inputactions">CatCameraLook.inputactions</a></td>
+<td>Cinemachine 마우스 시점 입력</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/CatCursorSphere.shader">CatCursorSphere.shader</a></td>
+<td>중앙 구체 표시</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Interaction/Presentation/CatInteractionOverlay.shader">CatInteractionOverlay.shader</a></td>
+<td>노란 면·외곽선 표시</td>
+</tr>
+<tr>
+<td><a href="../Assets/02Scripts/01Player/Equipment/Presentation/CatShotSpreadRing.shader">CatShotSpreadRing.shader</a></td>
+<td>산탄 범위 원 표시</td>
+</tr>
+<tr>
+<td><a href="../Assets/04Prefabs/Player/Inventory/TrapItem.asset">TrapItem.asset</a></td>
+<td>인벤토리 덫 데이터</td>
+</tr>
+<tr>
+<td><a href="../Assets/04Prefabs/Player/Inventory/Trap_Inventory.prefab">Trap_Inventory.prefab</a></td>
+<td>원본 덫 변형과 ItemPickup/TrapPickup</td>
+</tr>
+<tr>
+<td><a href="../Assets/01Scenes/PlaytestScene01.unity">PlaytestScene01.unity</a></td>
+<td>실제 컴포넌트·프리팹 오버라이드</td>
+</tr>
+</tbody></table>
+<h2 id="c7-s2">근거 파일</h2>
+<p><a href="evidence/source_snapshot.json">소스 스냅샷</a>은 각 파일의 SHA-256, 줄 수, 타입과 직접 참조를 저장합니다. <a href="evidence/baseline_context.json">기준 상태</a>는 버전·패키지·설치 씬 값과 주요 연결의 출처를 남깁니다. 실행 중 생성되는 대상은 이 정적 자료만으로 모두 확인할 수 없습니다.</p>
+<footer><a href="#chapter-0" data-chapter="0">목차로 돌아가기</a><span>기준 2026.10.14 · 6b8bafde</span></footer></article><article data-index="8" data-file="08_REVIEW_AND_VALIDATION.md" hidden><div class="article-tools"><a href="08_REVIEW_AND_VALIDATION.md">Markdown 원본</a><button onclick="window.print()">인쇄</button></div><h1 id="c8-s0">코드 검토와 검증 근거</h1>
+<h2 id="c8-s1">현재 확인과 과거 기록을 읽는 기준</h2>
+<p>문서에 파일이 존재한다고 썼다는 것, 저장된 씬에 참조가 있다고 썼다는 것, 실제 플레이에서 성공했다는 것은 서로 다른 주장입니다. 이번 작업은 <strong>기술문서 작성과 코드·연결 검토</strong>입니다. 테스트 때문에 씬을 저장하거나 입력·메뉴·게임 상태를 바꾸지 않았습니다. 아래 과거 시험의 성공 개수를 이번 문서 작업에서 새로 통과한 개수로 해석하지 않습니다.</p>
+<table>
+<thead>
+<tr>
+<th>근거 종류</th>
+<th>무엇을 확인할 수 있나요?</th>
+<th>확인할 수 없는 것</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>현재 C# 코드</td>
+<td>조건, 호출 순서, 책임과 확장 지점</td>
+<td>특정 PC에서의 실제 화면·프레임 타이밍</td>
+</tr>
+<tr>
+<td>저장된 씬·프리팹·재질</td>
+<td>연결과 직렬화된 값, 원본·변형 관계</td>
+<td>편집기 미저장 상태, 실행 중 동적 값</td>
+</tr>
+<tr>
+<td>기존 작업 로그</td>
+<td>그 날짜에 수행했다고 기록된 변경과 시험</td>
+<td>이후 수정이 같은 결과를 유지하는지</td>
+</tr>
+<tr>
+<td>외부 시험 결과 파일</td>
+<td>해당 시험의 실제 출력</td>
+<td>로그가 다루지 않은 입력·환경</td>
+</tr>
+<tr>
+<td>대화의 과거 요청</td>
+<td>원했던 모양·기능과 승인 범위</td>
+<td>원본 모델이나 코드가 없는 항목의 완료 여부</td>
+</tr>
+</tbody></table>
+<h2 id="c8-s2">이번 문서에 적용한 정적 검토</h2>
+<p>기준 소스는 <code>6b8bafde</code>이며 Player의 C# 53개와 직접 연결된 Systems 10개를 색인에 포함했습니다. 소스 파일의 SHA-256, 줄 수, 선언된 타입, 저장된 대상 씬의 직접 참조를 <a href="evidence/source_snapshot.json">소스 스냅샷</a>에 보관합니다. 해시는 파일 내용의 지문입니다. 팀원의 파일과 다르면 “같은 버전의 문서를 보고 있는가”를 먼저 확인할 수 있습니다.</p>
+<p>프리팹에서 상속된 컴포넌트, 일반 C# 클래스, 수동 에디터 메뉴는 씬의 직접 참조 수가 0일 수 있습니다. <strong>직접 참조가 0이라는 이유로 미사용 또는 삭제 가능이라고 판정하지 않습니다.</strong> 삭제는 별도 참조 조사와 사용자 승인이 필요합니다.</p>
+<p>이번 작성에서 파일 링크·코드 펜스·필수 장·스크립트 설명 포함 여부를 검사하고, 게임 코드·씬·에셋·기존 메타가 작성 전 해시와 같은지 비교합니다. 실제 결과는 함께 제공하는 <a href="evidence/document_validation.json">문서 검사 보고서</a>에 기록합니다. 이 보고서는 문서의 링크와 보존 범위 검사이며 게임 전체의 무오류 보증이 아닙니다.</p>
+<h2 id="c8-s3">SOLID 검토</h2>
+<p>SOLID는 파일 수를 무조건 늘리라는 규칙이 아닙니다. “누가 어떤 일을 맡고, 한 기능을 바꿨을 때 어디까지 영향이 가는가”를 판단하는 기준입니다.</p>
+<table>
+<thead>
+<tr>
+<th>원칙</th>
+<th>현재 잘 나뉜 예</th>
+<th>남은 결합·확인할 점</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S 단일 책임</td>
+<td>설치 입력/시간/바닥/표시를 PlacementInput/Hold/Surface/Feedback으로 분리. PlayerController는 조립·실행 연결 중심</td>
+<td>ItemInteractor는 대상 발견·캐시·저장·포획 연결까지 포함. 추가 요구가 커질 때 분리 범위 재평가</td>
+</tr>
+<tr>
+<td>O 확장과 기존 동작 보존</td>
+<td>SetInputSource로 키보드 대신 AI/다른 장치 입력 연결. 획득 포트 교체 지점 존재</td>
+<td>TrapPlacement는 동일 trapItem과 ConsumableJawTrap 구체 타입 사용. 다른 종류 설치물은 추가 설계 필요</td>
+</tr>
+<tr>
+<td>L 대체 가능성</td>
+<td>입력·조준·획득 공급자를 작은 계약으로 받음</td>
+<td>인터페이스 구현 자체가 동작 대체 보증은 아님. 새 공급자도 차단·해제·busy·재호출 규칙을 지키는지 검사 필요</td>
+</tr>
+<tr>
+<td>I 작은 계약</td>
+<td>IPrimaryAction, IInteractionAction, IInteractionTargetQuery는 각기 입력 점유·대상 조회만 제공</td>
+<td>거대한 플레이어 인터페이스로 합치면 카메라가 불필요한 인벤토리 기능까지 알아야 하므로 피함</td>
+</tr>
+<tr>
+<td>D 의존 방향</td>
+<td>이동·점프·유지 시간 판단 일부가 Unity 타입을 쓰지 않음. 설정 적용은 IGameSettingsApplier 경계 사용</td>
+<td>실제 생성·물리·UI와 GameManager/HotbarManager 단일 인스턴스 연결은 Unity에 의존. 완전한 엔진 독립을 주장할 수 없음</td>
+</tr>
+</tbody></table>
+<p>현재 코드리뷰는 위 경계를 확인한 것입니다. 새 코드 공급자의 동작을 실제로 바꾸어 LSP를 전부 증명한 시험은 아닙니다. 엔진을 바꾸면 순수 정책은 재사용할 여지가 있지만 Rigidbody, Input System, Cinemachine, Animator, UI, 물리 검사 어댑터는 다시 연결해야 합니다.</p>
+<h2 id="c8-s4">현재 코드와 설명이 어긋나거나 확장 시 주의할 항목</h2>
+<table>
+<thead>
+<tr>
+<th>구분</th>
+<th>위치·확인한 사실</th>
+<th>영향과 권장 확인</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>과거 설명과 차이</td>
+<td>ItemInteractor에 현재 LayerMask/Item·Enemy 레이어 판별 경로가 없음</td>
+<td>레이어 이름만 보고 F 연결을 판단하지 않습니다. 명시 등록, ItemPickup·ThiefController 탐색을 확인합니다. 이번 작업에서 기능 변경하지 않았습니다.</td>
+</tr>
+<tr>
+<td>낡은 주석·문구</td>
+<td>ItemInteractor.Capture의 “기절 제한·카운트 호출 안 함”, “카운트 미구현” 문구와 달리 IsCapturable 검사 및 GetCaptured 호출이 있음</td>
+<td>현재 Enemy의 GetCaptured는 GameManager.OnRatCaught로 이어집니다. UI 문자열보다 호출 코드를 기준으로 이해합니다. 향후 코드 정리 대상으로 기록만 했습니다.</td>
+</tr>
+<tr>
+<td>미사용 필드 경고</td>
+<td>ItemInteractor.placeDistance</td>
+<td>보존된 직렬화 필드의 CS0414 경고가 기존 컴파일에 있습니다. 제거하면 저장 호환·참조 영향까지 조사해야 하므로 문서 작업에서는 삭제하지 않았습니다.</td>
+</tr>
+<tr>
+<td>저장만 되는 설정</td>
+<td>GameSettings.MouseSensitivity는 PauseMenuUI에서 저장·표시하지만 카메라 적용 사용처가 Assets/02Scripts 검색에 없음</td>
+<td>슬라이더가 움직여도 실제 회전 감도는 바뀌지 않을 수 있습니다. 감도 적용을 추가할 때 기존 Cinemachine 입력 배율과 중복 곱셈 여부 확인 필요</td>
+</tr>
+<tr>
+<td>이벤트 재연결 한계</td>
+<td>TrapRoundReward는 OnEnable/Start, HotbarUI는 Start에서 연결</td>
+<td>플레이 도중 매니저를 교체하거나 뒤늦게 생성하는 기능을 넣으면 다시 연결해야 합니다. 현재 보상 미지급의 확정 원인으로 판정한 것은 아닙니다.</td>
+</tr>
+<tr>
+<td>슬롯 수 전제</td>
+<td>HotbarUI.RefreshSlot과 HotbarManager 배열</td>
+<td>저장 칸과 표시 칸 수가 다르면 일부 표시가 빠지거나 인덱스 문제가 날 수 있습니다. 둘을 함께 변경합니다.</td>
+</tr>
+<tr>
+<td>설정과 문구 불일치 가능</td>
+<td>PlacementFeedback.Show의 “1초” 문자열</td>
+<td>holdSeconds를 변경할 때 안내 문구도 바꿔야 합니다. 현재 값 1초에서는 일치합니다.</td>
+</tr>
+<tr>
+<td>초기값 보관</td>
+<td>PlacementSurface는 생성 시 바닥 배열·크기 등을 복사</td>
+<td>실행 중 Inspector 변경이 검사기에 즉시 반영된다고 가정하지 않습니다. 재생 재시작 후 확인하거나 명시적 갱신 설계 필요</td>
+</tr>
+<tr>
+<td>미리보기 지원 범위</td>
+<td>PlacementFeedback.CopyVisual는 MeshFilter/MeshRenderer 외형 복사</td>
+<td>다른 렌더러 종류로 설치물 모델을 교체하면 미리보기 지원을 먼저 확인합니다.</td>
+</tr>
+<tr>
+<td>클립 시간 의존</td>
+<td>JumpPolicy의 자세 시간표, PlayerAnimation의 매개변수 판별</td>
+<td>다른 길이의 점프 클립·실행 중 Controller 교체 시 검토 필요. 시간표와 블렌드 조건을 같이 조정합니다.</td>
+</tr>
+<tr>
+<td>스케일 재현 필요</td>
+<td>ItemHighlight의 SkinnedMeshRenderer BakeMesh와 렌더 행렬</td>
+<td>크기를 줄인 Enemy 외곽선 문제는 실제 비율·행렬을 재현해 판단해야 합니다. 문서 작성만으로 고쳤다고 표시하지 않습니다.</td>
+</tr>
+<tr>
+<td>오래된 검사 전제</td>
+<td>일부 PlayerValidationCases의 클릭 재잠금 기대</td>
+<td>ESC 메뉴 복귀와 일반 커서 해제를 구별해 검사합니다. 기존 테스트 이름만 보고 현재 UI 흐름 전체를 통과했다고 간주하지 않습니다.</td>
+</tr>
+</tbody></table>
+<p>위 표는 <strong>기술부채·확장 위험·설명 불일치</strong> 목록입니다. 이번 요청은 문서 작성이므로 나열한 스크립트를 수정하지 않았습니다.</p>
+<h2 id="c8-s5">기존 시험 근거</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>기록에서 확인한 결과</th>
+<th>범위와 제한</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>이동·운반·사격·점프·UI</td>
+<td><a href="../PLAYER_WORK_LOG.md">원본 작업 로그</a>의 날짜별 절차·결과</td>
+<td>오래된 결과입니다. 현재 모든 조합을 재시험한 것은 아닙니다. 기능별 장과 이력의 근거를 함께 봅니다.</td>
+</tr>
+<tr>
+<td>덫 최초 연결</td>
+<td>2026-10-14 로그에 설치 입력 29개, UI/ESC 연결 12개, 맵 물리 19개 기록</td>
+<td>당시 연결·검증 조건입니다. 이후 라운드 수명 등 변경 기록은 별도 항목으로 추적합니다.</td>
+</tr>
+<tr>
+<td>3치즈 미지급 조사</td>
+<td><a href="evidence/reward_capture_20261014.txt">포획 경로 로그</a>: Playing→RoundClear→RoundResult, 5/5 보물, 슬롯1 덫 추가, UI 아이콘2개 확인</td>
+<td>공개 포획 API를 호출한 재현 검사입니다. 실제 F 조작 동일 증상은 미재현, 사용자 문제 원인 미확정. 수정 완료로 표기하지 않습니다.</td>
+</tr>
+<tr>
+<td>PR49 병합 후보</td>
+<td><a href="evidence/pr49_validation.json">구조/GUID 검사</a> 36개 통과</td>
+<td>기존 Player 파일 보존과 후보 구조 검사. 새 프리팹 실제 게임 플레이 검사는 아님</td>
+</tr>
+<tr>
+<td>PR49 컴파일</td>
+<td><a href="evidence/pr49_compile.json">컴파일 요약</a>: 런타임95개·에디터24개, 오류0, 기존 경고1</td>
+<td>문서 작성 전 후보 검사. 문서의 핵심 코드63개와 전체 컴파일 대상119개는 서로 다른 집합</td>
+</tr>
+<tr>
+<td>PR49 원격 반영</td>
+<td>로컬 커밋6b8bafde 생성, 마지막 시도에서 일반 Git 인증 실패/연결도구403</td>
+<td>이후 사용자가 직접 푸시했는지는 이번 문서 범위에서 재조회하지 않았습니다. 원격 반영 완료라고 적지 않습니다.</td>
+</tr>
+</tbody></table>
+<p>외부 과거 검사 폴더는 <code>C:/Users/307/Documents/Codex/</code> 아래에 있으며 팀원의 PC에는 없을 수 있습니다. 위 핵심 텍스트 결과는 문서의 <code>evidence</code> 폴더에 함께 넣었습니다. 게임 코드를 복사해 별도 구현으로 만드는 자료가 아닙니다.</p>
+<h2 id="c8-s6">앞으로 수정할 때의 확인 절차</h2>
+<ol>
+<li><strong>대상 고르기:</strong> F번호, 현재 파일, 실제 씬 인스턴스와 원본 프리팹 중 어느 쪽인지 확인합니다.</li>
+<li><strong>현재 값 적기:</strong> 고칠 값과 연결을 먼저 기록합니다. 기본값과 오버라이드를 구분합니다.</li>
+<li><strong>작게 수정하기:</strong> 하나의 책임을 바꾸고 관련 없는 이름·메타·GUID를 건드리지 않습니다.</li>
+<li><strong>정적 확인:</strong> 컴파일 오류, 끊긴 참조, 중복 GUID, 입력을 동시에 사용하는 담당자부터 확인합니다.</li>
+<li><strong>실제 플레이 확인:</strong> 메뉴/포커스/재입력/라운드 전환처럼 기능이 겹치는 상황을 검사합니다. 모델은 정면·측면·사선도 확인합니다.</li>
+<li><strong>추적 자료 갱신:</strong> 기능 장, 스크립트 색인, 작업 로그에 바뀐 이유·검사·남은 문제를 기록합니다. 새 시험 날짜를 남기고 오래된 PASS를 재사용하지 않습니다.</li>
+<li><strong>협업 전 확인:</strong> Git 변경 목록에서 요청 범위 밖 파일과 메타 재생성을 확인합니다. 커밋·푸시는 별도 승인 범위를 따릅니다.</li>
+</ol>
+<p>문서만 고친 이번 작업에는 게임 빌드나 Play 실행이 필요하지 않습니다. 문서 링크·내용·보존 범위를 검사하는 것이 작업 유형에 맞는 검증입니다.</p>
+<h2 id="c8-s7">기능별 필수 회귀 검사</h2>
+<table>
+<thead>
+<tr>
+<th>기능</th>
+<th>정상 사례</th>
+<th>꼭 함께 확인할 경계</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>F01/F03 입력·UI</td>
+<td>Esc로 설정 열고 슬라이더 조작, Esc로 복귀</td>
+<td>메뉴 클릭이 집기·사격이 되지 않음, 포커스 복귀</td>
+</tr>
+<tr>
+<td>F02 이동</td>
+<td>평지·작은 턱·경사 이동</td>
+<td>천장·높은 벽·공중에서 턱 승강이 작동하지 않음</td>
+</tr>
+<tr>
+<td>F04 점프</td>
+<td>대기/걷기/달리기 각각 진입·복귀</td>
+<td>착지 직전 입력, 사격 후 실제 본 재생, 점프 중 사격</td>
+</tr>
+<tr>
+<td>F05/F06 획득</td>
+<td>좌클릭 운반, F 저장</td>
+<td>손에 총/물건 유지, 가득 찬 보관함, 기절하지 않은 쥐</td>
+</tr>
+<tr>
+<td>F07 표시</td>
+<td>물건·Enemy 크기에 맞는 강조</td>
+<td>비균일 스케일, 스키닝, 모델 교체, UI 대상 미등록</td>
+</tr>
+<tr>
+<td>F08 사격</td>
+<td>줌/비줌 한 클릭당4산탄</td>
+<td>벽에 총구가 막힘, 줌 중 Shift, 덫 선택과 충돌 없음</td>
+</tr>
+<tr>
+<td>F09/F10 인벤토리·덫</td>
+<td>시작첫칸, 휠선택,1초설치,3치즈</td>
+<td>빈칸없음, 취소·연속누름, 바닥끝, 종료 정리, 마지막Win</td>
+</tr>
+</tbody></table>
+<h2 id="c8-s8">문서를 다음 버전으로 유지하는 법</h2>
+<p>새 작업 로그에는 <code>날짜 / 요구 / F번호 / 실제 변경 파일 / 변경 이유 / 검증 / 남은 문제</code>를 씁니다. 기능 규칙이 바뀌면 과거 로그는 지우지 않고 해당 기능 장의 “현재 규칙”을 고칩니다. 소스 행 번호는 편집하면 달라질 수 있으므로 메서드 이름과 기준 커밋도 같이 남깁니다. <code>evidence/source_snapshot.json</code>은 2026-10-14 스냅샷이며 새 버전을 기록할 때는 문서 기준 날짜·커밋과 함께 갱신해야 합니다.</p>
+<footer><a href="#chapter-0" data-chapter="0">목차로 돌아가기</a><span>기준 2026.10.14 · 6b8bafde</span></footer></article></main></div><script>
+const pages=[{"file":"README.md","index":0,"toc":[{"id":"c0-s0","depth":1,"text":"플레이어 구현 기술문서"},{"id":"c0-s1","depth":2,"text":"어느 문서를 고치면 되나요?"},{"id":"c0-s2","depth":2,"text":"문서 기준과 확인 범위"},{"id":"c0-s3","depth":2,"text":"채택한 문서 작성 지침"}],"title":"플레이어 구현 기술문서"},{"file":"01_ARCHITECTURE.md","index":1,"toc":[{"id":"c1-s0","depth":1,"text":"전체 구조와 읽는 방법"},{"id":"c1-s1","depth":2,"text":"이 문서가 설명하는 현재 상태"},{"id":"c1-s2","depth":2,"text":"문서 형식을 고른 이유"},{"id":"c1-s3","depth":2,"text":"13개 구현 항목"},{"id":"c1-s4","depth":2,"text":"전체 호출 구조"},{"id":"c1-s5","depth":3,"text":"폴더가 나뉜 이유"},{"id":"c1-s6","depth":2,"text":"현재 조작 규칙"},{"id":"c1-s7","depth":2,"text":"공통 권한과 UI 연결"},{"id":"c1-s8","depth":3,"text":"설정창 코드의 역할"},{"id":"c1-s9","depth":2,"text":"설계 결정 기록"},{"id":"c1-s10","depth":2,"text":"처음 읽을 때의 순서"},{"id":"c1-s11","depth":2,"text":"쉬운 용어표"}],"title":"전체 구조와 읽는 방법"},{"file":"02_MOTION_CAMERA.md","index":2,"toc":[{"id":"c2-s0","depth":1,"text":"입력·이동·카메라·애니메이션 기술문서"},{"id":"c2-s1","depth":2,"text":"1. 먼저 이해할 구조"},{"id":"c2-s2","depth":2,"text":"2. 파일별 책임과 추적표"},{"id":"c2-s3","depth":2,"text":"3. F01 — 입력과 조작 권한"},{"id":"c2-s4","depth":3,"text":"3.1 목적과 현재 규칙"},{"id":"c2-s5","depth":3,"text":"3.2 실제 호출 순서"},{"id":"c2-s6","depth":3,"text":"3.3 코드 읽기"},{"id":"c2-s7","depth":3,"text":"3.4 수정 위치와 경계조건"},{"id":"c2-s8","depth":3,"text":"3.5 검증 방법과 SOLID 검토"},{"id":"c2-s9","depth":2,"text":"4. F02 — 이동, 작은 턱 넘기, 무마찰"},{"id":"c2-s10","depth":3,"text":"4.1 목적과 현재 흐름"},{"id":"c2-s11","depth":3,"text":"4.2 코드 읽기"},{"id":"c2-s12","depth":3,"text":"4.3 작은 턱을 넘는 검사 순서"},{"id":"c2-s13","depth":3,"text":"4.4 마찰은 스크립트의 가짜 물리가 아님"},{"id":"c2-s14","depth":3,"text":"4.5 Inspector에서 조절하는 법"},{"id":"c2-s15","depth":3,"text":"4.6 경계조건, 검사, SOLID 검토"},{"id":"c2-s16","depth":2,"text":"5. F03 — 3인칭 카메라, 커서, 조준 확대"},{"id":"c2-s17","depth":3,"text":"5.1 카메라와 커서의 역할 구분"},{"id":"c2-s18","depth":3,"text":"5.2 정지 중 좌우 60도 제한"},{"id":"c2-s19","depth":3,"text":"5.3 ESC 설정창에서 마우스가 사라지던 문제를 피하는 현재 구조"},{"id":"c2-s20","depth":3,"text":"5.4 우클릭 조준 확대"},{"id":"c2-s21","depth":3,"text":"5.5 수정법·검사·설계 리뷰"},{"id":"c2-s22","depth":2,"text":"6. F04 — Animator, 점프 모션, 사격 자세와의 연결"},{"id":"c2-s23","depth":3,"text":"6.1 실제 이동과 모양 변형의 분리"},{"id":"c2-s24","depth":3,"text":"6.2 이동·점프 상태 그래프"},{"id":"c2-s25","depth":3,"text":"6.3 점프 단계와 버퍼"},{"id":"c2-s26","depth":3,"text":"6.4 사격 후 모션 정지를 막는 현재 연결"},{"id":"c2-s27","depth":3,"text":"6.5 남아 있는 구형 컨트롤러 호환 경로"},{"id":"c2-s28","depth":3,"text":"6.6 수정 위치와 확인 순서"},{"id":"c2-s29","depth":3,"text":"6.7 SOLID 코드리뷰와 현재 제한"},{"id":"c2-s30","depth":2,"text":"7. 이 문서를 수정할 때 함께 갱신할 항목"}],"title":"입력·이동·카메라·애니메이션 기술문서"},{"file":"03_INTERACTION_COMBAT.md","index":3,"toc":[{"id":"c3-s0","depth":1,"text":"물건 상호작용과 샷건"},{"id":"c3-s1","depth":2,"text":"1. 처음 읽는 사람을 위한 개념"},{"id":"c3-s2","depth":2,"text":"2. 기능과 파일 책임표"},{"id":"c3-s3","depth":2,"text":"3. 현재 입력 우선순위"},{"id":"c3-s4","depth":2,"text":"4. F05 — 좌클릭 물건 운반"},{"id":"c3-s5","depth":3,"text":"4.1 목적과 데이터 흐름"},{"id":"c3-s6","depth":3,"text":"4.2 핵심 코드 읽기: 언제 집을 수 있는가"},{"id":"c3-s7","depth":3,"text":"4.3 집은 물건이 이동하는 과정"},{"id":"c3-s8","depth":3,"text":"4.4 놓을 때의 코드"},{"id":"c3-s9","depth":3,"text":"4.5 Inspector 설정과 외형 교체"},{"id":"c3-s10","depth":3,"text":"4.6 수정 후 확인할 일"},{"id":"c3-s11","depth":2,"text":"5. F06 — F 아이템 저장과 Enemy 포획"},{"id":"c3-s12","depth":3,"text":"5.1 현재 코드는 레이어 이름만으로 등록하지 않습니다"},{"id":"c3-s13","depth":3,"text":"5.2 일반 아이템의 저장 흐름"},{"id":"c3-s14","depth":3,"text":"5.3 핵심 코드 읽기: 손 상태를 바꾸지 않는 F"},{"id":"c3-s15","depth":3,"text":"5.4 Enemy는 현재 기절 조건과 라운드 카운트에 연결됩니다"},{"id":"c3-s16","depth":3,"text":"5.5 자주 생길 수 있는 오류와 확인 순서"},{"id":"c3-s17","depth":2,"text":"6. F07 — 중앙 커서, 노란 강조, UI 획득 연출"},{"id":"c3-s18","depth":3,"text":"6.1 중앙 구체와 산탄 원의 차이"},{"id":"c3-s19","depth":3,"text":"6.2 노란 강조는 원본 재질을 바꾸지 않습니다"},{"id":"c3-s20","depth":3,"text":"6.3 UI 획득 연출은 저장소가 아닙니다"},{"id":"c3-s21","depth":3,"text":"6.4 촬영용 객체와 리소스의 정리"},{"id":"c3-s22","depth":3,"text":"6.5 수정 후 확인할 일"},{"id":"c3-s23","depth":2,"text":"7. F08 — 샷건 장착·조준·발사"},{"id":"c3-s24","depth":3,"text":"7.1 장착과 손 자세"},{"id":"c3-s25","depth":3,"text":"7.2 조준과 걷기 고정"},{"id":"c3-s26","depth":3,"text":"7.3 단발과 산탄의 기본값"},{"id":"c3-s27","depth":3,"text":"7.4 클릭부터 명중까지"},{"id":"c3-s28","depth":3,"text":"7.5 카메라 조준선과 총구 광선은 다릅니다"},{"id":"c3-s29","depth":3,"text":"7.6 산탄 원과 모델 축"},{"id":"c3-s30","depth":3,"text":"7.7 추가 기능을 붙일 위치"},{"id":"c3-s31","depth":3,"text":"7.8 수정 후 확인할 일"},{"id":"c3-s32","depth":2,"text":"8. SOLID 관점의 코드리뷰"},{"id":"c3-s33","depth":3,"text":"8.1 현재 코드에서 문서와 실행이 다른 부분"},{"id":"c3-s34","depth":3,"text":"8.2 오류 재현 없이 단정하면 안 되는 부분"},{"id":"c3-s35","depth":2,"text":"9. 추적 가능한 변경·검증 기록 남기는 방법"}],"title":"물건 상호작용과 샷건"},{"file":"04_INVENTORY_TRAPS.md","index":4,"toc":[{"id":"c4-s0","depth":1,"text":"인벤토리와 덫"},{"id":"c4-s1","depth":2,"text":"F09 인벤토리 데이터와 화면"},{"id":"c4-s2","depth":3,"text":"현재 연결"},{"id":"c4-s3","depth":3,"text":"보관함 코드 읽기"},{"id":"c4-s4","depth":3,"text":"F 획득과 손 상태"},{"id":"c4-s5","depth":3,"text":"인벤토리를 수정할 때"},{"id":"c4-s6","depth":2,"text":"F10 덫 설치"},{"id":"c4-s7","depth":3,"text":"한 번의 설치가 처리되는 순서"},{"id":"c4-s8","depth":3,"text":"나누어 맡은 스크립트"},{"id":"c4-s9","depth":3,"text":"입력 우선순위"},{"id":"c4-s10","depth":3,"text":"1초 유지 코드 읽기"},{"id":"c4-s11","depth":3,"text":"격자와 장애물 판정"},{"id":"c4-s12","depth":3,"text":"현재 씬 설정과 수정 위치"},{"id":"c4-s13","depth":3,"text":"미리보기와 실제 생성"},{"id":"c4-s14","depth":2,"text":"덫 발동과 라운드 수명"},{"id":"c4-s15","depth":2,"text":"3치즈 보상"},{"id":"c4-s16","depth":3,"text":"정확한 조건"},{"id":"c4-s17","depth":3,"text":"지급 시점과 중복 방지 코드"},{"id":"c4-s18","depth":3,"text":"보상이 안 보일 때 확인 순서"},{"id":"c4-s19","depth":2,"text":"설계 검토와 확장 방법"},{"id":"c4-s20","depth":2,"text":"수정 후 확인할 사례"}],"title":"인벤토리와 덫"},{"file":"05_EDITOR_ASSETS.md","index":5,"toc":[{"id":"c5-s0","depth":1,"text":"에디터 도구, 에셋, 협업 연결"},{"id":"c5-s1","depth":2,"text":"F11. 에디터 구성·검증 도구"},{"id":"c5-s2","depth":3,"text":"왜 게임에서 안 쓰는 스크립트가 있나요?"},{"id":"c5-s3","depth":3,"text":"설치 도구 4개: 누르면 씬이 바뀝니다"},{"id":"c5-s4","depth":4,"text":"코드리뷰: 연결 검사부터 하는 이유"},{"id":"c5-s5","depth":3,"text":"검증 도구 7개: 어떤 시험인지 구분하기"},{"id":"c5-s6","depth":4,"text":"코드리뷰: 잘못된 씬에서 실행을 막기"},{"id":"c5-s7","depth":4,"text":"코드리뷰: 덫 때문에 사격 검사가 실패하는 것을 구분하기"},{"id":"c5-s8","depth":4,"text":"코드리뷰: 실제 버튼 경로를 시험하기"},{"id":"c5-s9","depth":4,"text":"코드리뷰: 시험 뒤 정리와 남은 한계"},{"id":"c5-s10","depth":3,"text":"검증 결과를 읽는 순서"},{"id":"c5-s11","depth":3,"text":"SOLID 관점에서 본 도구 구조"},{"id":"c5-s12","depth":2,"text":"F12. GUID와 협업 에셋 보존"},{"id":"c5-s13","depth":3,"text":"PR #49의 확인된 결과"},{"id":"c5-s14","depth":2,"text":"F13. 모델·리깅·재질·Unity 전달"},{"id":"c5-s15","depth":3,"text":"과거 제작 요청과 현재 확인 사실"},{"id":"c5-s16","depth":3,"text":"애니메이션 파일을 읽는 법"},{"id":"c5-s17","depth":3,"text":"색과 외곽선을 수정할 때"}],"title":"에디터 도구, 에셋, 협업 연결"},{"file":"06_HISTORY.md","index":6,"toc":[{"id":"c6-s0","depth":1,"text":"구현 이력과 검증 근거 추적표"},{"id":"c6-s1","depth":2,"text":"기록을 읽는 기준"},{"id":"c6-s2","depth":2,"text":"기능 번호와 현재 담당 위치"},{"id":"c6-s3","depth":2,"text":"초기 모델 제작 대화: 요청과 확인 가능 사실을 분리"},{"id":"c6-s4","depth":2,"text":"날짜별 변경 추적"},{"id":"c6-s5","depth":2,"text":"요구사항 변경으로 헷갈리기 쉬운 부분"},{"id":"c6-s6","depth":3,"text":"손으로 들기와 인벤토리에 저장하기"},{"id":"c6-s7","depth":3,"text":"적 포획과 +1 카운트"},{"id":"c6-s8","depth":3,"text":"애니메이션 연결과 본 움직임"},{"id":"c6-s9","depth":3,"text":"메뉴 입력과 카메라 잠금"},{"id":"c6-s10","depth":3,"text":"덫 재고, 설치된 덫, 보상을 구분하기"},{"id":"c6-s11","depth":2,"text":"최신 미해결 보고: 3치즈인데 덫이 안 들어옴"},{"id":"c6-s12","depth":2,"text":"최신 Git 작업: PR #49"},{"id":"c6-s13","depth":2,"text":"후속 담당자가 근거를 찾는 방법"},{"id":"c6-s14","depth":3,"text":"시험 결과를 과장하지 않기 위한 실제 사례"},{"id":"c6-s15","depth":2,"text":"작업 로그 모든 제목의 색인"},{"id":"c6-s16","depth":2,"text":"이번 기술문서 작성 작업"}],"title":"구현 이력과 검증 근거 추적표"},{"file":"07_SCRIPT_INDEX.md","index":7,"toc":[{"id":"c7-s0","depth":1,"text":"스크립트와 구현 위치 색인"},{"id":"c7-s1","depth":2,"text":"스크립트 외 연결 자료"},{"id":"c7-s2","depth":2,"text":"근거 파일"}],"title":"스크립트와 구현 위치 색인"},{"file":"08_REVIEW_AND_VALIDATION.md","index":8,"toc":[{"id":"c8-s0","depth":1,"text":"코드 검토와 검증 근거"},{"id":"c8-s1","depth":2,"text":"현재 확인과 과거 기록을 읽는 기준"},{"id":"c8-s2","depth":2,"text":"이번 문서에 적용한 정적 검토"},{"id":"c8-s3","depth":2,"text":"SOLID 검토"},{"id":"c8-s4","depth":2,"text":"현재 코드와 설명이 어긋나거나 확장 시 주의할 항목"},{"id":"c8-s5","depth":2,"text":"기존 시험 근거"},{"id":"c8-s6","depth":2,"text":"앞으로 수정할 때의 확인 절차"},{"id":"c8-s7","depth":2,"text":"기능별 필수 회귀 검사"},{"id":"c8-s8","depth":2,"text":"문서를 다음 버전으로 유지하는 법"}],"title":"코드 검토와 검증 근거"}];
+const articles=[...document.querySelectorAll('article')];let selected=0;
+function show(index,anchor,scroll=true){selected=index;articles.forEach((a,i)=>a.hidden=i!==index);document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active',Number(a.dataset.chapter)===index));const sub=document.getElementById('sectionNav');sub.replaceChildren();const t=document.createElement('strong');t.textContent='이 장의 목차';sub.append(t);pages[index].toc.filter(h=>h.depth===2).forEach(h=>{const a=document.createElement('a');a.href='#'+h.id;a.textContent=h.text;sub.append(a)});if(scroll){if(anchor)document.getElementById(anchor)?.scrollIntoView({block:'start'});else window.scrollTo(0,0)}}
+function navigate(hash){const chapter=hash.match(/^#chapter-(\d+)$/);if(chapter){show(Number(chapter[1]));return}const section=hash.match(/^#c(\d+)-s\d+$/);if(section)show(Number(section[1]),hash.slice(1))}
+document.addEventListener('click',e=>{const a=e.target.closest('a');if(!a||a.closest('.article-tools'))return;const raw=a.getAttribute('href');if(!raw)return;const idx=pages.findIndex(p=>p.file===raw.split('#')[0]);if(idx>=0){e.preventDefault();location.hash='chapter-'+idx;show(idx);return}});
+window.addEventListener('hashchange',()=>navigate(location.hash));
+const search=document.getElementById('search'),results=document.getElementById('results'),live=document.getElementById('live');
+const blocks=[];articles.forEach((article,index)=>{let anchor=pages[index].toc[0].id,heading=pages[index].title;article.querySelectorAll('h2,h3,p,li,tr,pre').forEach(el=>{if(/^H/.test(el.tagName)){anchor=el.id;heading=el.textContent}if(el.textContent.trim())blocks.push({index,anchor,heading,text:el.textContent.trim()})})});
+search.addEventListener('input',()=>{const q=search.value.trim().toLocaleLowerCase();results.replaceChildren();results.hidden=!q;if(!q){live.textContent='';return}const found=blocks.filter(b=>b.text.toLocaleLowerCase().includes(q));live.textContent=found.length+'개 문단에서 찾았습니다';const title=document.createElement('strong');title.textContent='검색 결과'+(found.length>50?' · 처음 50개':'');results.append(title);found.slice(0,50).forEach(b=>{const btn=document.createElement('button');btn.className='result';const label=document.createElement('strong');label.textContent=pages[b.index].title+' › '+b.heading;const snippet=document.createElement('small');let start=Math.max(0,b.text.toLocaleLowerCase().indexOf(q)-45);snippet.textContent=(start?'…':'')+b.text.slice(start,start+200);btn.append(label,snippet);btn.onclick=()=>{results.hidden=true;show(b.index,b.anchor);location.hash=b.anchor;};results.append(btn)});if(!found.length)results.append(document.createTextNode(' 다른 기능명이나 파일명으로 검색해 주세요.'));});
+show(0,undefined,false);navigate(location.hash);
+</script></body></html>

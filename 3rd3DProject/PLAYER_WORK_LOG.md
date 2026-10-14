@@ -628,3 +628,16 @@
 - 최종 편집 모드 연결 검사34개 PASS/FAIL0. Missing Script와 임시 입력장치·획득 텍스처·시험 객체 잔존0. 기존 이동·애니메이션·인벤토리·보상·덫 연결 정상, 첫 칸 덫1개 유지, Play=False, 원래 미저장 dirty=True 보존.
 - live_before.unity와 live_after.unity 사본 SHA256은 모두289467c7d423ea01ab6578da0b03cdff4188d24217fbba69e6cddd411141cc55로 동일하다. 씬 내용은 바이트까지 보존했다. 최종 파일 차이는 TrapPlacement.cs1개와 기존 작업 문서3개뿐이며, 새 파일/누락0, 메타1,074개 변경0/GUID중복0, Enemy·원본Trap·맵·다른씬·Packages·ProjectSettings 변경0이다.
 - 마지막 Unity Console 조회 오류0. 로그를 지우지 않았으며, 외부 MCP 검증 연결을 종료했다.
+
+
+## 2026-10-14 구현 기술문서 작성
+
+- 요청: 지금까지 구현·적용한 부분을 기능별로 분류하고, 웹에서 확인한 문서 작성 지침에 따라 구현 방법·코드 리뷰·수정 방법·작업 추적 자료를 쉬운 한국어로 작성.
+- 작성 위치: PlayerDocumentation/README.md, 01_ARCHITECTURE.md, 02_MOTION_CAMERA.md, 03_INTERACTION_COMBAT.md, 04_INVENTORY_TRAPS.md, 05_EDITOR_ASSETS.md, 06_HISTORY.md, 07_SCRIPT_INDEX.md, 08_REVIEW_AND_VALIDATION.md, index.html, evidence/.
+- 기준: 커밋 6b8bafde 및 2026-10-14 저장된 소스·씬·프리팹. F01~F13의 13개 기능, Player C# 53개와 직접 연계 Systems C# 10개를 조사했다. 원래 로그의 작업 31개 및 전체 제목 40개를 색인으로 보존했다. 초기 Blender 요청과 현재 에셋에서 확인 가능한 사항은 구분했다.
+- 형식: Diátaxis의 독자 목적별 구분, arc42의 구조·실행 흐름·설계 결정·위험 분류, Google 기술문서 지침을 조합했다. 기능별 실제 코드 발췌·쉬운 풀이·Inspector 설정·수정 위치·회귀 확인 사례와 SOLID 검토를 작성했다.
+- 확인 사항: 점프 실제 클립 1.2초와 정책 시간축 2초를 구분하고, F의 조준 대상 존재에 따른 입력 우선권·Hotbar 연계·3치즈 보상 조건을 현재 소스에 맞춰 설명했다. 3치즈 미지급은 과거 재현 검사에서 재현되지 않았으므로 해결 완료로 표시하지 않았다. PR49 원격 반영도 이전 실패 이후 완료됐다고 단정하지 않았다.
+- 문서 검증: 로컬 파일 링크, 코드 펜스, C# 63개 설명 포함, 소스 해시, 원래 로그 제목 전체 포함을 자동 검사했다. 검색용 HTML은 로컬 브라우저에서 목차 이동과 3치즈 검색·해당 문단 이동을 확인했고 콘솔 오류는 0이었다. 결과는 PlayerDocumentation/evidence/document_validation.json에 기록한다. 과거 Play 시험 결과는 날짜·범위·제한과 함께 따로 기재했다.
+- 보존: 시작 시 추적 파일 2,053개와 메타 1,076개의 SHA256을 기록했다. 게임 코드·씬·에셋·기존 메타/GUID·설정은 변경하지 않고, 본 로그와 기존 구현 설명서의 끝에만 문서 안내를 추가했다. Unity 실행·씬 저장·새 빌드/Play 시험·패키지 설치·파일 삭제/이름변경·Git 커밋/푸시는 하지 않았다.
+- 작성 지침: https://diataxis.fr/ ; https://arc42.org/overview/ ; https://developers.google.com/tech-writing/one/documents . Unity 메타데이터·Animator 공식 안내는 새 문서의 README에 연결했다.
+- 외부 작업 자료: C:/Users/307/Documents/Codex/PlayerTechnicalDocumentation20261014/ . 팀원이 필요한 핵심 소스 스냅샷과 과거 시험 텍스트는 문서 evidence에 포함했다.

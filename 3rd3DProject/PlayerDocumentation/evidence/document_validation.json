@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-14",
+  "sourceCommit": "6b8bafde9f16129d6c6a9a7c7127aaca5582a63a",
+  "scope": "Documentation only. No fresh Unity Play or build run.",
+  "markdownFiles": 9,
+  "linksChecked": 329,
+  "brokenFileLinks": [],
+  "unclosedFences": [],
+  "scriptsIndexed": 63,
+  "playerScripts": 53,
+  "undocumentedSourceNames": [],
+  "sourceHashMismatches": [],
+  "originalHistoryHeadings": 40,
+  "unindexedHistory": [],
+  "baselineTrackedFiles": 2053,
+  "metadataFiles": 1076,
+  "changedTrackedFiles": [
+    "3rd3DProject/PLAYER_IMPLEMENTATION_GUIDE.md",
+    "3rd3DProject/PLAYER_WORK_LOG.md"
+  ],
+  "missingTrackedFiles": [],
+  "unexpectedTrackedChanges": [],
+  "existingDocumentAppendChecks": [
+    {
+      "path": "PLAYER_WORK_LOG.md",
+      "originalBytes": 172446,
+      "appendedBytes": 2835,
+      "originalPrefixPreserved": true
+    },
+    {
+      "path": "PLAYER_IMPLEMENTATION_GUIDE.md",
+      "originalBytes": 95925,
+      "appendedBytes": 1497,
+      "originalPrefixPreserved": true
+    }
+  ],
+  "browser": {
+    "checked": true,
+    "method": "Local loopback HTTP reader in Codex in-app browser",
+    "search": "3치즈 returned 12 matching paragraphs and navigated to chapter 4 exact conditions",
+    "consoleErrors": 0,
+    "printTested": false
+  },
+  "passed": true
+}
