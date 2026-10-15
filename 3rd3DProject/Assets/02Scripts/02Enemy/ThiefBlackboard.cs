@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
@@ -34,6 +35,10 @@ public class ThiefBlackboard
     public bool IsCarryingItem => Carrier != null && Carrier.IsCarrying;
     public GameObject CarriedItem;
 
+    private static readonly Dictionary<Treasure, ThiefBlackboard> reservations
+        = new Dictionary<Treasure, ThiefBlackboard>();
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics() => reservations.Clear();
     [Header("디버그 및 상태")]
     public bool IsStunned;
     public bool IsFleeing;
@@ -75,14 +80,38 @@ public class ThiefBlackboard
 
     public void SetTarget(Treasure item)
     {
+        ReleaseReservation();
         TargetItem = item;
+        if (item != null) reservations[item] = this;
+
+        //TargetItem = item;
         //var itemComp = item != null ? item.GetComponent<Items2>() : null;
         //if(itemComp != null)
         //{
         //    itemComp.IsReserved = true;
         //}
     }
+    public static bool IsReservedByOrder(Treasure item, ThiefBlackboard me)
+    {
+        if(item == null) return false;
+        if (!reservations.TryGetValue(item, out var owner)) return false;
+        if (owner == me) return false;
+        if(owner.ThiefGameObject == null)
+        {
+            reservations.Remove(item);
+            return false;
+        }
+        return true;
+    }
 
+    private void ReleaseReservation()
+    {
+        if (TargetItem != null &&
+            reservations.TryGetValue(TargetItem, out var owner) && owner == this)
+            reservations.Remove(TargetItem);
+    }
+
+  
     //public void PickUpTargetItem()
     //{
     //    if (TargetItem != null)
@@ -141,7 +170,9 @@ public class ThiefBlackboard
 
         bool success = Carrier.TryPickUp(TargetItem);
         //Debug.Log($"[BT] TryPickUp 결과={success}, 직후 IsCarrying={Carrier.IsCarrying}");
+        ReleaseReservation();
         TargetItem = null;
+       
         return success;
     }
 
@@ -153,6 +184,7 @@ public class ThiefBlackboard
         //    if(item != null) item.IsReserved = false;
         //    TargetItem = null;
         //}
+        ReleaseReservation();
         TargetItem = null;
 
     }
@@ -165,6 +197,8 @@ public class ThiefBlackboard
 
     public void HandleCaught()
     {
+        ReleaseReservation();
+        TargetItem = null;
         Carrier?.DropOnCaught();
     }
     //public void DropCarriedItem()

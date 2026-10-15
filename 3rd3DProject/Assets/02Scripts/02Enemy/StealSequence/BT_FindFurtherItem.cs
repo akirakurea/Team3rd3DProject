@@ -39,6 +39,7 @@ public class BT_FindFurtherItem : BT_Leaf
             if(item == null) continue;
             if (item.gameObject.activeInHierarchy == false) continue;
             if(!item.IsAvailable) continue;
+            if (ThiefBlackboard.IsReservedByOrder(item, blackboard)) continue;
             //var itemComp = item.GetComponent<Items2>();
             //if (itemComp != null && itemComp.IsReserved) continue;//다른 도둑이 노릴경우
 
