@@ -11,13 +11,14 @@ GameObject:
   - component: {fileID: 1001}
   - component: {fileID: 1130}
   - component: {fileID: 8710806758736297146}
-  m_Layer: 0
+  - component: {fileID: -249367170131396977}
+  m_Layer: 6
   m_Name: PowerBankBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1001
 Transform:
   m_ObjectHideFlags: 0
@@ -70,6 +71,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 827b9c901969b384b8db8009a89248a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TexasShopReady.TexasShopSelectRoot
+--- !u!114 &-249367170131396977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86495d619cbf87d498409a2e43752e1b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Treasure
+  visuals: []
 --- !u!1 &1100
 GameObject:
   m_ObjectHideFlags: 0
@@ -81,7 +95,7 @@ GameObject:
   - component: {fileID: 1101}
   - component: {fileID: 1102}
   - component: {fileID: 1103}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Premium_Obsidian
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -171,7 +185,7 @@ GameObject:
   - component: {fileID: 1111}
   - component: {fileID: 1112}
   - component: {fileID: 1113}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Premium_Champagne
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -261,7 +275,7 @@ GameObject:
   - component: {fileID: 1121}
   - component: {fileID: 1122}
   - component: {fileID: 1123}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TSP_PowerLabel_001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -349,7 +363,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1142}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: CarryPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}

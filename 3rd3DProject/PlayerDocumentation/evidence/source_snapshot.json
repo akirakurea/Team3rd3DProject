@@ -1,0 +1,1236 @@
+[
+  {
+    "path": "Assets/02Scripts/01Player/Animation/PlayerAnimation.cs",
+    "lines": 95,
+    "sha256": "d432104eebed0626f31b7063f89722df9fa05c7008fcbf855314b5d539483943",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "PlayerAnimation",
+        "line": 5
+      },
+      {
+        "type": "class",
+        "name": "Settings",
+        "line": 8
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Animation/ShotgunPose.cs",
+    "lines": 143,
+    "sha256": "6062e86135aac89319447e0bb277ecc0a1e4a062703dd8ff15aab622cc40c631",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "ShotgunPose",
+        "line": 6
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Camera/AimZoom.cs",
+    "lines": 52,
+    "sha256": "5d5785e1a1edeff750e82d852c71339a213d707f9ac793ff4c84491e58edf7ee",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "AimZoom",
+        "line": 9
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "Cat_CinemachineCamera",
+        "id": 974152154
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Camera/CameraCursorLock.cs",
+    "lines": 90,
+    "sha256": "6458fa3829bdaee426f5b2efc641f344168d052bc601b00ce77915286ead664a",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "CameraCursorLock",
+        "line": 9
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "Cat_CinemachineCamera",
+        "id": 974152146
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Camera/CameraOrbitLimit.cs",
+    "lines": 66,
+    "sha256": "8a9b2019f2153bd5f41d4eea95087bc4bced2a3f8c413671682c3e14c01a3864",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "CameraOrbitLimit",
+        "line": 9
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "Cat_CinemachineCamera",
+        "id": 974152153
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Core/PlayerController.cs",
+    "lines": 128,
+    "sha256": "90558834536de4d70365b59c122c50d68db848ca0d78d069e4fd2af892d63a31",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "PlayerController",
+        "line": 6
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "prefab/stripped",
+        "id": 894582274
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Domain/CombatPolicy.cs",
+    "lines": 43,
+    "sha256": "aee1b164428a1b6de3ed3872f03625a35062a46819f5c6eb5e4823e3f178eb5d",
+    "declarations": [
+      {
+        "type": "interface",
+        "name": "IAimState",
+        "line": 2
+      },
+      {
+        "type": "interface",
+        "name": "IShotSpreadState",
+        "line": 9
+      },
+      {
+        "type": "class",
+        "name": "CombatPolicy",
+        "line": 16
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Domain/HandPolicy.cs",
+    "lines": 54,
+    "sha256": "486b96ddc0d0af739e99f2f65b9b36e06777baf804fdc3875d046247a141f3fa",
+    "declarations": [
+      {
+        "type": "struct",
+        "name": "HandInput",
+        "line": 2
+      },
+      {
+        "type": "struct",
+        "name": "HandState",
+        "line": 9
+      },
+      {
+        "type": "enum",
+        "name": "HandCommand",
+        "line": 16
+      },
+      {
+        "type": "class",
+        "name": "HandPolicy",
+        "line": 18
+      },
+      {
+        "type": "interface",
+        "name": "IEquipmentPort",
+        "line": 33
+      },
+      {
+        "type": "enum",
+        "name": "RegisteredCommand",
+        "line": 41
+      },
+      {
+        "type": "class",
+        "name": "RegisteredInteractionPolicy",
+        "line": 44
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Domain/IMotionState.cs",
+    "lines": 5,
+    "sha256": "fc9cd7bf7e2e0a603ccf40ddeecd21b2dadd82f72a57c4fb385c3a05bb0994af",
+    "declarations": [
+      {
+        "type": "interface",
+        "name": "IMotionState",
+        "line": 2
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Domain/InputPermission.cs",
+    "lines": 16,
+    "sha256": "2eae2df1262d8d4223ede1b991b073624d6e1478a5434fd60b293c03bb0934f6",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "InputPermission",
+        "line": 4
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Domain/IPrimaryAction.cs",
+    "lines": 17,
+    "sha256": "d17dc1cac4a94bb69aabf75b4aff6a8d2920953f381ce48da0d113f1cee07330",
+    "declarations": [
+      {
+        "type": "interface",
+        "name": "IPrimaryAction",
+        "line": 2
+      },
+      {
+        "type": "interface",
+        "name": "IInteractionAction",
+        "line": 8
+      },
+      {
+        "type": "interface",
+        "name": "IInteractionTargetQuery",
+        "line": 14
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Domain/JumpPolicy.cs",
+    "lines": 223,
+    "sha256": "ab88dd8870d9396a4ab474ab2c5dfe5737459b5742bc6fc01e718e78f520f073",
+    "declarations": [
+      {
+        "type": "enum",
+        "name": "JumpPhase",
+        "line": 4
+      },
+      {
+        "type": "struct",
+        "name": "JumpFrame",
+        "line": 13
+      },
+      {
+        "type": "class",
+        "name": "JumpPolicy",
+        "line": 32
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Domain/MovementPolicy.cs",
+    "lines": 52,
+    "sha256": "51264014ca6cb095ff1e70306e1f65f544fd8127403eb148466a8c7d6173e6a9",
+    "declarations": [
+      {
+        "type": "struct",
+        "name": "MovementIntent",
+        "line": 2
+      },
+      {
+        "type": "struct",
+        "name": "MovementSettings",
+        "line": 19
+      },
+      {
+        "type": "enum",
+        "name": "MovementState",
+        "line": 36
+      },
+      {
+        "type": "class",
+        "name": "MovementPolicy",
+        "line": 44
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Domain/OrbitPolicy.cs",
+    "lines": 63,
+    "sha256": "e794fb7cea08f8959ca8b0cddd38222935e6eae6e9eb5d4ec2a8d799103cc054",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "OrbitPolicy",
+        "line": 4
+      },
+      {
+        "type": "struct",
+        "name": "Constraint",
+        "line": 10
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Domain/PlacementHold.cs",
+    "lines": 34,
+    "sha256": "59b29a0959135540175d0c46659e1729aaf17ff60f2678c460f5050d96db9ea4",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "PlacementHold",
+        "line": 4
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Domain/PlacementInput.cs",
+    "lines": 97,
+    "sha256": "ad8f43124d5f324c8fae2ff2599348e70ad998f2f49b5fcc6e41621de8d21954",
+    "declarations": [
+      {
+        "type": "struct",
+        "name": "PlacementInputFrame",
+        "line": 2
+      },
+      {
+        "type": "class",
+        "name": "PlacementInput",
+        "line": 13
+      },
+      {
+        "type": "enum",
+        "name": "Source",
+        "line": 15
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Editor/Setup/CombatSetup.cs",
+    "lines": 96,
+    "sha256": "1952378c187378b9c0bdba16d1ac1c0ea4e7fd604e7b85abc88834468974fa4d",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "CombatSetup",
+        "line": 9
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Editor/Setup/EquipmentSetup.cs",
+    "lines": 86,
+    "sha256": "511061ad1829e1776bbaffdc4ed2c33e56e4b9aa9a900dd82c0d4618e3f3a20e",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "EquipmentSetup",
+        "line": 8
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Editor/Setup/InteractionSettings.cs",
+    "lines": 43,
+    "sha256": "e14ae4c20bef7b52a12591eee82157fda7637faa3bbabff55626eef4790138ee",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "InteractionSettings",
+        "line": 9
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Editor/Setup/InteractionSetup.cs",
+    "lines": 95,
+    "sha256": "eec2992463dd7c83d0b3cb74285636315d562397cd180a6912afb7e30292cf97",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "InteractionSetup",
+        "line": 8
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Editor/Validation/CombatInputValidation.cs",
+    "lines": 305,
+    "sha256": "a39817ba103652da01ad07909b6b73d78652d487807af35fc31592fd23e1f394",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "CombatInputValidation",
+        "line": 13
+      },
+      {
+        "type": "class",
+        "name": "Pause",
+        "line": 41
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Editor/Validation/CombatValidation.cs",
+    "lines": 494,
+    "sha256": "2760b412fcfcc0585fac551563c6a67ee6cc1c1832436b26e0a6cc5d47584250",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "CombatValidation",
+        "line": 17
+      },
+      {
+        "type": "class",
+        "name": "Pause",
+        "line": 56
+      },
+      {
+        "type": "class",
+        "name": "ScriptedCombatInput",
+        "line": 64
+      },
+      {
+        "type": "class",
+        "name": "MotionInput",
+        "line": 79
+      },
+      {
+        "type": "class",
+        "name": "NeutralHandInput",
+        "line": 86
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Editor/Validation/HitscanValidation.cs",
+    "lines": 250,
+    "sha256": "6629ede9c968219d8360fcd0c2bbbf9c73629cd905e816f7e2f44156d37de554",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "HitscanValidation",
+        "line": 8
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Editor/Validation/InteractionValidation.cs",
+    "lines": 562,
+    "sha256": "cbc16bb48b79fcdd75af088ca4c41df6d16b01eb7f4c9389280330ddab76205d",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "InteractionValidation",
+        "line": 15
+      },
+      {
+        "type": "class",
+        "name": "Pause",
+        "line": 55
+      },
+      {
+        "type": "class",
+        "name": "MotionInput",
+        "line": 66
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Editor/Validation/PlayerValidation.cs",
+    "lines": 563,
+    "sha256": "2ed838e1f7ff9873cf291b1372dd69855ac7198ff2f5c43e9218e12b6bd6fb52",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "PlayerValidation",
+        "line": 13
+      },
+      {
+        "type": "class",
+        "name": "PlayerEditorScope",
+        "line": 392
+      },
+      {
+        "type": "class",
+        "name": "HotbarSelection",
+        "line": 447
+      },
+      {
+        "type": "class",
+        "name": "HotbarSelectionScope",
+        "line": 470
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Editor/Validation/PlayerValidationCases.cs",
+    "lines": 166,
+    "sha256": "09bcd590dffc65d3d33ca5421a991608b0de2d030c1795b27d3dee48dbe19ef3",
+    "declarations": [
+      {
+        "type": "enum",
+        "name": "PlayerValidationKind",
+        "line": 4
+      },
+      {
+        "type": "struct",
+        "name": "PlayerValidationCase",
+        "line": 6
+      },
+      {
+        "type": "class",
+        "name": "PlayerValidationSample",
+        "line": 22
+      },
+      {
+        "type": "class",
+        "name": "PlayerValidationCases",
+        "line": 55
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Editor/Validation/PolicyValidation.cs",
+    "lines": 176,
+    "sha256": "3b4e23c651005f99278b60b989353ae59592947bce3c410cd264f4275e4e0e8b",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "PolicyValidation",
+        "line": 5
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Equipment/HitscanQuery.cs",
+    "lines": 200,
+    "sha256": "6c6c6b7172e57f5c49954c5b7e06481e17861af3a3e9a88432f3a3671ac46341",
+    "declarations": [
+      {
+        "type": "enum",
+        "name": "ShotHitKind",
+        "line": 3
+      },
+      {
+        "type": "struct",
+        "name": "ShotHit",
+        "line": 6
+      },
+      {
+        "type": "class",
+        "name": "HitscanQuery",
+        "line": 31
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Equipment/Presentation/ShotSpreadRing.cs",
+    "lines": 82,
+    "sha256": "aafabdca5c3bc2aaa569cb7849663f74ca991066cfb80fe56e1f1042766a2031",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "ShotSpreadRing",
+        "line": 8
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Equipment/ShotgunCombat.cs",
+    "lines": 138,
+    "sha256": "e1fb9cd667ee2c704c232e77cea9ee89d2de19e6b2310847e18fbdd168fe3529",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "ShotgunCombat",
+        "line": 8
+      },
+      {
+        "type": "interface",
+        "name": "IShotReceiver",
+        "line": 138
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "prefab/stripped",
+        "id": 953095911
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Equipment/ShotgunEquipment.cs",
+    "lines": 159,
+    "sha256": "12e2b84a83216f6253b9fcc44192ce2470fed0e8eb56fcef7a6c2edd4e09eb7e",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "ShotgunEquipment",
+        "line": 7
+      },
+      {
+        "type": "struct",
+        "name": "HandPose",
+        "line": 45
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Input/CombatInput.cs",
+    "lines": 69,
+    "sha256": "7483b97c2fdb05c8ca56f51c7ae110cd72ef77c3bb49e7387eae523a69e8a65b",
+    "declarations": [
+      {
+        "type": "struct",
+        "name": "CombatInputFrame",
+        "line": 5
+      },
+      {
+        "type": "interface",
+        "name": "ICombatInputSource",
+        "line": 13
+      },
+      {
+        "type": "interface",
+        "name": "IResettableInputSource",
+        "line": 19
+      },
+      {
+        "type": "class",
+        "name": "InputActivationGate",
+        "line": 25
+      },
+      {
+        "type": "class",
+        "name": "CombatInput",
+        "line": 52
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Input/GameplayInput.cs",
+    "lines": 46,
+    "sha256": "fc921672aa210d03e2fd3854190f1a6b9ed1439bae44c8bea08ce4ea3e16a5b8",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "GameplayInput",
+        "line": 5
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Input/InteractionInput.cs",
+    "lines": 26,
+    "sha256": "a43bbc9ae3f50ce31cbfbcc9a615c7a6ba8bd012c71d82b197d7e00330a894e5",
+    "declarations": [
+      {
+        "type": "interface",
+        "name": "IInteractionInputSource",
+        "line": 4
+      },
+      {
+        "type": "class",
+        "name": "InteractionInput",
+        "line": 10
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Input/PlayerInput.cs",
+    "lines": 49,
+    "sha256": "ecf97f350c013826f3f76b9439f7314057ff042071bf4083165bdf97c5b7cb22",
+    "declarations": [
+      {
+        "type": "struct",
+        "name": "PlayerInputFrame",
+        "line": 5
+      },
+      {
+        "type": "interface",
+        "name": "IPlayerInputSource",
+        "line": 25
+      },
+      {
+        "type": "class",
+        "name": "KeyboardInput",
+        "line": 31
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/CatInteractionItem.cs",
+    "lines": 143,
+    "sha256": "282e8802f282c6a69cc83181c421b4c1913c9d125a3222b84a5ba463b6651d52",
+    "declarations": [
+      {
+        "type": "enum",
+        "name": "ItemKind",
+        "line": 4
+      },
+      {
+        "type": "class",
+        "name": "CatInteractionItem",
+        "line": 12
+      },
+      {
+        "type": "class",
+        "name": "ReleaseRecovery",
+        "line": 26
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/InteractionController.cs",
+    "lines": 265,
+    "sha256": "5c6d84d2dd4b5748b5529aaf9afa60700a174d6080982041c66e8439bd22df3e",
+    "declarations": [
+      {
+        "type": "interface",
+        "name": "IRegisteredInteraction",
+        "line": 4
+      },
+      {
+        "type": "class",
+        "name": "InteractionController",
+        "line": 14
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "prefab/stripped",
+        "id": 2268041364028973912
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/ItemCarrier.cs",
+    "lines": 238,
+    "sha256": "396ea2629fd51259aa6f5371da31acc247ffd47ca63ea3e96b518a6fbc428bec",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "ItemCarrier",
+        "line": 5
+      },
+      {
+        "type": "enum",
+        "name": "PickupStage",
+        "line": 26
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/Placement/PlacementFeedback.cs",
+    "lines": 180,
+    "sha256": "5c35563d438c7c4b21a62acd2cd1f8cdfef7ea3dd417a4b722c23e90f220a781",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "PlacementFeedback",
+        "line": 10
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/Placement/PlacementSurface.cs",
+    "lines": 270,
+    "sha256": "0d35cffbb06c56ab604719a4d1f3a002b6be7c263f5c00edf84f0aa9fd44e3d8",
+    "declarations": [
+      {
+        "type": "enum",
+        "name": "PlacementFailure",
+        "line": 5
+      },
+      {
+        "type": "struct",
+        "name": "PlacementCandidate",
+        "line": 7
+      },
+      {
+        "type": "class",
+        "name": "PlacementSurface",
+        "line": 18
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/Placement/TrapPickup.cs",
+    "lines": 23,
+    "sha256": "2d54326624d5a68231a3e504d6a981da66621d874158e037ae90ecd1170e4325",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "TrapPickup",
+        "line": 6
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/Placement/TrapPlacement.cs",
+    "lines": 217,
+    "sha256": "eba08648ea7d33229504f919bc61fef5c44ad7ac05448a6892a44cfa2a5e1379",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "TrapPlacement",
+        "line": 8
+      },
+      {
+        "type": "class",
+        "name": "PlacedTrapLifetime",
+        "line": 150
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "prefab/stripped",
+        "id": 2268041364028973913
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/Placement/TrapRoundReward.cs",
+    "lines": 73,
+    "sha256": "12c4b527dd84f355de5592ea8e398779d7776c63984722defbf30a440f97574f",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "TrapRoundReward",
+        "line": 5
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "prefab/stripped",
+        "id": 2268041364028973923
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/Presentation/CenterCursor.cs",
+    "lines": 24,
+    "sha256": "6c8771986fb588d899183aefb6d47a17057389e05d969014d6e7ac1530c3f5cb",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "CenterCursor",
+        "line": 6
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "Main Camera",
+        "id": 501096479
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/Presentation/HighlightTarget.cs",
+    "lines": 33,
+    "sha256": "b106d949ef8ec36048ac2c0f2f278785c2a1cc0448a71b2c98dad13a9e877540",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "HighlightTarget",
+        "line": 8
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/Presentation/IHighlightSource.cs",
+    "lines": 10,
+    "sha256": "ca8e9363407a808cc7b9de618d220071e3997d6520d81b4955b002f114e1fea2",
+    "declarations": [
+      {
+        "type": "interface",
+        "name": "IHighlightSource",
+        "line": 4
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/Presentation/InventoryPickupEffect.cs",
+    "lines": 351,
+    "sha256": "0c5ccb17879ed3509cbc81734dee7f08dd4292950444f0af79e052689ddbd910",
+    "declarations": [
+      {
+        "type": "interface",
+        "name": "IPickupPort",
+        "line": 5
+      },
+      {
+        "type": "class",
+        "name": "InventoryPickupEffect",
+        "line": 13
+      },
+      {
+        "type": "class",
+        "name": "PickupReservation",
+        "line": 228
+      },
+      {
+        "type": "struct",
+        "name": "RendererState",
+        "line": 238
+      },
+      {
+        "type": "struct",
+        "name": "ColliderState",
+        "line": 244
+      },
+      {
+        "type": "struct",
+        "name": "BodyState",
+        "line": 250
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/Presentation/ItemHighlight.cs",
+    "lines": 133,
+    "sha256": "881decf254292b3c3032e06afb6d47fb0427efa08f28e53a855e94dedb8b5195",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "ItemHighlight",
+        "line": 6
+      },
+      {
+        "type": "struct",
+        "name": "Part",
+        "line": 13
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Interaction/Presentation/ItemIconCapture.cs",
+    "lines": 174,
+    "sha256": "a8fbfc88cb19120cabf2411bcb5b277fe401151eeac5253f63282dd569d81185",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "ItemIconCapture",
+        "line": 6
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Movement/PlayerJump.cs",
+    "lines": 91,
+    "sha256": "898af9e966c765ec4d58ed0ef21f20acba40cc1f75f23393ba32e9c7c308396c",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "PlayerJump",
+        "line": 5
+      },
+      {
+        "type": "class",
+        "name": "Settings",
+        "line": 8
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Movement/PlayerMovement.cs",
+    "lines": 55,
+    "sha256": "750df1f912c6dbf1d653f0449e37d4c2f29c04a041d004fbca544cb8c4ae59a2",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "PlayerMovement",
+        "line": 4
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Movement/StepSettings.cs",
+    "lines": 17,
+    "sha256": "13203f202f8eabf61e2b05988c4a0eb3c23763443b425716f955066c8881f304",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "StepSettings",
+        "line": 5
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/01Player/Movement/StepSolver.cs",
+    "lines": 164,
+    "sha256": "2816aa111f99cc33a01dba2d3041fc777f4b6eaac3e890c7ba4e1e76b9f22e3b",
+    "declarations": [
+      {
+        "type": "interface",
+        "name": "IStepSolver",
+        "line": 3
+      },
+      {
+        "type": "class",
+        "name": "StepSolver",
+        "line": 11
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/04Systems/GameManager.cs",
+    "lines": 223,
+    "sha256": "2a40a772c987c50dc5913b9e64353de9e06c33b06a67040e2ecae442444d67f3",
+    "declarations": [
+      {
+        "type": "struct",
+        "name": "RoundResult",
+        "line": 7
+      },
+      {
+        "type": "class",
+        "name": "GameManager",
+        "line": 26
+      },
+      {
+        "type": "enum",
+        "name": "GameState",
+        "line": 31
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "GameManager",
+        "id": 1088507844
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/04Systems/GameSettings.cs",
+    "lines": 98,
+    "sha256": "6fe28b4e8b442fac2f3460ad36b4cb7c7a120a9b9e041a7c9eed5abfd82d3c44",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "GameSettings",
+        "line": 10
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/04Systems/GameSettingsApplier.cs",
+    "lines": 111,
+    "sha256": "1a3ff88b8fb6d7fd6d46a53b2fd1e1574ce1df3680732d78a9ba6507cac031c5",
+    "declarations": [
+      {
+        "type": "interface",
+        "name": "IGameSettingsApplier",
+        "line": 6
+      },
+      {
+        "type": "struct",
+        "name": "GameResolution",
+        "line": 16
+      },
+      {
+        "type": "class",
+        "name": "GameSettingsApplier",
+        "line": 32
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/04Systems/HotbarItemData.cs",
+    "lines": 17,
+    "sha256": "c2a020bf823471de9f8bf10df3af37e4dbfe1f3734c73a227d80471a2af23ba9",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "HotbarItemData",
+        "line": 9
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/04Systems/HotbarManager.cs",
+    "lines": 154,
+    "sha256": "ab057c72b26cef1ae09c81dc62f41139e73ea6280bc0374b976c4821b34c912d",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "HotbarManager",
+        "line": 19
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "prefab/stripped",
+        "id": 2268041364028973911
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/04Systems/HotbarUI.cs",
+    "lines": 103,
+    "sha256": "dac71b462c9d8817d5d5f39407e800aef4689343c5e3d161f655aefb1860600c",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "HotbarUI",
+        "line": 20
+      },
+      {
+        "type": "class",
+        "name": "SlotView",
+        "line": 23
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "HotBar",
+        "id": 1515088512
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/04Systems/ItemInteractor.cs",
+    "lines": 287,
+    "sha256": "9a91614d6555e3982e57b915ca5454bb754eb4ad17a186a0793c7a73f829662e",
+    "declarations": [
+      {
+        "type": "interface",
+        "name": "IItemInventory",
+        "line": 9
+      },
+      {
+        "type": "enum",
+        "name": "RegisteredTargetKind",
+        "line": 15
+      },
+      {
+        "type": "class",
+        "name": "InteractionRegistration",
+        "line": 19
+      },
+      {
+        "type": "class",
+        "name": "ItemInteractor",
+        "line": 53
+      },
+      {
+        "type": "class",
+        "name": "HotbarStore",
+        "line": 73
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/04Systems/ItemPickup.cs",
+    "lines": 18,
+    "sha256": "27356dc7ab74ab145d073a3b7671001cfbb1b1eddabfcc540bd86a53b26d9399",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "ItemPickup",
+        "line": 4
+      },
+      {
+        "type": "interface",
+        "name": "IItemPickupRule",
+        "line": 15
+      },
+      {
+        "type": "interface",
+        "name": "IItemPickupConsumption",
+        "line": 18
+      }
+    ],
+    "directSceneComponents": []
+  },
+  {
+    "path": "Assets/02Scripts/04Systems/PauseMenuUI.cs",
+    "lines": 305,
+    "sha256": "65b49e20bc3a72da0c098cd2ed3a4b4677877eeb393c5f0657f12a5c0093200c",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "PauseMenuUI",
+        "line": 28
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "PauseCanvas",
+        "id": 804545210
+      }
+    ]
+  },
+  {
+    "path": "Assets/02Scripts/04Systems/RoundResultUI.cs",
+    "lines": 289,
+    "sha256": "5a029a5937ed7a7ec413375ca08ff9358983dbee5557886a6a8351d03882640a",
+    "declarations": [
+      {
+        "type": "class",
+        "name": "RoundResultUI",
+        "line": 19
+      }
+    ],
+    "directSceneComponents": [
+      {
+        "object": "ResultCanvas",
+        "id": 2118754483
+      }
+    ]
+  }
+]

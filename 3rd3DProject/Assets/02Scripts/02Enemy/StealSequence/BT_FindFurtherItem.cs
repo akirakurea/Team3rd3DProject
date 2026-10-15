@@ -1,0 +1,70 @@
+﻿using UnityEngine;
+
+public class BT_FindFurtherItem : BT_Leaf
+{
+    private ThiefBlackboard blackboard;
+
+    public BT_FindFurtherItem(ThiefBlackboard blackboard)
+    {
+        this.blackboard = blackboard;
+    }
+
+    public override BT_NodeStatus Evaluate()
+    {
+        //타겟이 있으면 성공처리해서 밑에 매서드 안읽게
+        if(blackboard.TargetItem != null)
+        {
+            return BT_NodeStatus.Success;
+        }
+        var items = TreasureManager.Instance.Treasures;
+        if (items == null || items.Count == 0)
+        {
+            Debug.LogWarning("[BT] 아이템매니저 비어있음");
+            return BT_NodeStatus.Failure;
+        }
+
+        Transform player = blackboard.PlayerTransform;
+        Transform thief = blackboard.ThiefTransform;
+        if (player == null)
+        {
+            Debug.LogWarning("[BT] 플레이어 비어있음");
+            return BT_NodeStatus.Failure;
+        }
+
+        Treasure furherItem = null;
+        float maxDistance = -1f;
+       
+        foreach(var item in items)
+        {
+            if(item == null) continue;
+            if (item.gameObject.activeInHierarchy == false) continue;
+            if(!item.IsAvailable) continue;
+            //var itemComp = item.GetComponent<Items2>();
+            //if (itemComp != null && itemComp.IsReserved) continue;//다른 도둑이 노릴경우
+
+            float distanceToPlayer = Vector3.Distance(item.transform.position, player.position);
+            float distanceToThiedf = Vector3.Distance(item.transform.position, thief.position);
+
+            if (item != null && item.gameObject.activeInHierarchy)
+            {
+            //플레이어와 멀수록 점수가 올라감 && 도둑과 가까울수록 점수가 더 크게 올라감
+            float score = distanceToPlayer / (distanceToThiedf + 0.1f);
+                if (score > maxDistance)
+                {
+                    maxDistance = score;
+                    furherItem = item;
+                }
+            }
+        }
+        if(furherItem != null)
+        {
+            blackboard.SetTarget(furherItem);//타겟 지정 및 예약
+            //blackboard.TargetItem = furherItem;
+            //furherItem.GetComponent<Items2>().IsReserved = true; //예약
+            Debug.Log($"[BT]아이템 찾기 성공 : {furherItem.name}");
+            return BT_NodeStatus.Success;
+        }
+        Debug.LogWarning($"[BT]아이템 찾기 실패(리스트 or Player Null");
+        return BT_NodeStatus.Failure;
+    }
+}
