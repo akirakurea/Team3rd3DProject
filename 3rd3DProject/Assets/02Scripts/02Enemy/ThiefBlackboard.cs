@@ -25,7 +25,7 @@ public class ThiefBlackboard
     [Header("플레이어감지")]
     public Transform PlayerTransform;
     public float DistanceToPlayer;
-    public float FleeDistanceThreshold = 8.0f;
+    public float FleeDistanceThreshold = 5.0f;
     public bool IsPlayerNearby => DistanceToPlayer <= FleeDistanceThreshold;
 
     [Header("아이템정보")]
@@ -102,6 +102,35 @@ public class ThiefBlackboard
     //        UpdateAgentSpeed();
     //    }
     //}
+
+    public bool TryBreakNearbyGlass(float radius)
+    {
+        Collider[] hits = Physics.OverlapSphere(ThiefTransform.position, radius);
+        BreakableGlass nearest = null;
+        float nearestDist = float.MaxValue;
+
+        foreach (var hit in hits)
+        {
+            if (hit.TryGetComponent<BreakableGlass>(out var glass) && !glass.IsBroken)
+            {
+                float d = Vector3.Distance(ThiefTransform.position, glass.transform.position);
+                if (d < nearestDist)
+                {
+                    nearestDist = d;
+                    nearest = glass;
+                }
+                
+            }
+            if(nearest != null)
+            {
+                nearest.Break();
+                Debug.Log("[BT]창문깨고 탈출해!");
+                return true;
+            }
+        }
+        return false;
+    }
+
     public bool TryPickUpTarget()
     {
         if (TargetItem == null || Carrier == null)

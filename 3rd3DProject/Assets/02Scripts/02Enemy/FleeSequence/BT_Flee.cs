@@ -1,9 +1,11 @@
-﻿using UnityEngine;
+﻿using System.IO;
+using UnityEngine;
 using UnityEngine.AI;
 
 public class BT_Flee : BT_Leaf
 {
     private ThiefBlackboard bb;
+   
     private float fleeDistance = 6.0f;
     private float safeDistance = 14.0f;
     private float minFleeDuration = 1.5f;
@@ -38,7 +40,7 @@ public class BT_Flee : BT_Leaf
         }
 
         bb.ClearTarget();//도망칠때는 노리던 아이템 초기화 및 예약해제 장치
-
+        //bb.TryBreakNearbyGlass();
         //if(bb.IsCarryingItem && (bb.DistanceToPlayer < 5.0f))
         //{
            
@@ -70,48 +72,83 @@ public class BT_Flee : BT_Leaf
 
     private Vector3 FindBestFleePosition()
     {
+        //Vector3 best = TryFindFleeCandidate();
+        //if(best != bb.ThiefTransform.position)
+        //    return best;
+        Vector3 normalBest = TryFindFleeCandidate(out float normalDist);
+        bool normalIsSafe = normalBest != bb.ThiefTransform.position &&
+            normalDist >= safeDistance;
+        if (!normalIsSafe)
+        {
+            if (bb.TryBreakNearbyGlass(fleeDistance))
+            {
+                Vector3 viaGlass = TryFindFleeCandidate(out float glassDist);
+                bool glassIsBetter = viaGlass != bb.ThiefTransform.position &&
+                    (normalBest == bb.ThiefTransform.position || glassDist > normalDist);
+
+                if (glassIsBetter)
+                    return viaGlass;
+            }
+        }
+        if (normalBest != bb.ThiefTransform.position)
+            return normalBest;
+
+        return bb.SpawnPosition != null ? 
+            bb.SpawnPosition.position : bb.ThiefTransform.position;
+    }
+ 
+    private Vector3 TryFindFleeCandidate(out float bestDist)
+    {
         Vector3 awayFromPlayer = (bb.ThiefTransform.position - bb.PlayerTransform.position).normalized;
         Vector3 bestPos = bb.ThiefTransform.position;
-        float maxDistFromPlayer = -1f;
+        bestDist = -1f;
 
         float[] checkAngles = { 0f, 45f, -45f, 90f, -90f, 135f, -135f, 180f };
-        
+        NavMeshPath path = new NavMeshPath();
         foreach(float angle in checkAngles)
         {
             Vector3 checkDir = Quaternion.Euler(0, angle, 0) * awayFromPlayer;
             Vector3 targetCandidate = bb.ThiefTransform.position + checkDir * fleeDistance;
 
-            NavMeshHit hit;
+            
 
-            if (!NavMesh.Raycast(bb.ThiefTransform.position, targetCandidate, out hit, NavMesh.AllAreas))
+            //if (!NavMesh.Raycast(bb.ThiefTransform.position, targetCandidate, out NavMeshHit hit, NavMesh.AllAreas))
+            //{
+            //    float distToPlayer = Vector3.Distance(targetCandidate, bb.PlayerTransform.position);
+            //    if(distToPlayer > maxDistFromPlayer)
+            //    {
+            //        maxDistFromPlayer = distToPlayer;
+            //        bestPos = targetCandidate;
+            //    }
+            //}
+            //else
+            //{
+            //    if(hit.distance > 2.0f)
+            //    {
+            //        float distToPlayer = Vector3.Distance(hit.position, bb.PlayerTransform.position);
+            //        if(distToPlayer > maxDistFromPlayer)
+            //        {
+            //            maxDistFromPlayer = distToPlayer;
+            //            bestPos = hit.position;
+            //        }
+            //    }
+            //}
+            if (NavMesh.SamplePosition(targetCandidate, out NavMeshHit hit, 3.0f, NavMesh.AllAreas) &&
+                NavMesh.CalculatePath(bb.ThiefTransform.position, hit.position, NavMesh.AllAreas, path) &&
+                path.status == NavMeshPathStatus.PathComplete)
             {
-                float distToPlayer = Vector3.Distance(targetCandidate, bb.PlayerTransform.position);
-                if(distToPlayer > maxDistFromPlayer)
+                float distToPlayer = Vector3.Distance(hit.position, bb.PlayerTransform.position);
+                if (distToPlayer > bestDist)
                 {
-                    maxDistFromPlayer = distToPlayer;
-                    bestPos = targetCandidate;
-                }
-            }
-            else
-            {
-                if(hit.distance > 2.0f)
-                {
-                    float distToPlayer = Vector3.Distance(hit.position, bb.PlayerTransform.position);
-                    if(distToPlayer > maxDistFromPlayer)
-                    {
-                        maxDistFromPlayer = distToPlayer;
-                        bestPos = hit.position;
-                    }
+                    bestDist = distToPlayer;
+                    bestPos = hit.position;
                 }
             }
 
         }
-        if (bestPos == bb.ThiefTransform.position && bb.SpawnPosition != null)
-        {
-            return bb.SpawnPosition.position;
-        }
+        
         return bestPos;
     }
 
-    
+   
 }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Unity.AI.Navigation;
+using UnityEngine;
 using UnityEngine.Events;
 
 // 창문이나 문에 있는 유리 전용 오브젝트에 붙입니다.
@@ -12,6 +13,8 @@ public class BreakableGlass : MonoBehaviour
     public GameObject brokenVisual;
     [Tooltip("깨졌을 때 끌 유리 전용 Collider입니다.")]
     public Collider[] glassColliders;
+    [SerializeField] private NavMeshLink windowLink;
+
 
     [Header("파괴 효과 (선택 사항)")]
     public GameObject breakEffectPrefab;
@@ -72,8 +75,11 @@ public class BreakableGlass : MonoBehaviour
             audioSource.PlayOneShot(breakSound);
 
         onBroken.Invoke();
+        if (windowLink != null)
+            windowLink.enabled = true;
     }
 
+   
     // Play 중 컴포넌트 메뉴에서 AI 없이 파괴 동작을 확인할 수 있습니다.
     [ContextMenu("테스트: 유리 깨기 (Play 중)")]
     private void TestBreak()

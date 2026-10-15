@@ -104,9 +104,10 @@ namespace TexasJawTrap
             contactTrigger.enabled = false;
 
             // 덫 유지 시간만큼 스턴 상태를 설정합니다. 실제 행동 중지는 BT가 담당합니다.
-            EnemyTrapStun stun = thief.GetComponent<EnemyTrapStun>();
-            if (stun != null) stun.ApplyStun(Mathf.Max(0.01f, removeDelay));
-
+            //EnemyTrapStun stun = thief.GetComponent<EnemyTrapStun>();
+            //if (stun != null) stun.ApplyStun(Mathf.Max(0.01f, removeDelay));
+            var controller = thief.GetComponent<ThiefController>();
+            if (controller != null) controller.TakeStun(Mathf.Max(0.01f, removeDelay));
             // 잡힌 도둑을 다른 기능에 알립니다.
             onTriggered.Invoke(thief);
         }
