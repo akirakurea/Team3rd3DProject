@@ -5,6 +5,10 @@ using UnityEngine.EventSystems;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
+using NUnit.Framework;
+using System.Collections.Generic;
+
+
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -48,7 +52,7 @@ public class PauseMenuUI : MonoBehaviour
     [SerializeField] private TMP_Text sensitivityText;   // 선택: "1.0x"
 
     [Header("해상도")]
-    [SerializeField] private Slider resolutionSlider;
+    [SerializeField] private TMP_Dropdown resolutionDropdown;
     [SerializeField] private TMP_Text resolutionText;    // 선택: "1920 x 1080"
 
     private GameManager gm;
@@ -237,18 +241,32 @@ public class PauseMenuUI : MonoBehaviour
     private void SetupResolution()
     {
         int index = settings.InitializeResolutions();
-        if (resolutionSlider == null) return;
+        if (resolutionDropdown == null) return;
 
-        resolutionSlider.minValue = 0;
-        resolutionSlider.maxValue = settings.Resolutions.Count - 1;
-        resolutionSlider.wholeNumbers = true;
-        resolutionSlider.interactable = settings.Resolutions.Count > 1;
-        resolutionSlider.SetValueWithoutNotify(index);
-        SetResolutionText(index);
+        resolutionDropdown.ClearOptions();
+        var options = new List<string>();
+        foreach (var res in settings.Resolutions)
+            options.Add($"{res.Width} x {res.Height}");
+        resolutionDropdown.AddOptions(options);
 
-        // 드래그하는 동안에는 글자만 바꾸고, 슬라이더를 놓는 순간 실제로 적용한다 (화면이 계속 깜빡이는 것 방지)
-        resolutionSlider.onValueChanged.AddListener(OnResolutionSliderChanged);
-        AddPointerUpListener(resolutionSlider.gameObject, ApplyResolution);
+        resolutionDropdown.SetValueWithoutNotify(index);
+        resolutionDropdown.onValueChanged.AddListener(OnResolutionChanged);
+        //누가 해상도를 슬라이더로 만들어...
+        //resolutionDropdown.minValue = 0;
+        //resolutionDropdown.maxValue = settings.Resolutions.Count - 1;
+        //resolutionDropdown.wholeNumbers = true;
+        //resolutionDropdown.interactable = settings.Resolutions.Count > 1;
+        //resolutionDropdown.SetValueWithoutNotify(index);
+        //SetResolutionText(index);
+
+        //// 드래그하는 동안에는 글자만 바꾸고, 슬라이더를 놓는 순간 실제로 적용한다 (화면이 계속 깜빡이는 것 방지)
+        //resolutionDropdown.onValueChanged.AddListener(OnResolutionSliderChanged);
+        //AddPointerUpListener(resolutionDropdown.gameObject, ApplyResolution);
+    }
+
+    private void OnResolutionChanged(int index)
+    {
+        settings.ApplyResolution(index);
     }
 
     private void OnResolutionSliderChanged(float value)
@@ -258,7 +276,7 @@ public class PauseMenuUI : MonoBehaviour
 
     private void ApplyResolution()
     {
-        settings.ApplyResolution(Mathf.RoundToInt(resolutionSlider.value));
+        settings.ApplyResolution(Mathf.RoundToInt(resolutionDropdown.value));
     }
 
     private void SetResolutionText(int index)
