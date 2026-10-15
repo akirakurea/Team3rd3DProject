@@ -121,13 +121,13 @@ public class ThiefBlackboard
                 }
                 
             }
+        }
             if(nearest != null)
             {
                 nearest.Break();
                 Debug.Log("[BT]창문깨고 탈출해!");
                 return true;
             }
-        }
         return false;
     }
 
