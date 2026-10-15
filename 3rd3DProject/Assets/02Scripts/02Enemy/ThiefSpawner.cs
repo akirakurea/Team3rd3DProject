@@ -27,6 +27,7 @@ public class ThiefSpawner : MonoBehaviour
     private void HandleRoundStarted(int round, int ratsThisRound)
     {
         if(spawnRoutine != null) StopCoroutine(spawnRoutine);
+        
         activeRats.Clear();
         spawnRoutine = StartCoroutine(SpawnRoundRoutine(ratsThisRound));
     }

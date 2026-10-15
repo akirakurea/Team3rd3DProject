@@ -2406,6 +2406,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 670821890067747767, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: interactionDistance
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 1601464630816194196, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
       propertyPath: windowLink
       value: 
@@ -2453,6 +2457,18 @@ PrefabInstance:
     - target: {fileID: 3660057572064562078, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5494470693378854492, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: interactionDistance
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5494470693378854492, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: onOpened.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5494470693378854492, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
+      propertyPath: onOpened.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6710248109694493405, guid: a2be60dfb0236ee439771e7fb1c18283, type: 3}
       propertyPath: windowLink
@@ -9552,7 +9568,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 949905719985743627, guid: 6e59d3b72784e984cbf46071ab57cff1, type: 3}
   m_PrefabInstance: {fileID: 2268041364028973909}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 971369868}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aba7a711876204040affb2ed3ed8c586, type: 3}
@@ -10333,7 +10349,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 89836356175608200, guid: 6e59d3b72784e984cbf46071ab57cff1, type: 3}
   m_PrefabInstance: {fileID: 2268041364028973909}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 971369868}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5a7204e67f70d3449a86d7ac2e2c797f, type: 3}
@@ -10669,6 +10685,37 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 1920676566906207125, guid: 3b44829a0f1a1f744bde14f8080e29fc, type: 3}
+--- !u!1 &971369868 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5286257427757735957, guid: 6e59d3b72784e984cbf46071ab57cff1, type: 3}
+  m_PrefabInstance: {fileID: 2268041364028973909}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &971369881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 971369868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1dd54fcaf9db9c64980b9f930df3ef63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrapPlacement
+  inventory: {fileID: 0}
+  trapItem: {fileID: 0}
+  view: {fileID: 0}
+  interaction: {fileID: 0}
+  floors: []
+  cellSize: 1
+  reach: 2.2
+  holdSeconds: 1
+  footprintHalfSize: {x: 0.46, y: 0.27}
+  modelGroundOffset: {x: 0, y: 0, z: 0}
+  clearanceHeight: 1.4
+  previewMaterial: {fileID: 0}
+  progressFill: {fileID: 0}
+  statusText: {fileID: 0}
 --- !u!1 &972123071
 GameObject:
   m_ObjectHideFlags: 0
@@ -23444,7 +23491,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5286257427757735957, guid: 6e59d3b72784e984cbf46071ab57cff1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 971369881}
   m_SourcePrefab: {fileID: 100100000, guid: 6e59d3b72784e984cbf46071ab57cff1, type: 3}
 --- !u!1001 &8588313691407767199
 PrefabInstance:
